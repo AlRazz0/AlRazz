@@ -17,6 +17,8 @@ import {
 } from "../lib/furniture.ts";
 import type { Config, Panel, Product, Settings } from "../lib/furniture.ts";
 import { commercialMaterials } from "../lib/material-presets.ts";
+import { mergeCommercialMaterials } from "../lib/material-catalog.ts";
+import { existsSync } from "node:fs";
 import {
   catalogCSVTemplate,
   exportCatalogCSV,
@@ -458,6 +460,12 @@ test("standard and RH variants retain distinct costs, identities and cut-list la
       code: "RH-18-B",
       board: "rh",
       active: true,
+      ...(rh.swatch !== undefined ? { swatch: rh.swatch } : {}),
+      ...(rh.sourceUrl !== undefined ? { sourceUrl: rh.sourceUrl } : {}),
+      ...(rh.texture !== undefined ? { texture: rh.texture } : {}),
+      ...(rh.renderTexture !== undefined
+        ? { renderTexture: rh.renderTexture }
+        : {}),
     },
   );
   rh.active = false;
@@ -479,11 +487,12 @@ test("standard and RH variants retain distinct costs, identities and cut-list la
 });
 
 test("commercial presets are independent editable materials with strictly validated metadata", () => {
-  assert.equal(commercialMaterials.length, 23);
-  assert.equal(
+  assert.ok(
+    commercialMaterials.length > 23 && commercialMaterials.length <= 100,
+  );
+  assert.ok(
     defaultSettings.materials.filter((material) => material.brand === "Hispano")
-      .length,
-    8,
+      .length > 8,
   );
   assert.ok(
     defaultSettings.materials
@@ -501,8 +510,21 @@ test("commercial presets are independent editable materials with strictly valida
     ),
     "No verified Hispano finish/RH pairing is seeded.",
   );
-  for (const material of commercialMaterials)
+  for (const material of commercialMaterials) {
     assert.doesNotThrow(() => materialSchema.parse(material));
+    assert.ok(
+      material.sourceUrl,
+      "Each commercial reference links to its manufacturer.",
+    );
+    assert.ok(
+      material.swatch,
+      "Each commercial reference includes the manufacturer's sample.",
+    );
+    assert.ok(
+      existsSync(new URL("../public" + material.swatch, import.meta.url)),
+      "The sample must ship with the site.",
+    );
+  }
   for (const board of ["hydro", "waterproof", "RH", "other"])
     assert.throws(() =>
       materialSchema.parse({ ...commercialMaterials[0], board }),
@@ -516,6 +538,59 @@ test("commercial presets are independent editable materials with strictly valida
   assert.throws(() =>
     materialSchema.parse({ ...commercialMaterials[0], thickness: 16 }),
   );
+});
+
+test("manufacturer metadata cannot load remote tracking images or point to untrusted sites", () => {
+  const sample = commercialMaterials[0];
+  for (const swatch of [
+    "https://example.com/image.jpg",
+    "//example.com/image.jpg",
+    "/images/materials/../secret.png",
+    "/images/materials/sample.svg",
+  ])
+    assert.equal(
+      materialSchema.safeParse({ ...sample, swatch }).success,
+      false,
+    );
+  for (const sourceUrl of [
+    "javascript:alert(1)",
+    "https://pelikano.com.evil.test/x",
+    "https://secret@pelikano.com/x",
+    "http://pelikano.com/x",
+  ])
+    assert.equal(
+      materialSchema.safeParse({ ...sample, sourceUrl }).success,
+      false,
+    );
+  const published = publicMaterials({
+    ...defaultSettings,
+    materials: [{ ...sample, active: true, price: 175 }],
+  });
+  assert.equal(published[0].swatch, sample.swatch);
+  assert.equal(published[0].sourceUrl, sample.sourceUrl);
+  assert.equal("price" in published[0], false);
+});
+
+test("catalog enrichment preserves workshop edits, explicit removals and hidden references", () => {
+  const preset = {
+    ...commercialMaterials[0],
+    swatch: "/images/materials/sample.jpg",
+    sourceUrl: "https://tableroshispanos.es/productos/blanco-100/",
+    texture: "Unicolor",
+  };
+  const { swatch, sourceUrl, texture, ...legacy } = preset;
+  const current = { ...legacy, active: false, price: 143, color: "#123456" };
+  const frozen = JSON.stringify(current);
+  const merged = mergeCommercialMaterials([current], [preset]);
+  assert.deepEqual(merged[0], { ...current, swatch, sourceUrl, texture });
+  assert.equal(JSON.stringify(current), frozen);
+  assert.deepEqual(mergeCommercialMaterials(merged, [preset]), merged);
+  const explicit = { ...current, swatch: "", sourceUrl: "", texture: "" };
+  assert.deepEqual(mergeCommercialMaterials([explicit], [preset])[0], explicit);
+  const renamed = { ...current, name: "Muestra propia del taller" };
+  assert.deepEqual(mergeCommercialMaterials([renamed], [preset])[0], renamed);
+  assert.equal(mergeCommercialMaterials([], [preset])[0].active, false);
+  assert.equal(mergeCommercialMaterials([], [preset], true)[0].active, true);
 });
 
 test("price recomputes from panels and selected services; hinges follow door height, not cabinet height", () => {

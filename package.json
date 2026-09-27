@@ -10,13 +10,15 @@
     "build": "vite build",
     "preview": "vite preview",
     "check": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test tests/furniture.test.ts tests/auth.test.ts tests/deployment.test.mjs tests/camera.test.ts",
+    "test": "node --experimental-strip-types --test tests/furniture.test.ts tests/auth.test.ts tests/deployment.test.mjs tests/camera.test.ts tests/swatch-textures.test.ts tests/viewer-dimensions.test.ts tests/pages.test.mjs",
     "test:api": "node --experimental-strip-types --test tests/api.integration.mjs",
     "test:auth-api": "node --experimental-strip-types --test tests/auth.integration.mjs",
     "setup:local": "node scripts/setup-local.mjs",
     "db:local": "wrangler d1 migrations apply alrazz-db --local",
     "db:remote": "wrangler d1 migrations apply alrazz-db --remote",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy",
+    "prepare:pages": "node scripts/prepare-pages.mjs",
+    "deploy:pages": "wrangler pages deploy --cwd hosting/pages --project-name alrazz --branch main"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

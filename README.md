@@ -5,7 +5,8 @@ Plataforma en español para diseñar y cotizar muebles de **melamina de 18 mm**.
 ## Qué funciona
 
 - Catálogo conectado a una base de datos D1: crear, duplicar, editar, activar y ocultar modelos.
-- Configurador 3D con giro y zoom, vistas frontal/lateral/superior, apertura de puertas, medidas, acabados, interior, repisas y módulos.
+- Configurador 3D con giro y zoom, vistas frontal/lateral/superior, apertura de puertas y cotas de ancho, alto y fondo sobre el modelo. Las cotas siguen la cámara y se incluyen en el PNG si están activadas.
+- Selector con 82 referencias comerciales de Hispano, Vesto y Pelíkano, buscador y muestras oficiales alojadas en la propia web. El panel permite editar los acabados sin cambiar código; los colores y vetas del visor son orientativos y la disponibilidad local se confirma con el taller.
 - Motor compartido de geometría, restricciones, despiece y precio. El servidor calcula la cotización; no acepta precios del navegador.
 - Diseños persistentes con enlace para compartir, cantidades, duplicación y copia histórica de parámetros y precio.
 - Resumen de solicitud e imagen PNG para el cliente. Despiece preliminar y CSV exclusivos del administrador, con segundo factor verificado.
@@ -14,15 +15,15 @@ Plataforma en español para diseñar y cotizar muebles de **melamina de 18 mm**.
 - Panel privado con correo, contraseña y segundo factor: autenticador, correo opcional o recuperación de un solo uso. Materiales, costos, margen, plazos orientativos y disponibilidad.
 - CSV/JSON con vista previa y validación antes de importar borradores. Un CSV exportado de Google Sheets puede usarse directamente con la plantilla.
 
-**Los modelos, precios, colores y plazos iniciales son datos de muestra.** Deben ajustarse con AlRazz antes de operar comercialmente. Todo importe es referencial y el despiece está marcado «no autorizado para producción».
+**Los modelos, precios y plazos iniciales son datos de muestra.** Los nombres y muestras comerciales tienen [fuentes oficiales documentadas](docs/material-sources.md), pero no confirman existencias en Cusco ni equivalencia colorimétrica de una pantalla. Todo importe es referencial y el despiece está marcado «no autorizado para producción».
 
 ## Conectividad sin cambiar páginas
 
-| Permanente en el sistema                                     | Administrable desde el panel                            |
-| ------------------------------------------------------------ | ------------------------------------------------------- |
-| Espesor de 18 mm, reglas constructivas y holguras del piloto | Modelos, nombres, categorías soportadas y descripciones |
-| Motor 3D y estructura de la web                              | Medidas iniciales, límites, distribución y orden        |
-| Validación en el servidor y autorización                     | Materiales, colores, costos, margen y servicios         |
+| Permanente en el sistema                                     | Administrable desde el panel                               |
+| ------------------------------------------------------------ | ---------------------------------------------------------- |
+| Espesor de 18 mm, reglas constructivas y holguras del piloto | Modelos, nombres, categorías soportadas y descripciones    |
+| Motor 3D y estructura de la web                              | Medidas iniciales, límites, distribución y orden           |
+| Validación en el servidor y autorización                     | Materiales, colores, costos, margen y servicios            |
 | Contrato de API y formato de piezas                          | Contactos de WhatsApp, plazos y disponibilidad orientativa |
 
 El catálogo vive en D1 y se consulta por API. Los cambios administrativos se ven al cargar el catálogo, sin reconstruir ni publicar código. Desactivar conserva el modelo y no altera diseños ya guardados. Una familia constructiva nueva —por ejemplo, cocinas con mecanismos especiales— sí necesita una plantilla de fabricación validada.
@@ -57,11 +58,13 @@ Las pruebas cubren motor, CSV, criptografía, autenticación, persistencia, aisl
 
 ## Publicación
 
-La web está disponible por HTTPS en [alrazz.alrazz-cusco.workers.dev](https://alrazz.alrazz-cusco.workers.dev). Se verificó **Workers Free ($0)** en el panel, D1 tiene ambas migraciones aplicadas y el Worker dispone de cinco secretos nuevos de producción. Pasaron la comprobación pública y un acceso real con contraseña, TOTP, consulta del panel privado y cierre de sesión. La portada muestra el catálogo en español con cuatro modelos y 23 acabados.
+La web está disponible por HTTPS en [alrazz.alrazz-cusco.workers.dev](https://alrazz.alrazz-cusco.workers.dev). Se verificó **Workers Free ($0)** en el panel, D1 tiene ambas migraciones aplicadas y el Worker dispone de cinco secretos de producción. Pasaron la comprobación pública y un acceso real con contraseña, TOTP, consulta del panel privado y cierre de sesión. La selección de acabados puede ampliarse desde administración sin volver a sembrar la base.
 
 La web y su API se sirven desde el mismo origen; el catálogo permanece en D1. La contraseña se verifica en un Durable Object interno SQLite, disponible en el plan gratuito, sin reducir la protección scrypt. Se mantiene el requisito de **costo cero**, dentro de las cuotas gratuitas, sin activar suscripciones de pago.
 
 La primera publicación se realizó desde Wrangler con OAuth. El flujo manual de GitHub Actions está preparado, pero **falta un token API dedicado para habilitarlo**; no se ha copiado el OAuth de la sesión a GitHub. La [guía de publicación](docs/deployment.md) documenta ambas vías y la comprobación pública de solo lectura.
+
+La [guía de Pages](docs/pages.md) documenta la dirección corta: sirve el frontend estático y conecta `/api/*` al mismo Worker mediante un binding fijo. Se conservan D1 y la autenticación. Cada entrega con cambios de interfaz debe publicar el Worker y la copia de Pages del mismo commit.
 
 Antes de operar comercialmente, confirmar tarifas, materiales, contactos y disponibilidad reales, y validar las piezas con el taller. El acceso completo ya funcionó en Workers Free; no se han medido sus métricas exactas de CPU ni su capacidad bajo carga. El envío de códigos por correo requiere configurar un remitente y proveedor, según la [guía de seguridad](docs/admin-security.md).
 

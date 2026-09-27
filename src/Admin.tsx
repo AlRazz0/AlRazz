@@ -75,7 +75,9 @@ import {
 } from "../lib/catalog-csv";
 import "./admin.css";
 import { commercialMaterials } from "../lib/material-presets";
+import { mergeCommercialMaterials } from "../lib/material-catalog";
 import { materialLabel, materialBrands } from "./materials";
+import { MaterialSource, MaterialSwatch } from "./MaterialSwatch";
 
 type AdminSnapshot = {
   admin: boolean;
@@ -117,6 +119,11 @@ const dimensions = [
   { key: "depth", name: "Fondo" },
 ] as const;
 const clone = <T,>(value: T): T => structuredClone(value);
+const materialSearchText = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("es");
 function designIdFromReference(reference: string) {
   const value = reference.trim();
   const uuid =
@@ -264,6 +271,7 @@ export default function Admin() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [materialFilter, setMaterialFilter] = useState("all");
+  const [materialSearch, setMaterialSearch] = useState("");
   const [editor, setEditor] = useState<Product | null>(null);
   const [original, setOriginal] = useState<Product | null>(null);
   const [editorError, setEditorError] = useState("");
@@ -294,6 +302,11 @@ export default function Admin() {
     cutProducts.find((product) => product.id === cutProductId) ??
     cutProducts[0];
   const settingsDirty = JSON.stringify(settings) !== savedSettings;
+  const materialMatches = (material: Settings["materials"][number]) =>
+    (materialFilter === "all" || material.brand === materialFilter) &&
+    materialSearchText(
+      `${material.name} ${material.brand || ""} ${material.code || ""}`,
+    ).includes(materialSearchText(materialSearch.trim()));
   const editorDirty =
     !!editor &&
     (!original || JSON.stringify(editor) !== JSON.stringify(original));
@@ -1476,31 +1489,23 @@ export default function Admin() {
                       type="button"
                       className="button outline"
                       onClick={() => {
-                        const additions = commercialMaterials
-                          .filter(
-                            (m) =>
-                              !settings.materials.some(
-                                (current) => current.id === m.id,
-                              ),
-                          )
-                          .map((m) => ({ ...m, active: false }));
-                        if (
-                          settings.materials.length + additions.length >
-                          100
-                        ) {
+                        const merged = mergeCommercialMaterials(
+                          settings.materials,
+                          commercialMaterials,
+                        );
+                        if (merged.length > 100) {
                           setNotice(
                             "El catálogo admite 100 acabados. Añade las referencias que necesitas de forma individual.",
                           );
                           return;
                         }
-                        setSetting("materials", [
-                          ...settings.materials,
-                          ...additions,
-                        ]);
+                        const additions =
+                          merged.length - settings.materials.length;
+                        setSetting("materials", merged);
                         setNotice(
-                          additions.length
-                            ? `${additions.length} acabados añadidos como ocultos. Revisa precios y activa los que ofreces; guarda para publicar.`
-                            : "El catálogo de marcas ya está añadido. Se conservaron tus precios y cambios.",
+                          additions
+                            ? `${additions} acabados añadidos como ocultos y referencias oficiales completadas. Revisa precios y activa los que ofreces; guarda para publicar.`
+                            : "Referencias oficiales completadas donde faltaban. Se conservaron tus nombres, precios y visibilidad. Guarda los ajustes para publicar.",
                         );
                       }}
                     >
@@ -1547,25 +1552,34 @@ export default function Admin() {
                         ))}
                       </select>
                     </Field>
+                    <label className="admin-field admin-material-search">
+                      <span>Buscar acabado</span>
+                      <input
+                        type="search"
+                        value={materialSearch}
+                        placeholder="Nombre comercial, marca o código"
+                        maxLength={100}
+                        onChange={(event) =>
+                          setMaterialSearch(event.target.value)
+                        }
+                      />
+                    </label>
                     <p className="admin-help">
-                      {
-                        settings.materials.filter(
-                          (m) =>
-                            materialFilter === "all" ||
-                            m.brand === materialFilter,
-                        ).length
-                      }{" "}
-                      acabados · El catálogo inicial contiene tonos y costos
-                      referenciales; verifica la muestra y la tarifa del
-                      proveedor.
+                      {settings.materials.filter(materialMatches).length}{" "}
+                      acabados · Selección de catálogo; imágenes, tonos y costos
+                      referenciales. Verifica la muestra, disponibilidad y
+                      tarifa del proveedor.
                     </p>
                   </div>
                   {settings.materials.map((material, index) => {
-                    if (
-                      materialFilter !== "all" &&
-                      material.brand !== materialFilter
-                    )
-                      return null;
+                    if (!materialMatches(material)) return null;
+                    const preset = commercialMaterials.find(
+                      (item) =>
+                        item.id === material.id &&
+                        item.name === material.name &&
+                        item.brand === material.brand &&
+                        item.board === material.board,
+                    );
                     const editMaterial = (
                       patch: Partial<Settings["materials"][number]>,
                     ) =>
@@ -1585,16 +1599,25 @@ export default function Admin() {
                         className="admin-material-row commercial-material-row"
                         key={index}
                       >
-                        <Field title="Color">
-                          <input
-                            type="color"
-                            value={material.color}
-                            aria-label={`Color de ${material.name}`}
-                            onChange={(event) =>
-                              editMaterial({ color: event.target.value })
-                            }
+                        <div className="admin-material-appearance">
+                          <MaterialSwatch
+                            material={material}
+                            title={materialLabel(material)}
                           />
-                        </Field>
+                          <Field title="Color">
+                            <input
+                              type="color"
+                              value={material.color}
+                              aria-label={`Color de ${material.name}`}
+                              onChange={(event) =>
+                                editMaterial({
+                                  color: event.target.value,
+                                  swatch: "",
+                                })
+                              }
+                            />
+                          </Field>
+                        </div>
                         <Field title="Nombre comercial">
                           <input
                             value={material.name}
@@ -1669,6 +1692,56 @@ export default function Admin() {
                           value={material.price}
                           change={(value) => editMaterial({ price: value })}
                         />
+                        <div className="admin-material-metadata">
+                          <Field
+                            title="Textura"
+                            note="Opcional; usa la denominación de la ficha del fabricante."
+                          >
+                            <input
+                              value={material.texture || ""}
+                              maxLength={80}
+                              placeholder="Textura comercial"
+                              onChange={(event) =>
+                                editMaterial({ texture: event.target.value })
+                              }
+                            />
+                          </Field>
+                          <Field
+                            title="Ficha del fabricante"
+                            note="Enlace público al catálogo oficial, opcional."
+                          >
+                            <input
+                              type="url"
+                              value={material.sourceUrl || ""}
+                              maxLength={500}
+                              placeholder="https://…"
+                              onChange={(event) =>
+                                editMaterial({ sourceUrl: event.target.value })
+                              }
+                            />
+                          </Field>
+                          {preset?.swatch && (
+                            <label className="admin-switch-label">
+                              <Switch
+                                checked={material.swatch === preset.swatch}
+                                onCheckedChange={(checked) =>
+                                  editMaterial({
+                                    swatch: checked ? preset.swatch : "",
+                                    renderTexture: checked
+                                      ? preset.renderTexture
+                                      : false,
+                                  })
+                                }
+                                aria-label={`Usar muestra del fabricante para ${material.name}`}
+                              />
+                              <span>
+                                Usar muestra del fabricante. Al ajustar el color
+                                manualmente se usa tu tono.
+                              </span>
+                            </label>
+                          )}
+                          <MaterialSource material={material} />
+                        </div>
                         <label className="admin-switch-label">
                           <Switch
                             checked={material.active}
@@ -1687,6 +1760,12 @@ export default function Admin() {
                     <option value="Vesto" />
                     <option value="Pelikano" />
                   </datalist>
+                  {!settings.materials.some(materialMatches) && (
+                    <p className="admin-help">
+                      No hay acabados con estos filtros. Prueba otro nombre o
+                      marca.
+                    </p>
+                  )}
                   <p className="admin-help">
                     El índice 100 equivale a la tarifa base por m². Un índice
                     110 aumenta un 10 % el costo de ese acabado. Ocultar un
