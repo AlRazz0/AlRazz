@@ -13,6 +13,7 @@ import Viewer from "./Viewer";
 import { materialLabel, materialBrands } from "./materials";
 import { MaterialSwatch } from "./MaterialSwatch";
 import { ContactLinks } from "./ContactLinks";
+import { Brand } from "./Brand";
 import { useRevealMotion } from "./useRevealMotion";
 const Configurator = lazy(() => import("./Configurator"));
 const Cart = lazy(() => import("./Cart"));
@@ -36,9 +37,9 @@ export function Header({ compact = false }: { compact?: boolean }) {
       <div className="announcement">
         Hecho en Perú. Diseñado para tu espacio. <span>Melamina de 18 mm</span>
       </div>
-      <header className="site-header">
-        <a className="wordmark" href="/">
-          AlRazz<span>®</span>
+      <header className="site-header site-header--branded">
+        <a className="brand-link" href="/" aria-label="El capo, ir al inicio">
+          <Brand />
         </a>
         <nav>
           <a href="/#catalogo">Muebles ⌄</a>
@@ -68,10 +69,10 @@ export function Header({ compact = false }: { compact?: boolean }) {
 export function Footer() {
   return (
     <footer>
-      <a className="wordmark" href="/">
-        AlRazz<span>®</span>
+      <a className="brand-link" href="/" aria-label="El capo, ir al inicio">
+        <Brand variant="footer" />
       </a>
-      <p>Muebles para tu forma de vivir.</p>
+      <p>Muebles en melamina Marlon</p>
       <a href="/admin">Administración</a>
       <span>Diseñado y fabricado en Perú · 2026</span>
     </footer>
@@ -159,7 +160,7 @@ function Home() {
             />
             <div className="image-caption">
               <span>La forma de habitar tu espacio.</span>
-              <span>ALRAZZ · COLECCIÓN MODULAR</span>
+              <span>El capo · COLECCIÓN MODULAR</span>
             </div>
           </div>
         </section>

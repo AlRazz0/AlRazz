@@ -17,7 +17,7 @@ function phoneLabel(number: string) {
 
 export function ContactLinks({
   settings,
-  message = "Hola, AlRazz. Me gustaría recibir asesoría para un mueble de melamina a medida.",
+  message = "Hola, El capo. Me gustaría recibir asesoría para un mueble de melamina a medida.",
   variant = "inline",
 }: Props) {
   const [open, setOpen] = useState(false);
@@ -65,7 +65,7 @@ export function ContactLinks({
     >
       <MessageCircle size={20} aria-hidden="true" />
       <span>
-        <small>WhatsApp {numbers.length > 1 ? index + 1 : "AlRazz"}</small>
+        <small>WhatsApp {numbers.length > 1 ? index + 1 : "El capo"}</small>
         <strong>{phoneLabel(number)}</strong>
       </span>
       <ArrowUpRight size={20} aria-hidden="true" />
