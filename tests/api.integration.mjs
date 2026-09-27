@@ -125,6 +125,16 @@ function publicOnly(value) {
     "ADMIN_TOTP_SECRET",
     "ADMIN_RECOVERY_HASHES",
     "RESEND_API_KEY",
+    "panels",
+    "length",
+    "thickness",
+    "lengthAxis",
+    "widthAxis",
+    "materialName",
+    "grain",
+    "edges",
+    "area",
+    "accessories",
   ];
   const visit = (object) => {
     if (!object || typeof object !== "object") return;
@@ -133,6 +143,20 @@ function publicOnly(value) {
         !denied.includes(key),
         `El dato privado ${key} salió en la respuesta pública.`,
       );
+      if (key === "geometry") {
+        assert.ok(Array.isArray(item) && item.length > 0);
+        for (const panel of item) {
+          assert.deepEqual(
+            Object.keys(panel).sort(),
+            "door" in panel
+              ? ["door", "material", "position", "size"]
+              : ["material", "position", "size"],
+          );
+          assert.equal(panel.size.length, 3);
+          assert.equal(panel.position.length, 3);
+          assert.ok([...panel.size, ...panel.position].every(Number.isFinite));
+        }
+      }
       visit(item);
     }
   };
@@ -153,6 +177,10 @@ test("API persistente: autorización, catálogo, concurrencia, cotización y dis
     (await visitor.post({ op: "product", product: {} })).status,
     401,
   );
+  assert.equal(
+    (await visitor.post({ op: "cut-list", designId: "invalid" })).status,
+    401,
+  );
 
   const challenge = await staff.post({ op: "login", email, password });
   assert.equal(challenge.status, 200);
@@ -160,6 +188,10 @@ test("API persistente: autorización, catálogo, concurrencia, cotización y dis
   assert.equal(challenge.data.challenge, true);
   assert.equal(
     (await staff.post({ op: "settings", settings: {}, version: 1 })).status,
+    401,
+  );
+  assert.equal(
+    (await staff.post({ op: "cut-list", designId: "invalid" })).status,
     401,
   );
   let session = await staff.post({
@@ -207,14 +239,19 @@ test("API persistente: autorización, catálogo, concurrencia, cotización y dis
   const catalog = await visitor.get("catalog");
   assert.equal(catalog.status, 200);
   publicOnly(catalog.data);
-  assert.ok(catalog.data.products[0].preview.panels.length > 0);
+  assert.ok(catalog.data.products[0].preview.geometry.length > 0);
   assert.equal(catalog.data.settings.materials[0].price, undefined);
   const quoteInput = { productId: model.id, config: model.defaults };
   const quote = await visitor.quote(quoteInput);
   assert.equal(quote.status, 200);
   publicOnly(quote.data);
   assert.ok(Number.isFinite(quote.data.price) && quote.data.price > 0);
-  assert.ok(quote.data.panels.every((p) => p.thickness === 18));
+  assert.ok(quote.data.geometry.length > 0);
+  const privateCuts = await staff.post({ op: "cut-list", ...quoteInput });
+  assert.equal(privateCuts.status, 200);
+  assert.equal(privateCuts.data.source, "current");
+  assert.ok(privateCuts.data.result.panels.every((p) => p.thickness === 18));
+  assert.equal(privateCuts.data.result.price, quote.data.price);
   assert.equal(
     (
       await visitor.quote({
@@ -307,6 +344,14 @@ test("API persistente: autorización, catálogo, concurrencia, cotización y dis
   );
   assert.equal(design.quantity, 2);
   publicOnly(design);
+  const savedCuts = await staff.post({ op: "cut-list", designId: design.id });
+  assert.equal(savedCuts.status, 200);
+  assert.equal(savedCuts.data.source, "saved");
+  assert.deepEqual(savedCuts.data.result, privateCuts.data.result);
+  assert.equal(
+    (await stranger.post({ op: "cut-list", designId: design.id })).status,
+    401,
+  );
   assert.equal((await stranger.get("designs")).data.designs.length, 0);
   const shared = await stranger.get("design&id=" + design.id);
   assert.equal(shared.status, 200);
@@ -339,6 +384,7 @@ test("API persistente: autorización, catálogo, concurrencia, cotización y dis
     quantity: 3,
   });
   assert.equal(changed.status, 200);
+  publicOnly(changed.data);
   assert.equal(changed.data.design.quantity, 3);
   assert.equal(
     (
@@ -384,6 +430,12 @@ test("API persistente: autorización, catálogo, concurrencia, cotización y dis
       later.result,
       design.result,
       "Una tarifa nueva no puede alterar un diseño guardado.",
+    );
+    publicOnly(later);
+    assert.deepEqual(
+      (await staff.post({ op: "cut-list", designId: design.id })).data.result,
+      savedCuts.data.result,
+      "El despiece privado conserva el snapshot y sus tarifas originales.",
     );
   } finally {
     assert.equal(

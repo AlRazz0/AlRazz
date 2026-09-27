@@ -98,7 +98,10 @@ class Client {
   }
 }
 
-async function createHarness(extraBindings = {}, { passwordVerifier = true } = {}) {
+async function createHarness(
+  extraBindings = {},
+  { passwordVerifier = true } = {},
+) {
   const fetchMock = createFetchMock();
   fetchMock.disableNetConnect();
   let options = {
@@ -217,6 +220,186 @@ async function deliveredCode(messages) {
   assert.ok(code, "Mock email must contain a six-digit code");
   return code;
 }
+
+function assertPublicGeometryOnly(value) {
+  const privateFields = new Set([
+    "panels",
+    "length",
+    "thickness",
+    "lengthAxis",
+    "widthAxis",
+    "materialName",
+    "grain",
+    "edges",
+    "area",
+    "accessories",
+    "breakdown",
+    "basePrice",
+    "margin",
+    "materialRate",
+    "edgeRate",
+    "doorHardware",
+    "snapshot",
+    "owner_hash",
+  ]);
+  const visit = (object) => {
+    if (!object || typeof object !== "object") return;
+    for (const [key, item] of Object.entries(object)) {
+      assert.ok(!privateFields.has(key), `Private manufacturing field: ${key}`);
+      if (key === "geometry") {
+        assert.ok(Array.isArray(item) && item.length > 0);
+        for (const panel of item) {
+          assert.deepEqual(
+            Object.keys(panel).sort(),
+            "door" in panel
+              ? ["door", "material", "position", "size"]
+              : ["material", "position", "size"],
+          );
+          assert.equal(panel.size.length, 3);
+          assert.equal(panel.position.length, 3);
+          assert.ok([...panel.size, ...panel.position].every(Number.isFinite));
+        }
+      }
+      visit(item);
+    }
+  };
+  visit(value);
+}
+
+test("manufacturing details require both admin factors while all public design responses expose only visual geometry", async () => {
+  const h = await createHarness();
+  try {
+    const visitor = h.client();
+    const staff = h.client("203.0.113.46");
+    const catalog = await visitor.request(undefined, {
+      path: "/api/store?action=catalog",
+    });
+    assert.equal(catalog.status, 200);
+    assertPublicGeometryOnly(catalog.data);
+    const product = catalog.data.products[0];
+    const input = { productId: product.id, config: product.defaults };
+    // Authentication happens even before validating the private selector.
+    assert.equal(
+      (await visitor.request({ op: "cut-list", designId: "invalid" })).status,
+      401,
+    );
+    assert.equal((await staff.login()).status, 200);
+    assert.equal(
+      (await staff.request({ op: "cut-list", ...input })).status,
+      401,
+    );
+    assert.equal((await staff.verify()).status, 200);
+    const current = await staff.request({ op: "cut-list", ...input });
+    assert.equal(current.status, 200);
+    assert.equal(current.data.source, "current");
+    assert.equal(current.data.design, null);
+    assert.ok(current.data.result.panels.length > 0);
+    assert.ok(
+      current.data.result.panels.every((panel) => panel.thickness === 18),
+    );
+    assert.ok(
+      current.data.result.panels.every((panel) => panel.name && panel.edges),
+    );
+    assert.ok(current.data.result.breakdown);
+
+    const quote = await visitor.request(input, { path: "/api/quote" });
+    assert.equal(quote.status, 200);
+    assert.deepEqual(Object.keys(quote.data).sort(), ["geometry", "price"]);
+    assertPublicGeometryOnly(quote.data);
+    const saved = await visitor.request({
+      op: "save-design",
+      ...input,
+      quantity: 2,
+    });
+    assert.equal(saved.status, 201);
+    assertPublicGeometryOnly(saved.data);
+    const design = saved.data.design;
+    const anonymous = h.client("203.0.113.47");
+    assert.equal(
+      (await anonymous.request({ op: "cut-list", designId: design.id })).status,
+      401,
+    );
+    const shared = await anonymous.request(undefined, {
+      path: `/api/store?action=design&id=${design.id}`,
+    });
+    assert.equal(shared.status, 200);
+    assertPublicGeometryOnly(shared.data);
+    const listed = await visitor.request(undefined, {
+      path: "/api/store?action=designs",
+    });
+    assertPublicGeometryOnly(listed.data);
+    assert.equal(listed.data.designs.length, 1);
+    const changed = await visitor.request({
+      op: "set-quantity",
+      id: design.id,
+      version: design.version,
+      quantity: 3,
+    });
+    assert.equal(changed.status, 200);
+    assertPublicGeometryOnly(changed.data);
+
+    const dashboard = await staff.state();
+    const adjusted = {
+      ...dashboard.data.settings,
+      materials: dashboard.data.settings.materials.map((material) => ({
+        ...material,
+        price: material.price + 100,
+      })),
+    };
+    assert.equal(
+      (
+        await staff.request({
+          op: "settings",
+          settings: adjusted,
+          version: dashboard.data.settingsVersion,
+        })
+      ).status,
+      200,
+    );
+    const requoted = await staff.request({ op: "cut-list", ...input });
+    assert.ok(requoted.data.result.price > current.data.result.price);
+    const originalProduct = dashboard.data.products.find(
+      (item) => item.id === product.id,
+    );
+    assert.equal(
+      (
+        await staff.request({
+          op: "product",
+          product: { ...originalProduct, active: false },
+          expectedVersion: originalProduct.version,
+        })
+      ).status,
+      200,
+    );
+    const historical = await staff.request({
+      op: "cut-list",
+      designId: design.id,
+    });
+    assert.equal(historical.status, 200);
+    assert.equal(historical.data.source, "saved");
+    assert.equal(historical.data.design.quantity, 3);
+    assert.deepEqual(historical.data.result, current.data.result);
+    assertPublicGeometryOnly(
+      (
+        await anonymous.request(undefined, {
+          path: `/api/store?action=design&id=${design.id}`,
+        })
+      ).data,
+    );
+    assert.equal(
+      (
+        await staff.request({
+          op: "cut-list",
+          designId: design.id,
+          ...input,
+        })
+      ).status,
+      400,
+    );
+  } finally {
+    await h.close();
+  }
+});
 
 test("administration requires both factors and revokes sessions", async (t) => {
   const h = await createHarness();

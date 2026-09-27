@@ -8,8 +8,9 @@ Plataforma en español para diseñar y cotizar muebles de **melamina de 18 mm**.
 - Configurador 3D con giro y zoom, vistas frontal/lateral/superior, apertura de puertas, medidas, acabados, interior, repisas y módulos.
 - Motor compartido de geometría, restricciones, despiece y precio. El servidor calcula la cotización; no acepta precios del navegador.
 - Diseños persistentes con enlace para compartir, cantidades, duplicación y copia histórica de parámetros y precio.
-- Resumen y despiece CSV; imagen PNG del mueble.
-- WhatsApp comercial configurable. Cuando falta el número, ofrece descargar/copiar la solicitud sin inventar un destinatario.
+- Resumen de solicitud e imagen PNG para el cliente. Despiece preliminar y CSV exclusivos del administrador, con segundo factor verificado.
+- Dos contactos de WhatsApp configurables desde el panel. El cliente elige el destinatario y envía su mensaje en WhatsApp; no hay envío automático ni simultáneo a ambos números.
+- Entradas de sección, transiciones del catálogo y movimiento de cámara y puertas 3D, respetando la preferencia de movimiento reducido.
 - Panel privado con correo, contraseña y segundo factor: autenticador, correo opcional o recuperación de un solo uso. Materiales, costos, margen, plazos orientativos y disponibilidad.
 - CSV/JSON con vista previa y validación antes de importar borradores. Un CSV exportado de Google Sheets puede usarse directamente con la plantilla.
 
@@ -22,7 +23,7 @@ Plataforma en español para diseñar y cotizar muebles de **melamina de 18 mm**.
 | Espesor de 18 mm, reglas constructivas y holguras del piloto | Modelos, nombres, categorías soportadas y descripciones |
 | Motor 3D y estructura de la web                              | Medidas iniciales, límites, distribución y orden        |
 | Validación en el servidor y autorización                     | Materiales, colores, costos, margen y servicios         |
-| Contrato de API y formato de piezas                          | WhatsApp, plazos y disponibilidad orientativa           |
+| Contrato de API y formato de piezas                          | Contactos de WhatsApp, plazos y disponibilidad orientativa |
 
 El catálogo vive en D1 y se consulta por API. Los cambios administrativos se ven al cargar el catálogo, sin reconstruir ni publicar código. Desactivar conserva el modelo y no altera diseños ya guardados. Una familia constructiva nueva —por ejemplo, cocinas con mecanismos especiales— sí necesita una plantilla de fabricación validada.
 
@@ -62,7 +63,7 @@ La web y su API se sirven desde el mismo origen; el catálogo permanece en D1. L
 
 La primera publicación se realizó desde Wrangler con OAuth. El flujo manual de GitHub Actions está preparado, pero **falta un token API dedicado para habilitarlo**; no se ha copiado el OAuth de la sesión a GitHub. La [guía de publicación](docs/deployment.md) documenta ambas vías y la comprobación pública de solo lectura.
 
-Antes de operar comercialmente, configurar tarifas, materiales, WhatsApp y disponibilidad reales, y validar las piezas con el taller. El acceso completo ya funcionó en Workers Free; no se han medido sus métricas exactas de CPU ni su capacidad bajo carga. El envío de códigos por correo requiere configurar un remitente y proveedor, según la [guía de seguridad](docs/admin-security.md).
+Antes de operar comercialmente, confirmar tarifas, materiales, contactos y disponibilidad reales, y validar las piezas con el taller. El acceso completo ya funcionó en Workers Free; no se han medido sus métricas exactas de CPU ni su capacidad bajo carga. El envío de códigos por correo requiere configurar un remitente y proveedor, según la [guía de seguridad](docs/admin-security.md).
 
 No publicar el directorio completo `dist/` como archivos estáticos: la parte pública es `dist/client` y la API requiere su Worker. Nunca subir `.dev.vars`, cookies, secretos, `.wrangler/` ni `node_modules/`. No existe acceso administrativo predeterminado ni reclamación de propietario por el primer visitante.
 

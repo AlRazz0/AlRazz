@@ -126,6 +126,13 @@ export const settingsSchema = z
         /^$|^[1-9][0-9]{7,14}$/,
         "Usa código de país y número, sin + ni espacios",
       ),
+    whatsappSecondary: z
+      .string()
+      .regex(
+        /^$|^[1-9][0-9]{7,14}$/,
+        "Usa código de país y número, sin + ni espacios",
+      )
+      .default(""),
     availability: z.enum([
       "Disponible",
       "Disponibilidad media",
@@ -145,6 +152,7 @@ export const settingsSchema = z
 export type Settings = z.infer<typeof settingsSchema>;
 export const defaultSettings: Settings = {
   whatsapp: "",
+  whatsappSecondary: "",
   availability: "Disponibilidad media",
   leadWeeks: 3,
   materialRate: 100,

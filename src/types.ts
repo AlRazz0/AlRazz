@@ -1,13 +1,10 @@
-import type { Product, Config, Panel } from "../lib/furniture";
+import type { Product, Config } from "../lib/furniture";
+import type { VisualPanel } from "../lib/public-geometry";
 import type { PublicMaterial } from "../lib/furniture";
 export type { PublicMaterial } from "../lib/furniture";
 export type Quote = {
-  panels: Panel[];
-  area: number;
-  edges: number;
-  doors: number;
+  geometry: VisualPanel[];
   price: number;
-  accessories: { name: string; quantity: number }[];
 };
 export type PublicProduct = Omit<Product, "basePrice"> & {
   publicPrice: number;
@@ -15,6 +12,7 @@ export type PublicProduct = Omit<Product, "basePrice"> & {
 };
 export type PublicSettings = {
   whatsapp: string;
+  whatsappSecondary: string;
   availability: string;
   leadWeeks: number;
   materials: PublicMaterial[];

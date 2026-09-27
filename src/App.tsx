@@ -1,17 +1,18 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import {
   ArrowUpRight,
   ArrowRight,
   Layers3,
   Ruler,
   ShoppingBag,
-  MessageCircle,
 } from "lucide-react";
 import { api } from "../lib/api";
 import { money } from "../lib/furniture";
 import type { PublicProduct, PublicSettings } from "./types";
 import Viewer from "./Viewer";
 import { materialLabel, materialBrands } from "./materials";
+import { ContactLinks } from "./ContactLinks";
+import { useRevealMotion } from "./useRevealMotion";
 const Configurator = lazy(() => import("./Configurator"));
 const Cart = lazy(() => import("./Cart"));
 const Admin = lazy(() => import("./Admin"));
@@ -42,6 +43,7 @@ export function Header({ compact = false }: { compact?: boolean }) {
           <a href="/#catalogo">Muebles ⌄</a>
           <a href="/#proceso">Cómo funciona</a>
           <a href="/#materiales">Materiales</a>
+          <a href="/#contacto">Hablemos</a>
         </nav>
         <div className="header-actions">
           {!compact && (
@@ -93,6 +95,7 @@ export default function App() {
   );
 }
 function Home() {
+  const page = useRef<HTMLElement>(null);
   const [products, setProducts] = useState<PublicProduct[]>([]);
   const [settings, setSettings] = useState<PublicSettings>();
   const [error, setError] = useState("");
@@ -113,10 +116,14 @@ function Home() {
   const shown = products.filter(
     (p) => category === "Todos" || p.category === category,
   );
+  useRevealMotion(
+    page,
+    category + ":" + products.map((product) => product.id).join(","),
+  );
   return (
     <>
       <Header />
-      <main>
+      <main ref={page}>
         <section className="hero">
           <div className="hero-copy">
             <p className="eyebrow">TU ESPACIO. TUS REGLAS.</p>
@@ -156,7 +163,7 @@ function Home() {
           </div>
         </section>
         <section id="catalogo" className="section catalog-intro">
-          <div>
+          <div data-reveal>
             <p className="eyebrow">UN BUEN PUNTO DE PARTIDA</p>
             <h2>
               Elige el mueble.
@@ -164,7 +171,12 @@ function Home() {
               <span>El resto lo decides tú.</span>
             </h2>
           </div>
-          <a className="text-link" href="/configurar">
+          <a
+            className="text-link"
+            href="/configurar"
+            data-reveal
+            data-reveal-delay="90"
+          >
             Crear mi combinación <ArrowRight size={21} />
           </a>
           <div className="filter-row" aria-label="Filtrar muebles">
@@ -192,18 +204,21 @@ function Home() {
             </p>
           )}
           <div className="product-grid">
-            {shown.map((p) => (
+            {shown.map((p, index) => (
               <a
                 className="product-card"
                 key={p.id}
                 href={"/configurar?producto=" + p.id}
+                data-reveal
+                data-reveal-key={category + ":" + p.id}
+                data-reveal-delay={index * 65}
               >
                 <div className="product-art">
                   <span className="product-label">A tu medida</span>
                   {p.preview && settings ? (
                     <Viewer
                       small
-                      panels={p.preview.panels}
+                      panels={p.preview.geometry}
                       materials={settings.materials}
                       {...p.defaults}
                     />
@@ -245,8 +260,10 @@ function Home() {
           </p>
         </section>
         <section id="proceso" className="process section">
-          <p className="eyebrow">DE TU IDEA A TU ESPACIO</p>
-          <h2>Así de tuyo. Así de simple.</h2>
+          <p className="eyebrow" data-reveal>
+            DE TU IDEA A TU ESPACIO
+          </p>
+          <h2 data-reveal>Así de tuyo. Así de simple.</h2>
           <div className="steps">
             {[
               [
@@ -264,8 +281,8 @@ function Home() {
                 "Hagámoslo realidad",
                 "Solicita tu cotización. Nuestro equipo valida cada detalle antes de fabricar.",
               ],
-            ].map(([n, t, d]) => (
-              <article key={n}>
+            ].map(([n, t, d], index) => (
+              <article key={n} data-reveal data-reveal-delay={index * 85}>
                 <span>{n}</span>
                 <h3>{t}</h3>
                 <p>{d}</p>
@@ -274,9 +291,11 @@ function Home() {
           </div>
         </section>
         <section id="materiales" className="material-band section">
-          <p className="eyebrow">LO ESENCIAL, BIEN HECHO</p>
-          <h2>18 mm de posibilidades.</h2>
-          <p>
+          <p className="eyebrow" data-reveal>
+            LO ESENCIAL, BIEN HECHO
+          </p>
+          <h2 data-reveal>18 mm de posibilidades.</h2>
+          <p data-reveal>
             Trabajamos principalmente con Hispano, junto a Vesto y Pelikano.
             Melamina de 18 mm y opciones RH para proyectos que requieren mayor
             resistencia a la humedad.
@@ -288,7 +307,7 @@ function Home() {
               <span key={brand}>{brand}</span>
             ))}
           </div>
-          <div className="material-samples">
+          <div className="material-samples" data-reveal>
             {settings?.materials
               .filter((m) => m.active)
               .slice(0, 8)
@@ -312,7 +331,7 @@ function Home() {
           </a>
         </section>
         <section className="section faq">
-          <h2>Antes de empezar.</h2>
+          <h2 data-reveal>Antes de empezar.</h2>
           {[
             [
               "¿Qué es la melamina RH?",
@@ -335,7 +354,7 @@ function Home() {
               "Sí. Guárdalo en Mis diseños y comparte su enlace para retomar exactamente la misma configuración.",
             ],
           ].map(([q, a]) => (
-            <details key={q}>
+            <details key={q} data-reveal>
               <summary>
                 {q}
                 <span>+</span>
@@ -344,19 +363,32 @@ function Home() {
             </details>
           ))}
         </section>
+        {settings && (
+          <section id="contacto" className="section home-contact">
+            <div data-reveal>
+              <p className="eyebrow">CONVERSEMOS SOBRE TU ESPACIO</p>
+              <h2>
+                Tu idea tiene un lugar.
+                <br />
+                <span>Vamos a encontrarlo.</span>
+              </h2>
+              <p className="home-contact-copy">
+                Cuéntanos qué tienes en mente. Te ayudamos a elegir las medidas,
+                el acabado y los detalles de tu mueble.
+              </p>
+            </div>
+            <div
+              className="home-contact-actions"
+              data-reveal
+              data-reveal-delay="100"
+            >
+              <ContactLinks settings={settings} />
+            </div>
+          </section>
+        )}
       </main>
       <Footer />
-      {settings?.whatsapp && (
-        <a
-          className="whatsapp-float"
-          href={"https://wa.me/" + settings.whatsapp}
-          target="_blank"
-          rel="noreferrer"
-          aria-label="Consultar por WhatsApp"
-        >
-          <MessageCircle size={24} />
-        </a>
-      )}
+      {settings && <ContactLinks settings={settings} variant="floating" />}
     </>
   );
 }

@@ -16,9 +16,9 @@ El identificador de un modelo existente es permanente. Todas las medidas están 
 
 ## Materiales, capacidad y costos
 
-En **Ajustes del taller** se puede cambiar WhatsApp, disponibilidad, plazo general, acabados y reglas de cotización. Los cambios se aplican al pulsar **Guardar ajustes**. Los costos internos se muestran únicamente en administración.
+En **Ajustes del taller** se pueden cambiar los dos contactos de WhatsApp, disponibilidad, plazo general, acabados y reglas de cotización. Los cambios se aplican al pulsar **Guardar ajustes**. Los costos internos se muestran únicamente en administración.
 
-- **WhatsApp:** código de país y teléfono, sin signos ni espacios. Dejarlo vacío desactiva el contacto comercial.
+- **WhatsApp comercial 1 y 2:** código de país y teléfono, sin signos ni espacios. Cada número vacío queda oculto; dejar ambos vacíos desactiva el contacto comercial. Si ambos contienen el mismo número, se muestra una sola opción. El cliente elige a cuál escribir y abre WhatsApp con un mensaje preparado. No se envía automáticamente el mismo mensaje a ambos destinatarios.
 - **Acabados:** añadir marca, nombre comercial, código del fabricante (opcional), tablero estándar o RH, identificador, color e índice de costo. Un índice de 100 equivale a la tarifa base por m²; 110 representa un costo 10 % mayor. Activa los que el taller ofrece. El código interno no es un SKU del fabricante.
 - **Identificadores de acabado:** conservarlos si ya se utilizan en modelos o configuraciones. La interfaz bloquea el cambio de los identificadores usados por el catálogo.
 - **Costos:** material, tapacanto, herrajes, instalación, transporte y margen. El precio se calcula en servidor. La mano de obra se configura para cada mueble.
@@ -27,7 +27,19 @@ En **Ajustes del taller** se puede cambiar WhatsApp, disponibilidad, plazo gener
 
 Cada variante RH tiene un identificador y costo propios. Para añadir una combinación que compras a tu proveedor, crea un acabado nuevo, elige **RH**, escribe su marca y nombre comercial y configura su índice. No conviertas un acabado estándar en RH si necesitas ofrecer ambos. RH significa resistente a la humedad, no impermeable. Ocultar una variante no elimina su historial ni modifica diseños ya guardados.
 
-En el configurador, el cliente puede filtrar marca y tipo de tablero, elegir exterior e interior y ver la identificación comercial en el despiece. Los colores en pantalla son aproximados; confirma muestra física y disponibilidad antes de fabricar.
+En el configurador, el cliente puede filtrar marca y tipo de tablero y elegir exterior e interior. El despiece y su identificación de materiales se consultan exclusivamente en administración. Los colores en pantalla son aproximados; confirma muestra física y disponibilidad antes de fabricar.
+
+## Despiece privado del taller
+
+La pestaña **Despiece** solo está disponible después de iniciar sesión y completar el segundo paso. El servidor exige esa misma autorización; ocultar el botón público no es el mecanismo de protección.
+
+1. Selecciona **Modelo del catálogo** para consultar la configuración inicial de un modelo visible con las tarifas actuales.
+2. Selecciona **Diseño guardado** y pega su enlace o identificador para consultar las medidas, materiales y resultado originales. Se conserva el snapshot aunque luego cambien los precios o se oculte el mueble.
+3. Pulsa **Consultar despiece** para ver las piezas y medidas en milímetros. La cantidad solicitada del diseño se muestra por separado: la tabla y el CSV preliminar corresponden a una unidad del mueble.
+
+La descarga CSV disponible permanece dentro del panel privado. El formato definitivo del taller queda pendiente de definición; no se da por validada la compatibilidad con CutMaster ni la fabricación. El despiece sigue siendo preliminar y requiere revisión del taller.
+
+El cliente recibe únicamente geometría para la vista 3D y precio. Las consultas públicas y los enlaces compartidos no entregan la tabla de corte, veta, tapacantos, accesorios ni costos internos. Las dimensiones visibles del mueble pueden inferirse de su representación; no se promete ocultarlas.
 
 ## Ambiente y escala
 
