@@ -8,6 +8,7 @@ La identidad visible es **El capo**, con la firma **Muebles en melamina Marlon**
 
 - Catálogo conectado a una base de datos D1: crear, duplicar, editar, activar y ocultar modelos.
 - Colección adicional de [16 modelos de taller](docs/coleccion-taller.md), con tipo constructivo administrable, búsqueda por nombre/categoría y vistas de catálogo que se cargan al acercarse a pantalla para limitar contextos 3D.
+- Ampliación de [12 modelos de almacenaje con puertas](docs/coleccion-taller-ampliada.md), importables y editables desde el panel. Las miniaturas abren las puertas al pasar el ratón o recibir foco de teclado y las cierran al salir, con encuadre estable y respeto al movimiento reducido.
 - Configurador 3D con giro y zoom, vistas frontal/lateral/superior, apertura de puertas y cotas de ancho, alto y fondo sobre el modelo. Las cotas siguen la cámara y se incluyen en el PNG si están activadas.
 - Selector con 82 referencias comerciales de Hispano, Vesto y Pelíkano, buscador y muestras oficiales alojadas en la propia web. El panel permite editar los acabados sin cambiar código; los colores y vetas del visor son orientativos y la disponibilidad local se confirma con el taller.
 - Motor compartido de geometría, restricciones, despiece y precio. El servidor calcula la cotización; no acepta precios del navegador.

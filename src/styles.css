@@ -1756,7 +1756,6 @@ footer > span {
     box-shadow: 0 7px 18px #36261613;
   }
   .product-card:is(:hover, :focus-visible) .product-art > .viewer,
-  .product-card:is(:hover, :focus-visible) .product-art > .card-preview,
   .product-card:is(:hover, :focus-visible) .product-art > img {
     transform: scale(1.035);
   }

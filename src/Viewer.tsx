@@ -15,6 +15,7 @@ import {
 } from "./camera-motion";
 import { createSwatchTextures } from "./swatch-textures";
 import { createDimensionOverlay } from "./viewer-dimensions";
+import { DOOR_OPEN_ANGLE, doorPreviewBounds } from "./door-preview";
 import type { VisualPanel } from "../lib/public-geometry";
 import type { PublicMaterial } from "./types";
 import {
@@ -73,6 +74,7 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
     width: number;
     depth: number;
     doors: THREE.Group[];
+    previewBounds: THREE.Box3 | null;
     doorAmount: number;
     doorTarget: number;
     framed: boolean;
@@ -86,6 +88,7 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
     render: () => void;
   } | null>(null);
   const [error, setError] = useState("");
+  const framedOpen = small ? false : open;
   useImperativeHandle(
     ref,
     () => ({
@@ -222,7 +225,12 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
       duration: number,
     ) => {
       motions.delete(channel);
-      if (preference.matches || small || document.hidden || duration === 0) {
+      if (
+        preference.matches ||
+        (small && channel === "camera") ||
+        document.hidden ||
+        duration === 0
+      ) {
         update(1);
         render();
         return;
@@ -255,9 +263,12 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
       // actual animated pose so closing returns to the closed composition.
       const rotations = r.doors.map((hinge) => hinge.rotation.y);
       r.doors.forEach((hinge) => {
-        hinge.rotation.y = -Math.PI * 0.58 * r.doorTarget;
+        hinge.rotation.y = DOOR_OPEN_ANGLE * r.doorTarget;
       });
-      const bounds = new THREE.Box3().setFromObject(group);
+      const bounds =
+        small && r.previewBounds
+          ? r.previewBounds.clone()
+          : new THREE.Box3().setFromObject(group);
       r.doors.forEach((hinge, index) => {
         hinge.rotation.y = rotations[index];
       });
@@ -282,7 +293,10 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
         "camera",
         (progress) => {
           const pose = poseAt(progress, (currentDirection) => {
-            const currentBounds = new THREE.Box3().setFromObject(group);
+            const currentBounds =
+              small && r.previewBounds
+                ? r.previewBounds.clone()
+                : new THREE.Box3().setFromObject(group);
             if (r.reference.visible) {
               placeReference(r.reference, currentDirection, r.width, r.depth);
               currentBounds.expandByObject(r.reference);
@@ -337,6 +351,7 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
       width: 1,
       depth: 0.4,
       doors: [],
+      previewBounds: null,
       doorAmount: 0,
       doorTarget: 0,
       framed: false,
@@ -414,7 +429,7 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
         );
         mesh.position.set(panel.size[0] / 2000, 0, 0);
         hinge.add(mesh);
-        hinge.rotation.y = -Math.PI * 0.58 * r.doorAmount;
+        hinge.rotation.y = DOOR_OPEN_ANGLE * r.doorAmount;
         r.doors.push(hinge);
         if (handle !== "push") {
           const h = new THREE.Mesh(
@@ -431,7 +446,8 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
         r.group.add(hinge);
       } else r.group.add(mesh);
     });
-    if (needsInitialFrame) r.frame(getViewDirection(view));
+    r.previewBounds = small ? doorPreviewBounds(r.group, r.doors) : null;
+    if (needsInitialFrame || small) r.frame(getViewDirection(view));
     r.render();
     return () => swatches.dispose();
   }, [panels, materials, handle, small]);
@@ -439,16 +455,17 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
     const r = runtime.current;
     if (!r) return;
     const start = r.doorAmount;
-    r.doorTarget = open ? 1 : 0;
+    const target = open && r.doors.length ? 1 : 0;
+    r.doorTarget = target;
     r.animate(
       "doors",
       (progress) => {
-        r.doorAmount = THREE.MathUtils.lerp(start, open ? 1 : 0, progress);
+        r.doorAmount = THREE.MathUtils.lerp(start, target, progress);
         r.doors.forEach((hinge) => {
-          hinge.rotation.y = -Math.PI * 0.58 * r.doorAmount;
+          hinge.rotation.y = DOOR_OPEN_ANGLE * r.doorAmount;
         });
       },
-      540,
+      Math.abs(start - target) < 0.000001 ? 0 : 540,
     );
   }, [open, small]);
   useEffect(() => {
@@ -484,7 +501,7 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
     const r = runtime.current;
     if (!r) return;
     r.frame(getViewDirection(view), true);
-  }, [width, height, depth, view, small, open, reference, environment]);
+  }, [width, height, depth, view, small, framedOpen, reference, environment]);
   return (
     <div className={"viewer " + (small ? "viewer-small" : "")} ref={mount}>
       {error && <p className="viewer-error">{error}</p>}

@@ -1,0 +1,496 @@
+{
+  "products": [
+    {
+      "id": "despensa-profunda-124",
+      "name": "Despensa Profunda 124",
+      "category": "Cocina",
+      "description": "Dos puertas y cuatro niveles por columna para guardar provisiones, recipientes y utensilios de cocina.",
+      "active": false,
+      "version": 1,
+      "order": 25,
+      "basePrice": 140,
+      "weeks": 3,
+      "construction": {
+        "kind": "cabinet"
+      },
+      "limits": {
+        "width": {
+          "min": 800,
+          "max": 1250
+        },
+        "height": {
+          "min": 1000,
+          "max": 1900
+        },
+        "depth": {
+          "min": 400,
+          "max": 650
+        }
+      },
+      "defaults": {
+        "width": 1240,
+        "height": 1360,
+        "depth": 600,
+        "modules": 2,
+        "shelves": 3,
+        "doors": "full",
+        "finish": "hispano-blanco-100",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "archivo-triple-178",
+      "name": "Archivo Triple 178",
+      "category": "Auxiliares",
+      "description": "Tres puertas con tres niveles interiores por columna para ordenar archivos, cajas y material de oficina.",
+      "active": false,
+      "version": 1,
+      "order": 26,
+      "basePrice": 140,
+      "weeks": 3,
+      "construction": {
+        "kind": "cabinet"
+      },
+      "limits": {
+        "width": {
+          "min": 1200,
+          "max": 1870
+        },
+        "height": {
+          "min": 800,
+          "max": 1700
+        },
+        "depth": {
+          "min": 300,
+          "max": 500
+        }
+      },
+      "defaults": {
+        "width": 1780,
+        "height": 1250,
+        "depth": 400,
+        "modules": 3,
+        "shelves": 2,
+        "doors": "full",
+        "finish": "hispano-gris-suave",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "despensa-torre-29",
+      "name": "Despensa Torre 29",
+      "category": "Cocina",
+      "description": "Una despensa estrecha con puerta completa y ocho niveles para aprovechar un espacio reducido.",
+      "active": false,
+      "version": 1,
+      "order": 27,
+      "basePrice": 140,
+      "weeks": 3,
+      "construction": {
+        "kind": "cabinet"
+      },
+      "limits": {
+        "width": {
+          "min": 250,
+          "max": 600
+        },
+        "height": {
+          "min": 1500,
+          "max": 2300
+        },
+        "depth": {
+          "min": 250,
+          "max": 450
+        }
+      },
+      "defaults": {
+        "width": 290,
+        "height": 2250,
+        "depth": 350,
+        "modules": 1,
+        "shelves": 7,
+        "doors": "full",
+        "finish": "hispano-almendra-02",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "despensa-mixta-124",
+      "name": "Despensa Mixta 124",
+      "category": "Cocina",
+      "description": "Almacenaje cerrado en la parte baja y repisas abiertas arriba para combinar provisiones y objetos de uso frecuente.",
+      "active": false,
+      "version": 1,
+      "order": 28,
+      "basePrice": 140,
+      "weeks": 3,
+      "construction": {
+        "kind": "cabinet"
+      },
+      "limits": {
+        "width": {
+          "min": 800,
+          "max": 1250
+        },
+        "height": {
+          "min": 1400,
+          "max": 2200
+        },
+        "depth": {
+          "min": 350,
+          "max": 600
+        }
+      },
+      "defaults": {
+        "width": 1240,
+        "height": 1830,
+        "depth": 520,
+        "modules": 2,
+        "shelves": 3,
+        "doors": "lower",
+        "finish": "hispano-roble-catania",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "aparador-dormitorio-120",
+      "name": "Aparador Dormitorio 120",
+      "category": "Aparadores",
+      "description": "Un aparador profundo con dos puertas y seis espacios interiores para ropa doblada, cajas y accesorios.",
+      "active": false,
+      "version": 1,
+      "order": 29,
+      "basePrice": 140,
+      "weeks": 3,
+      "construction": {
+        "kind": "cabinet"
+      },
+      "limits": {
+        "width": {
+          "min": 800,
+          "max": 1250
+        },
+        "height": {
+          "min": 600,
+          "max": 1000
+        },
+        "depth": {
+          "min": 450,
+          "max": 650
+        }
+      },
+      "defaults": {
+        "width": 1200,
+        "height": 780,
+        "depth": 600,
+        "modules": 2,
+        "shelves": 2,
+        "doors": "full",
+        "finish": "hispano-chiavenna",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "alacena-panoramica-192",
+      "name": "Alacena Panorámica 192",
+      "category": "Cocina",
+      "description": "Cuatro puertas y dos niveles interiores en una alacena de fondo contenido para organizar vajilla y recipientes.",
+      "active": false,
+      "version": 1,
+      "order": 30,
+      "basePrice": 140,
+      "weeks": 3,
+      "construction": {
+        "kind": "cabinet"
+      },
+      "limits": {
+        "width": {
+          "min": 1200,
+          "max": 2400
+        },
+        "height": {
+          "min": 600,
+          "max": 1200
+        },
+        "depth": {
+          "min": 250,
+          "max": 450
+        }
+      },
+      "defaults": {
+        "width": 1920,
+        "height": 880,
+        "depth": 330,
+        "modules": 4,
+        "shelves": 1,
+        "doors": "full",
+        "finish": "hispano-blanco-100",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "aparador-comedor-239",
+      "name": "Aparador Comedor 239",
+      "category": "Aparadores",
+      "description": "Un aparador amplio con cuatro puertas y doce espacios interiores para menaje, vajilla y cajas del comedor.",
+      "active": false,
+      "version": 1,
+      "order": 31,
+      "basePrice": 140,
+      "weeks": 3,
+      "construction": {
+        "kind": "cabinet"
+      },
+      "limits": {
+        "width": {
+          "min": 1600,
+          "max": 2490
+        },
+        "height": {
+          "min": 800,
+          "max": 1200
+        },
+        "depth": {
+          "min": 350,
+          "max": 650
+        }
+      },
+      "defaults": {
+        "width": 2390,
+        "height": 1050,
+        "depth": 550,
+        "modules": 4,
+        "shelves": 2,
+        "doors": "full",
+        "finish": "hispano-roble-catania",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "zapatera-cerrada-148",
+      "name": "Zapatera Cerrada 148",
+      "category": "Zapateras",
+      "description": "Tres puertas ocultan seis niveles de repisas por columna para mantener el calzado y los accesorios ordenados.",
+      "active": false,
+      "version": 1,
+      "order": 32,
+      "basePrice": 180,
+      "weeks": 3,
+      "construction": {
+        "kind": "cabinet"
+      },
+      "limits": {
+        "width": {
+          "min": 1100,
+          "max": 1870
+        },
+        "height": {
+          "min": 1400,
+          "max": 2100
+        },
+        "depth": {
+          "min": 250,
+          "max": 450
+        }
+      },
+      "defaults": {
+        "width": 1480,
+        "height": 1830,
+        "depth": 300,
+        "modules": 3,
+        "shelves": 5,
+        "doors": "full",
+        "finish": "hispano-gris-suave",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "archivador-duo-124",
+      "name": "Archivador Dúo 124",
+      "category": "Auxiliares",
+      "description": "Cuatro espacios interiores amplios, protegidos por dos puertas, para cajas de archivo y material de trabajo.",
+      "active": false,
+      "version": 1,
+      "order": 33,
+      "basePrice": 140,
+      "weeks": 3,
+      "construction": {
+        "kind": "cabinet"
+      },
+      "limits": {
+        "width": {
+          "min": 800,
+          "max": 1250
+        },
+        "height": {
+          "min": 700,
+          "max": 1400
+        },
+        "depth": {
+          "min": 300,
+          "max": 550
+        }
+      },
+      "defaults": {
+        "width": 1240,
+        "height": 1040,
+        "depth": 450,
+        "modules": 2,
+        "shelves": 1,
+        "doors": "full",
+        "finish": "hispano-gris-grafito-02",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "gabinete-oficina-195",
+      "name": "Gabinete Oficina 195",
+      "category": "Auxiliares",
+      "description": "Cuatro compartimentos con puertas y sin repisas interiores para guardar cajas y útiles voluminosos de oficina.",
+      "active": false,
+      "version": 1,
+      "order": 34,
+      "basePrice": 140,
+      "weeks": 3,
+      "construction": {
+        "kind": "cabinet"
+      },
+      "limits": {
+        "width": {
+          "min": 1200,
+          "max": 2490
+        },
+        "height": {
+          "min": 300,
+          "max": 700
+        },
+        "depth": {
+          "min": 350,
+          "max": 600
+        }
+      },
+      "defaults": {
+        "width": 1950,
+        "height": 500,
+        "depth": 500,
+        "modules": 4,
+        "shelves": 0,
+        "doors": "full",
+        "finish": "hispano-almendra-02",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "alacena-compacta-55",
+      "name": "Alacena Compacta 55",
+      "category": "Cocina",
+      "description": "Una puerta y tres niveles interiores en un módulo compacto para especias, tazas y recipientes pequeños.",
+      "active": false,
+      "version": 1,
+      "order": 35,
+      "basePrice": 140,
+      "weeks": 3,
+      "construction": {
+        "kind": "cabinet"
+      },
+      "limits": {
+        "width": {
+          "min": 350,
+          "max": 630
+        },
+        "height": {
+          "min": 450,
+          "max": 900
+        },
+        "depth": {
+          "min": 250,
+          "max": 450
+        }
+      },
+      "defaults": {
+        "width": 550,
+        "height": 640,
+        "depth": 300,
+        "modules": 1,
+        "shelves": 2,
+        "doors": "full",
+        "finish": "hispano-blanco-100",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "velador-mixto-45",
+      "name": "Velador Mixto 45",
+      "category": "Veladores",
+      "description": "Un nicho abierto para lo que usas a diario y una puerta inferior para guardar los objetos pequeños.",
+      "active": false,
+      "version": 1,
+      "order": 36,
+      "basePrice": 140,
+      "weeks": 3,
+      "construction": {
+        "kind": "cabinet"
+      },
+      "limits": {
+        "width": {
+          "min": 350,
+          "max": 600
+        },
+        "height": {
+          "min": 400,
+          "max": 700
+        },
+        "depth": {
+          "min": 300,
+          "max": 500
+        }
+      },
+      "defaults": {
+        "width": 450,
+        "height": 400,
+        "depth": 400,
+        "modules": 1,
+        "shelves": 0,
+        "doors": "lower",
+        "finish": "hispano-roble-catania",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    }
+  ]
+}
