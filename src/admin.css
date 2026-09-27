@@ -877,6 +877,93 @@
 .admin-login-card .admin-message {
   display: block;
 }
+.admin-login-form > .admin-field + .admin-field {
+  margin-top: 20px;
+}
+.admin-login-steps {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  padding: 0;
+  margin: 0 0 28px;
+  font-size: 10px;
+  color: #887662;
+}
+.admin-login-steps li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.admin-login-steps li > span {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid #cfc2b0;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.admin-login-steps li[aria-current="step"] {
+  color: #9d432f;
+}
+.admin-login-steps li[aria-current="step"] > span {
+  background: #9d432f;
+  border-color: #9d432f;
+  color: #fffdf8;
+}
+.admin-field .admin-verification-input {
+  font-variant-numeric: tabular-nums;
+  font-size: 21px;
+  letter-spacing: 0.14em;
+  padding: 13px;
+}
+.admin-verification-help {
+  font-size: 11px;
+  color: #806d56;
+  line-height: 1.7;
+  margin-top: 12px;
+}
+.admin-verification-timer {
+  font-size: 10px;
+  color: #806d56;
+  font-variant-numeric: tabular-nums;
+  margin-top: 14px;
+}
+.admin-login-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 0;
+  margin-top: 12px;
+  border: 0;
+  background: transparent;
+  color: #80664c;
+  font-size: 11px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.admin-login-link:hover {
+  color: #9d432f;
+}
+.admin-login-link:focus-visible {
+  outline: 2px solid #b87555;
+  outline-offset: 3px;
+}
+.admin-login-link:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.admin-email-code {
+  margin-bottom: 22px;
+}
+.admin-email-code .button {
+  width: 100%;
+  font-size: 11px;
+}
 @media (min-width: 1250px) {
   .admin-settings-form .admin-padded {
     grid-template-columns: 1fr 1fr 1fr;

@@ -5,6 +5,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
+import { totp } from "../lib/admin-crypto.ts";
 
 // Deliberately restricted to local development: these tests write and restore data.
 const base = process.env.API_TEST_URL || "http://127.0.0.1:5173";
@@ -17,10 +18,24 @@ const localVars = await readFile(
   new URL("../.dev.vars", import.meta.url),
   "utf8",
 ).catch(() => "");
+const localValue = (key) => {
+  const raw = localVars
+    .split(/\r?\n/)
+    .find((line) => line.startsWith(key + "="))
+    ?.slice(key.length + 1);
+  return raw?.startsWith('"') ? JSON.parse(raw) : raw;
+};
+const localCredentials = await readFile(
+  new URL("../.admin-credentials.txt", import.meta.url),
+  "utf8",
+).catch(() => "");
 const password =
   process.env.ADMIN_PASSWORD ||
-  /^ADMIN_PASSWORD=["']?([^\r\n"']+)/m.exec(localVars)?.[1];
+  /^Contraseña: (.+)$/m.exec(localCredentials)?.[1];
+const email = localValue("ADMIN_EMAIL");
+const totpSecret = localValue("ADMIN_TOTP_SECRET");
 assert.ok(password, "Ejecuta npm run setup:local antes de probar la API.");
+assert.ok(email && totpSecret, "Configura correo y autenticador local.");
 
 async function cleanupFixtures(products, designs) {
   const statements = [];
@@ -106,6 +121,10 @@ function publicOnly(value) {
     "snapshot",
     "SESSION_SECRET",
     "ADMIN_PASSWORD",
+    "ADMIN_PASSWORD_HASH",
+    "ADMIN_TOTP_SECRET",
+    "ADMIN_RECOVERY_HASHES",
+    "RESEND_API_KEY",
   ];
   const visit = (object) => {
     if (!object || typeof object !== "object") return;
@@ -128,16 +147,42 @@ test("API persistente: autorización, catálogo, concurrencia, cotización y dis
   const visitor = new Client("203.0.113.82");
   const stranger = new Client("203.0.113.83");
   const state = await staff.get("admin");
-  assert.deepEqual(state.data, { admin: false, configured: true });
+  assert.equal(state.data.admin, false);
+  assert.equal(state.data.configured, true);
   assert.equal(
     (await visitor.post({ op: "product", product: {} })).status,
     401,
   );
 
-  const session = await staff.post({ op: "login", password });
+  const challenge = await staff.post({ op: "login", email, password });
+  assert.equal(challenge.status, 200);
+  assert.equal(challenge.data.admin, false);
+  assert.equal(challenge.data.challenge, true);
+  assert.equal(
+    (await staff.post({ op: "settings", settings: {}, version: 1 })).status,
+    401,
+  );
+  let session = await staff.post({
+    op: "verify-login",
+    method: "totp",
+    code: totp(totpSecret, Math.floor(Date.now() / 1000)),
+  });
+  if (session.status === 401) {
+    // A prior local run may have used this time step. Never reset replay protection.
+    await new Promise((resolve) =>
+      setTimeout(resolve, 31000 - (Date.now() % 30000)),
+    );
+    await staff.post({ op: "login", email, password });
+    session = await staff.post({
+      op: "verify-login",
+      method: "totp",
+      code: totp(totpSecret, Math.floor(Date.now() / 1000)),
+    });
+  }
   assert.equal(session.status, 200);
+  assert.equal(session.data.admin, true);
   assert.match(session.response.headers.get("set-cookie"), /HttpOnly/);
-  assert.match(session.response.headers.get("set-cookie"), /SameSite=Lax/);
+  assert.match(session.response.headers.get("set-cookie"), /SameSite=Strict/);
   const forged = new Client("203.0.113.84");
   for (const [key, token] of staff.cookies)
     forged.cookies.set(
@@ -418,24 +463,13 @@ test("API persistente: autorización, catálogo, concurrencia, cotización y dis
     200,
   );
   assert.equal((await stranger.get("design&id=" + design.id)).status, 404);
+  const copiedSession = new Client("203.0.113.89");
+  copiedSession.cookies = new Map(staff.cookies);
   assert.equal((await staff.post({ op: "logout" })).status, 200);
   assert.equal((await staff.get("admin")).data.admin, false);
-});
-
-test("Los intentos de acceso se limitan en la base de datos", async () => {
-  // Dedicated documentation-range IP does not lock the local user's login bucket.
-  const attacker = new Client("203.0.113.99");
-  for (let i = 0; i < 5; i++) {
-    const attempt = await attacker.post({
-      op: "login",
-      password: "incorrect-test-password",
-    });
-    assert.ok([401, 429].includes(attempt.status));
-  }
-  const blocked = await attacker.post({
-    op: "login",
-    password: "incorrect-test-password",
-  });
-  assert.equal(blocked.status, 429);
-  assert.ok(Number(blocked.response.headers.get("retry-after")) > 0);
+  assert.equal(
+    (await copiedSession.get("admin")).data.admin,
+    false,
+    "Cerrar sesión revoca también una copia de la cookie.",
+  );
 });

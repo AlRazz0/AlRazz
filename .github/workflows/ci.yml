@@ -1,7 +1,7 @@
 name: Validar AlRazz
 on:
   push:
-    branches: [main, codex/alrazz-mvp]
+    branches: [main, "codex/**"]
   pull_request:
     branches: [main]
 permissions:
@@ -19,3 +19,4 @@ jobs:
       - run: npm run check
       - run: npm test
       - run: npm run build
+      - run: npm run test:auth-api
