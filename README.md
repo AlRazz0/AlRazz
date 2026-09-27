@@ -56,16 +56,16 @@ Las pruebas cubren motor, CSV, criptografía, autenticación, persistencia, aisl
 
 ## Publicar después de aprobar
 
-El destino preparado es **Cloudflare Workers con D1**, que sirve la web y su API desde el mismo origen.
+El destino preparado es **Cloudflare Workers con D1**, que sirve la web y su API desde el mismo origen. Se mantiene el requisito de **costo cero usando Workers Free**, dentro de sus cuotas. La verificación de contraseña se ejecuta en un Durable Object interno con backend SQLite, disponible en el plan gratuito, sin reducir la protección scrypt. El despliegue no activa suscripciones de pago.
 
-1. Iniciar sesión en Cloudflare: `npx wrangler login`.
+1. Iniciar sesión en Cloudflare: `npx wrangler login`. Comprobar que la cuenta utiliza Workers Free.
 2. Crear D1: `npx wrangler d1 create alrazz-db`. Sustituir el identificador local de ejemplo en `wrangler.jsonc` por el devuelto.
-3. Aprovisionar un correo autorizado, hash scrypt de contraseña, semilla TOTP, hashes de recuperación y secreto de sesión nuevos. Configurarlos mediante `wrangler secret put` como `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, `ADMIN_TOTP_SECRET`, `ADMIN_RECOVERY_HASHES` y `SESSION_SECRET`. Para códigos por correo, configurar también `RESEND_API_KEY` y `ADMIN_EMAIL_FROM` con remitente verificado. Seguir la [guía de seguridad](docs/admin-security.md), incluido el presupuesto de CPU para scrypt; no reutilizar credenciales locales.
-4. Aplicar el esquema: `npm run db:remote`.
-5. Compilar y publicar: `npm run build` y `npm run deploy`.
-6. Entrar en el panel, configurar tarifas, materiales, WhatsApp y disponibilidad reales. Validar las piezas con el taller antes de aceptar pedidos.
+3. Aprovisionar un correo autorizado, hash scrypt de contraseña, semilla TOTP, hashes de recuperación y secreto de sesión nuevos. Configurarlos mediante `wrangler secret put` como `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, `ADMIN_TOTP_SECRET`, `ADMIN_RECOVERY_HASHES` y `SESSION_SECRET`. Para códigos por correo, configurar también `RESEND_API_KEY` y `ADMIN_EMAIL_FROM` con remitente verificado. Seguir la [guía de seguridad](docs/admin-security.md); no reutilizar credenciales locales.
+4. Configurar el entorno `production` de GitHub con el token de Cloudflare, el identificador de cuenta y la URL pública, siguiendo la [guía de publicación](docs/deployment.md).
+5. Ejecutar `Publicar AlRazz en Cloudflare` desde GitHub Actions sobre `main`. El flujo valida, aplica migraciones pendientes, publica y comprueba la respuesta pública.
+6. Validar el acceso completo y su consumo de CPU en Cloudflare Free. Entrar en el panel, configurar tarifas, materiales, WhatsApp y disponibilidad reales. Validar las piezas con el taller antes de aceptar pedidos.
 
-No publicar el directorio completo `dist/` como archivos estáticos: la parte pública es `dist/client` y la API requiere su Worker. Nunca subir `.dev.vars`, cookies, secretos, `.wrangler/` ni `node_modules/`. No existe acceso administrativo predeterminado ni reclamación de propietario por el primer visitante.
+La [guía de publicación](docs/deployment.md) describe la conexión con GitHub y las comprobaciones previas. Antes de operar, verificar el flujo completo en el plan gratuito real; las pruebas locales no demuestran su presupuesto de CPU. No publicar el directorio completo `dist/` como archivos estáticos: la parte pública es `dist/client` y la API requiere su Worker. Nunca subir `.dev.vars`, cookies, secretos, `.wrangler/` ni `node_modules/`. No existe acceso administrativo predeterminado ni reclamación de propietario por el primer visitante.
 
 ## Alcance pendiente
 

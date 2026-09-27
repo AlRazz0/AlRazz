@@ -18,5 +18,19 @@
       "migrations_dir": "migrations",
     },
   ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "ADMIN_PASSWORD_VERIFIER",
+        "class_name": "AdminPasswordVerifier",
+      },
+    ],
+  },
+  "migrations": [
+    {
+      "tag": "v1-admin-password-verifier",
+      "new_sqlite_classes": ["AdminPasswordVerifier"],
+    },
+  ],
   "observability": { "enabled": true },
 }
