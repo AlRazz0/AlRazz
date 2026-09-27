@@ -78,6 +78,7 @@ import { commercialMaterials } from "../lib/material-presets";
 import { mergeCommercialMaterials } from "../lib/material-catalog";
 import { materialLabel, materialBrands } from "./materials";
 import { MaterialSource, MaterialSwatch } from "./MaterialSwatch";
+import { Brand } from "./Brand";
 
 type AdminSnapshot = {
   admin: boolean;
@@ -805,9 +806,9 @@ export default function Admin() {
   }
 
   const topbar = (
-    <header className="admin-topbar">
-      <a href="/" className="admin-brand" aria-label="AlRazz, ir al inicio">
-        AlRazz<span>®</span>
+    <header className="admin-topbar admin-topbar--branded">
+      <a href="/" className="brand-link" aria-label="El capo, ir al inicio">
+        <Brand variant="admin" />
       </a>
       <span className="admin-topbar-label">Taller digital</span>
       <a className="admin-back" href="/">
@@ -851,7 +852,7 @@ export default function Admin() {
         {topbar}
         <main className="admin-login-layout">
           <section className="admin-login-story">
-            <p className="admin-eyebrow">ALRAZZ / ADMINISTRACIÓN</p>
+            <p className="admin-eyebrow">El capo / ADMINISTRACIÓN</p>
             <h1>
               Tu catálogo.
               <br />
@@ -1005,7 +1006,7 @@ export default function Admin() {
                       id="admin-verification-help"
                     >
                       {verificationMethod === "totp"
-                        ? "Abre tu aplicación de autenticación e ingresa el código de 6 dígitos de AlRazz."
+                        ? "Abre tu aplicación de autenticación e ingresa el código de 6 dígitos. Si ya configuraste tu acceso, la cuenta puede seguir apareciendo como AlRazz."
                         : verificationMethod === "email"
                           ? "Ingresa los 6 dígitos del último código que recibiste en el correo de administración."
                           : "Usa uno de los códigos que guardaste al configurar tu acceso. Cada código sirve una sola vez."}
@@ -1130,7 +1131,7 @@ export default function Admin() {
                   <ArrowUpRight size={18} />
                 </button>
                 <small className="admin-muted">
-                  Acceso privado para el equipo de AlRazz.
+                  Acceso privado para el equipo de El capo.
                 </small>
               </form>
             )}
@@ -1258,7 +1259,7 @@ export default function Admin() {
                   <button
                     onClick={() =>
                       download(
-                        "alrazz-catalogo.csv",
+                        "El-capo-catalogo.csv",
                         exportCatalogCSV(products),
                         "text/csv;charset=utf-8",
                       )
@@ -1396,7 +1397,7 @@ export default function Admin() {
                 <button
                   onClick={() =>
                     download(
-                      "alrazz-plantilla.csv",
+                      "El-capo-plantilla.csv",
                       catalogCSVTemplate(settings),
                       "text/csv;charset=utf-8",
                     )
@@ -1861,7 +1862,7 @@ export default function Admin() {
               <div className="admin-panel-heading">
                 <div>
                   <h2>Despiece del taller</h2>
-                  <p>Consulta técnica privada para el equipo de AlRazz.</p>
+                  <p>Consulta técnica privada para el equipo de El capo.</p>
                 </div>
                 <span className="admin-private">
                   <LockKeyhole size={14} /> Acceso de administración

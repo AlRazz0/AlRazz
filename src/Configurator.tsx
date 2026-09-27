@@ -191,7 +191,7 @@ export default function Configurator() {
     if (image) {
       const a = document.createElement("a");
       a.href = image;
-      a.download = "AlRazz-" + product?.id + ".png";
+      a.download = "El-capo-" + product?.id + ".png";
       a.click();
     } else toast.error("La imagen 3D aún no está disponible.");
   }

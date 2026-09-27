@@ -1,6 +1,8 @@
-# AlRazz
+# El capo
 
 Plataforma en español para diseñar y cotizar muebles de **melamina de 18 mm**. Esta primera versión desarrolla una familia de almacenaje modular: estanterías, libreros, aparadores y muebles de TV. No incluye sofás.
+
+La identidad visible es **El capo**, con la firma **Muebles en melamina Marlon**. Los nombres técnicos del repositorio, alojamiento y autenticador se mantienen para conservar las conexiones existentes. Ver [identidad visual](docs/brand-identity.md) y [ampliación del catálogo](docs/catalog-expansion.md): cuatro propuestas adicionales importables y editables desde administración.
 
 ## Qué funciona
 
@@ -92,4 +94,4 @@ No publicar el directorio completo `dist/` como archivos estáticos: la parte p�
 
 Guías: [administración](docs/admin.md), [datos y API](docs/backend.md), [motor y fabricación](docs/parametric-engine.md).
 
-La identidad y la fotografía conceptual de AlRazz son propias. Tylko se utilizó como referencia de experiencia, sin copiar su marca, fotografías o código.
+La identidad de El capo y la fotografía conceptual son propias. Tylko se utilizó como referencia de experiencia, sin copiar su marca, fotografías o código.

@@ -66,7 +66,7 @@ export default function Cart() {
   }
   const total = designs.reduce((n, d) => n + d.price * d.quantity, 0);
   const message = [
-    "Hola, quiero cotizar estos muebles AlRazz:",
+    "Hola, El capo. Quiero cotizar estos muebles:",
     ...designs.map((d) =>
       [
         d.product.name + " · " + d.quantity + " unidad(es)",
@@ -197,14 +197,14 @@ export default function Cart() {
               ) : (
                 <div className="info-box">
                   El canal de WhatsApp aún está por confirmar. Puedes descargar
-                  tu solicitud o copiarla para enviarla a AlRazz.
+                  tu solicitud o copiarla para enviarla a El capo.
                 </div>
               )}
               <button
                 className="button outline full"
                 onClick={() =>
                   download(
-                    "AlRazz-solicitud.txt",
+                    "El-capo-solicitud.txt",
                     message,
                     "text/plain;charset=utf-8",
                   )

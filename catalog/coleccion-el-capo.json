@@ -1,0 +1,120 @@
+{
+  "products": [
+    {
+      "id": "auxiliar-compacto",
+      "name": "Auxiliar Compacto",
+      "category": "Estanterías",
+      "description": "Dos columnas abiertas y una repisa por lado para ordenar libros y objetos cotidianos en poco espacio.",
+      "active": false,
+      "version": 1,
+      "order": 5,
+      "basePrice": 180,
+      "weeks": 3,
+      "limits": {
+        "width": { "min": 600, "max": 1200 },
+        "height": { "min": 400, "max": 1100 },
+        "depth": { "min": 250, "max": 450 }
+      },
+      "defaults": {
+        "width": 700,
+        "height": 640,
+        "depth": 300,
+        "modules": 2,
+        "shelves": 1,
+        "doors": "none",
+        "finish": "hispano-roble-catania",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "organizador-duo",
+      "name": "Organizador Dúo",
+      "category": "Estanterías",
+      "description": "Un organizador horizontal con cuatro espacios abiertos para tener tus objetos favoritos a la vista.",
+      "active": false,
+      "version": 1,
+      "order": 6,
+      "basePrice": 180,
+      "weeks": 3,
+      "limits": {
+        "width": { "min": 800, "max": 1800 },
+        "height": { "min": 300, "max": 800 },
+        "depth": { "min": 250, "max": 450 }
+      },
+      "defaults": {
+        "width": 1270,
+        "height": 440,
+        "depth": 300,
+        "modules": 2,
+        "shelves": 1,
+        "doors": "none",
+        "finish": "hispano-gris-suave",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "tv-abierto-175",
+      "name": "TV Abierto 175",
+      "category": "Muebles de TV",
+      "description": "Tres columnas con repisas abiertas para organizar equipos, libros y objetos de tu sala.",
+      "active": false,
+      "version": 1,
+      "order": 7,
+      "basePrice": 120,
+      "weeks": 3,
+      "limits": {
+        "width": { "min": 1200, "max": 2400 },
+        "height": { "min": 400, "max": 800 },
+        "depth": { "min": 300, "max": 500 }
+      },
+      "defaults": {
+        "width": 1750,
+        "height": 590,
+        "depth": 350,
+        "modules": 3,
+        "shelves": 1,
+        "doors": "none",
+        "finish": "hispano-chiavenna",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "tv-bajo-200",
+      "name": "TV Bajo 200",
+      "category": "Muebles de TV",
+      "description": "Un perfil bajo con cuatro compartimentos abiertos para una sala de líneas sencillas.",
+      "active": false,
+      "version": 1,
+      "order": 8,
+      "basePrice": 120,
+      "weeks": 3,
+      "limits": {
+        "width": { "min": 1400, "max": 2600 },
+        "height": { "min": 250, "max": 600 },
+        "depth": { "min": 250, "max": 500 }
+      },
+      "defaults": {
+        "width": 2000,
+        "height": 300,
+        "depth": 300,
+        "modules": 4,
+        "shelves": 0,
+        "doors": "none",
+        "finish": "hispano-almendra-02",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    }
+  ]
+}
