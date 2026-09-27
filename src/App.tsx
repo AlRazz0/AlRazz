@@ -1,0 +1,339 @@
+import { lazy, Suspense, useEffect, useState } from "react";
+import {
+  ArrowUpRight,
+  ArrowRight,
+  Layers3,
+  Ruler,
+  ShoppingBag,
+  MessageCircle,
+} from "lucide-react";
+import { api } from "../lib/api";
+import { money } from "../lib/furniture";
+import type { PublicProduct, PublicSettings } from "./types";
+import Viewer from "./Viewer";
+const Configurator = lazy(() => import("./Configurator"));
+const Cart = lazy(() => import("./Cart"));
+const Admin = lazy(() => import("./Admin"));
+export function Header({ compact = false }: { compact?: boolean }) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    api("action=designs")
+      .then((d) =>
+        setCount(
+          d.designs?.reduce(
+            (n: number, d: { quantity: number }) => n + d.quantity,
+            0,
+          ) || 0,
+        ),
+      )
+      .catch(() => {});
+  }, []);
+  return (
+    <>
+      <div className="announcement">
+        Hecho en Perú. Diseñado para tu espacio. <span>Melamina de 18 mm</span>
+      </div>
+      <header className="site-header">
+        <a className="wordmark" href="/">
+          AlRazz<span>®</span>
+        </a>
+        <nav>
+          <a href="/#catalogo">Muebles ⌄</a>
+          <a href="/#proceso">Cómo funciona</a>
+          <a href="/#materiales">Materiales</a>
+        </nav>
+        <div className="header-actions">
+          {!compact && (
+            <a href="/configurar" className="header-cta">
+              Diseña el tuyo <ArrowUpRight size={18} />
+            </a>
+          )}
+          <a
+            className="bag"
+            href="/carrito"
+            aria-label={"Mis diseños, " + count + " muebles"}
+          >
+            <ShoppingBag size={22} />
+            <span>{count}</span>
+          </a>
+        </div>
+      </header>
+    </>
+  );
+}
+export function Footer() {
+  return (
+    <footer>
+      <a className="wordmark" href="/">
+        AlRazz<span>®</span>
+      </a>
+      <p>Muebles para tu forma de vivir.</p>
+      <a href="/admin">Administración</a>
+      <span>Diseñado y fabricado en Perú · 2026</span>
+    </footer>
+  );
+}
+export default function App() {
+  const path = window.location.pathname;
+  return (
+    <Suspense
+      fallback={<div className="loading-page">Preparando tu espacio…</div>}
+    >
+      {path === "/admin" ? (
+        <Admin />
+      ) : path === "/configurar" ? (
+        <Configurator />
+      ) : path === "/carrito" ? (
+        <Cart />
+      ) : (
+        <Home />
+      )}
+    </Suspense>
+  );
+}
+function Home() {
+  const [products, setProducts] = useState<PublicProduct[]>([]);
+  const [settings, setSettings] = useState<PublicSettings>();
+  const [error, setError] = useState("");
+  const [category, setCategory] = useState("Todos");
+  const [loading, setLoading] = useState(true);
+  function load() {
+    setError("");
+    setLoading(true);
+    api("action=catalog")
+      .then((d) => {
+        setProducts(d.products);
+        setSettings(d.settings);
+      })
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  }
+  useEffect(load, []);
+  const shown = products.filter(
+    (p) => category === "Todos" || p.category === category,
+  );
+  return (
+    <>
+      <Header />
+      <main>
+        <section className="hero">
+          <div className="hero-copy">
+            <p className="eyebrow">TU ESPACIO. TUS REGLAS.</p>
+            <h1>
+              No todos los
+              <br />
+              espacios son iguales.
+              <br />
+              <em>Tu mueble tampoco.</em>
+            </h1>
+            <p className="intro">
+              Muebles de melamina hechos a tu medida.
+              <br />
+              Elige un diseño, dale tu forma y hazlo tuyo.
+            </p>
+            <a className="button cream" href="/configurar">
+              Diseñar mi mueble <ArrowUpRight size={21} />
+            </a>
+            <div className="hero-foot">
+              <span>
+                <Ruler size={18} /> A tu medida
+              </span>
+              <span>
+                <Layers3 size={18} /> Melamina de 18 mm
+              </span>
+            </div>
+          </div>
+          <div className="hero-photo">
+            <img
+              src="/images/hero.png"
+              alt="Estantería modular terracota con puertas inferiores en un espacio cálido"
+            />
+            <div className="image-caption">
+              <span>La forma de habitar tu espacio.</span>
+              <span>ALRAZZ · COLECCIÓN MODULAR</span>
+            </div>
+          </div>
+        </section>
+        <section id="catalogo" className="section catalog-intro">
+          <div>
+            <p className="eyebrow">UN BUEN PUNTO DE PARTIDA</p>
+            <h2>
+              Elige el mueble.
+              <br />
+              <span>El resto lo decides tú.</span>
+            </h2>
+          </div>
+          <a className="text-link" href="/configurar">
+            Crear mi combinación <ArrowRight size={21} />
+          </a>
+          <div className="filter-row" aria-label="Filtrar muebles">
+            {["Todos", ...new Set(products.map((p) => p.category))].map((c) => (
+              <button
+                key={c}
+                className={c === category ? "active" : ""}
+                onClick={() => setCategory(c)}
+                aria-pressed={c === category}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+          {error && (
+            <div className="error-box" role="alert">
+              {error}
+              <button onClick={load}>Reintentar</button>
+            </div>
+          )}
+          {loading && <p className="muted loading-copy">Cargando colección…</p>}
+          {!loading && !error && shown.length === 0 && (
+            <p className="muted loading-copy">
+              Estamos preparando nuevos modelos para esta colección.
+            </p>
+          )}
+          <div className="product-grid">
+            {shown.map((p) => (
+              <a
+                className="product-card"
+                key={p.id}
+                href={"/configurar?producto=" + p.id}
+              >
+                <div className="product-art">
+                  <span className="product-label">A tu medida</span>
+                  {p.preview && settings ? (
+                    <Viewer
+                      small
+                      panels={p.preview.panels}
+                      materials={settings.materials}
+                      {...p.defaults}
+                    />
+                  ) : (
+                    <img src="/images/hero.png" alt={p.name} />
+                  )}
+                  <span className="product-arrow">
+                    <ArrowUpRight size={24} />
+                  </span>
+                </div>
+                <div className="product-title">
+                  <h3>{p.name}</h3>
+                  <span>Desde {money(p.publicPrice)}</span>
+                </div>
+                <p>
+                  {p.category} · {p.defaults.width / 10} ×{" "}
+                  {p.defaults.height / 10} × {p.defaults.depth / 10} cm
+                </p>
+                <div
+                  className="mini-swatches"
+                  aria-label="Acabados disponibles"
+                >
+                  {settings?.materials
+                    .filter((m) => m.active)
+                    .map((f) => (
+                      <span
+                        key={f.id}
+                        style={{ background: f.color }}
+                        title={f.name}
+                      />
+                    ))}
+                </div>
+              </a>
+            ))}
+          </div>
+          <p className="catalog-note">
+            Importes referenciales. Cada diseño se valida antes de fabricar.
+          </p>
+        </section>
+        <section id="proceso" className="process section">
+          <p className="eyebrow">DE TU IDEA A TU ESPACIO</p>
+          <h2>Así de tuyo. Así de simple.</h2>
+          <div className="steps">
+            {[
+              [
+                "01",
+                "Elige tu punto de partida",
+                "Encuentra el modelo que encaja con tu día a día.",
+              ],
+              [
+                "02",
+                "Dale tus medidas",
+                "Prueba medidas, distribución y colores en 3D.",
+              ],
+              [
+                "03",
+                "Hagámoslo realidad",
+                "Solicita tu cotización. Nuestro equipo valida cada detalle antes de fabricar.",
+              ],
+            ].map(([n, t, d]) => (
+              <article key={n}>
+                <span>{n}</span>
+                <h3>{t}</h3>
+                <p>{d}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+        <section id="materiales" className="material-band section">
+          <p className="eyebrow">LO ESENCIAL, BIEN HECHO</p>
+          <h2>18 mm de posibilidades.</h2>
+          <p>
+            Una colección dedicada a la melamina. Colores que conviven con tu
+            espacio y medidas que se adaptan a ti.
+          </p>
+          <div className="material-samples">
+            {settings?.materials
+              .filter((m) => m.active)
+              .map((f) => (
+                <a href="/configurar" key={f.id}>
+                  <span style={{ background: f.color }} />
+                  {f.name}
+                </a>
+              ))}
+          </div>
+          <a className="button dark" href="/configurar">
+            Explorar acabados <ArrowUpRight size={20} />
+          </a>
+        </section>
+        <section className="section faq">
+          <h2>Antes de empezar.</h2>
+          {[
+            [
+              "¿Qué puedo personalizar?",
+              "Ancho, alto, fondo, número de módulos, repisas, puertas y acabados. Las opciones respetan los límites de cada modelo.",
+            ],
+            [
+              "¿El precio es definitivo?",
+              "Es una estimación. Confirmamos materiales, medidas, accesorios, transporte y condiciones de instalación antes de enviarte la cotización final.",
+            ],
+            [
+              "¿Cuándo estará listo?",
+              "La agenda de fabricación se confirma con nuestro equipo. La disponibilidad mostrada es orientativa y no reserva una fecha.",
+            ],
+            [
+              "¿Puedo guardar mi diseño?",
+              "Sí. Guárdalo en Mis diseños y comparte su enlace para retomar exactamente la misma configuración.",
+            ],
+          ].map(([q, a]) => (
+            <details key={q}>
+              <summary>
+                {q}
+                <span>+</span>
+              </summary>
+              <p>{a}</p>
+            </details>
+          ))}
+        </section>
+      </main>
+      <Footer />
+      {settings?.whatsapp && (
+        <a
+          className="whatsapp-float"
+          href={"https://wa.me/" + settings.whatsapp}
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Consultar por WhatsApp"
+        >
+          <MessageCircle size={24} />
+        </a>
+      )}
+    </>
+  );
+}
