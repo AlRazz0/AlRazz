@@ -4,12 +4,13 @@ import {
   ArrowRight,
   Layers3,
   Ruler,
+  Search,
   ShoppingBag,
 } from "lucide-react";
 import { api } from "../lib/api";
 import { money } from "../lib/furniture";
 import type { PublicProduct, PublicSettings } from "./types";
-import Viewer from "./Viewer";
+import { CardPreview } from "./CardPreview";
 import { materialLabel, materialBrands } from "./materials";
 import { MaterialSwatch } from "./MaterialSwatch";
 import { ContactLinks } from "./ContactLinks";
@@ -18,6 +19,12 @@ import { useRevealMotion } from "./useRevealMotion";
 const Configurator = lazy(() => import("./Configurator"));
 const Cart = lazy(() => import("./Cart"));
 const Admin = lazy(() => import("./Admin"));
+const catalogSearchText = (text: string) =>
+  text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("es")
+    .trim();
 export function Header({ compact = false }: { compact?: boolean }) {
   const [count, setCount] = useState(0);
   useEffect(() => {
@@ -102,6 +109,7 @@ function Home() {
   const [settings, setSettings] = useState<PublicSettings>();
   const [error, setError] = useState("");
   const [category, setCategory] = useState("Todos");
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   function load() {
     setError("");
@@ -116,11 +124,15 @@ function Home() {
   }
   useEffect(load, []);
   const shown = products.filter(
-    (p) => category === "Todos" || p.category === category,
+    (p) =>
+      (category === "Todos" || p.category === category) &&
+      catalogSearchText(`${p.name} ${p.category} ${p.description}`).includes(
+        catalogSearchText(search),
+      ),
   );
   useRevealMotion(
     page,
-    category + ":" + products.map((product) => product.id).join(","),
+    category + ":" + shown.map((product) => product.id).join(","),
   );
   return (
     <>
@@ -193,6 +205,24 @@ function Home() {
               </button>
             ))}
           </div>
+          <div className="catalog-tools">
+            <label className="catalog-search">
+              <Search size={18} aria-hidden="true" />
+              <input
+                type="search"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Buscar un mueble…"
+                aria-label="Buscar muebles por nombre o categoría"
+              />
+            </label>
+            {!loading && !error && (
+              <p className="catalog-count" role="status" aria-atomic="true">
+                {shown.length} de {products.length}{" "}
+                {products.length === 1 ? "modelo" : "modelos"}
+              </p>
+            )}
+          </div>
           {error && (
             <div className="error-box" role="alert">
               {error}
@@ -201,9 +231,24 @@ function Home() {
           )}
           {loading && <p className="muted loading-copy">Cargando colección…</p>}
           {!loading && !error && shown.length === 0 && (
-            <p className="muted loading-copy">
-              Estamos preparando nuevos modelos para esta colección.
-            </p>
+            <div className="catalog-empty">
+              <p className="muted loading-copy">
+                {search.trim() || category !== "Todos"
+                  ? "No encontramos modelos con esos filtros."
+                  : "Estamos preparando nuevos modelos para esta colección."}
+              </p>
+              {(search.trim() || category !== "Todos") && (
+                <button
+                  className="text-link"
+                  onClick={() => {
+                    setSearch("");
+                    setCategory("Todos");
+                  }}
+                >
+                  Ver todos los muebles <ArrowRight size={16} />
+                </button>
+              )}
+            </div>
           )}
           <div className="product-grid">
             {shown.map((p, index) => (
@@ -218,14 +263,15 @@ function Home() {
                 <div className="product-art">
                   <span className="product-label">A tu medida</span>
                   {p.preview && settings ? (
-                    <Viewer
-                      small
-                      panels={p.preview.geometry}
-                      materials={settings.materials}
-                      {...p.defaults}
-                    />
+                    <CardPreview product={p} materials={settings.materials} />
                   ) : (
-                    <img src="/images/hero.png" alt={p.name} />
+                    <div
+                      className="card-preview-placeholder"
+                      role="img"
+                      aria-label={`Vista previa de ${p.name} no disponible`}
+                    >
+                      <span>Explora este modelo</span>
+                    </div>
                   )}
                   <span className="product-arrow">
                     <ArrowUpRight size={24} />

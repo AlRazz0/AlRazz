@@ -16,6 +16,7 @@ import { publicGeometry } from "../lib/public-geometry";
 export { AdminPasswordVerifier } from "./admin-password.ts";
 import {
   buildFurniture,
+  createFurnitureBuilder,
   configSchema,
   defaultSettings,
   productSchema,
@@ -629,9 +630,10 @@ async function get(request: Request, env: Env) {
         readProducts(env.DB),
         readSettings(env.DB),
       ]);
+      const build = createFurnitureBuilder(settings);
       return json({
         products: products.map((p) => {
-          const preview = publicResult(buildFurniture(p, p.defaults, settings));
+          const preview = publicResult(build(p, p.defaults));
           return { ...publicProduct(p, preview.price), preview };
         }),
         settings: publicSettings(settings),

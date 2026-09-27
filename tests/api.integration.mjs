@@ -6,6 +6,7 @@ import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
 import { totp } from "../lib/admin-crypto.ts";
+import { constructionTemplates } from "../lib/product-templates.ts";
 
 // Deliberately restricted to local development: these tests write and restore data.
 const base = process.env.API_TEST_URL || "http://127.0.0.1:5173";
@@ -515,6 +516,56 @@ test("API persistente: autorización, catálogo, concurrencia, cotización y dis
     200,
   );
   assert.equal((await stranger.get("design&id=" + design.id)).status, 404);
+  // New construction metadata must survive import, publication, quotation and snapshots.
+  const typedModels = constructionTemplates.map((template, index) => ({
+    ...structuredClone(template),
+    id: `${id}-type${index}`,
+    defaults: { ...template.defaults, finish: model.defaults.finish },
+  }));
+  fixtureProducts.push(...typedModels.map((product) => product.id));
+  const typedImport = await staff.post({ op: "import", products: typedModels });
+  assert.equal(typedImport.status, 201);
+  assert.equal(typedImport.data.count, 4);
+  for (const draft of typedImport.data.imported) {
+    assert.equal(draft.active, false);
+    const activated = await staff.post({
+      op: "product", product: { ...draft, active: true }, expectedVersion: 1,
+    });
+    assert.equal(activated.status, 200);
+    const typed = activated.data.product;
+    const publicTyped = (await visitor.get("catalog")).data.products.find((p) => p.id === typed.id);
+    assert.deepEqual(publicTyped.construction, typed.construction);
+    publicOnly(publicTyped);
+    const typedInput = { productId: typed.id, config: typed.defaults };
+    const typedQuote = await visitor.quote(typedInput);
+    assert.equal(typedQuote.status, 200);
+    publicOnly(typedQuote.data);
+    assert.deepEqual(typedQuote.data, publicTyped.preview);
+    const typedCuts = await staff.post({ op: "cut-list", ...typedInput });
+    assert.equal(typedCuts.status, 200);
+    assert.equal(typedCuts.data.result.price, typedQuote.data.price);
+    assert.equal(typedCuts.data.result.panels.length, typedQuote.data.geometry.length);
+    assert.ok(typedCuts.data.result.panels.every((p) => p.thickness === 18));
+    if (typed.construction.kind === "desk" || typed.construction.kind === "desk-storage") {
+      assert.equal((await visitor.quote({ ...typedInput, config: { ...typed.defaults, modules: 2 } })).status, 400);
+    }
+    if (typed.construction.kind === "desk-storage") {
+      const typedSaved = await visitor.post({ op: "save-design", ...typedInput });
+      assert.equal(typedSaved.status, 201);
+      const historical = typedSaved.data.design;
+      fixtureDesigns.push(historical.id);
+      const changedType = await staff.post({
+        op: "product", expectedVersion: typed.version,
+        product: { ...typed, active: false, construction: { kind: "cabinet" }, defaults: { ...typed.defaults, modules: 3 } },
+      });
+      assert.equal(changedType.status, 200);
+      const preserved = (await stranger.get("design&id=" + historical.id)).data.design;
+      assert.deepEqual(preserved.product.construction, typed.construction);
+      assert.deepEqual(preserved.result, historical.result);
+      assert.deepEqual((await staff.post({ op: "cut-list", designId: historical.id })).data.result, typedCuts.data.result);
+      assert.equal((await stranger.post({ op: "cut-list", designId: historical.id })).status, 401);
+    }
+  }
   const copiedSession = new Client("203.0.113.89");
   copiedSession.cookies = new Map(staff.cookies);
   assert.equal((await staff.post({ op: "logout" })).status, 200);

@@ -1,10 +1,13 @@
 import {
   quoteCSVCell,
+  constructionSchema,
+  productCategories,
   seedProducts,
   settingsSchema,
   validateProduct,
 } from "./furniture.ts";
 import type { Config, Product, Settings } from "./furniture.ts";
+import { productTemplate } from "./product-templates.ts";
 
 export type CatalogCSVError = { row: number; message: string };
 export type CatalogCSVImport = {
@@ -15,6 +18,9 @@ type Column =
   | "id"
   | "name"
   | "category"
+  | "construction"
+  | "storageSide"
+  | "storageWidth"
   | "description"
   | "basePrice"
   | "weeks"
@@ -42,6 +48,9 @@ export const CATALOG_COLUMNS: ReadonlyArray<{ key: Column; label: string }> = [
   { key: "id", label: "Código" },
   { key: "name", label: "Nombre" },
   { key: "category", label: "Categoría" },
+  { key: "construction", label: "Tipo constructivo" },
+  { key: "storageSide", label: "Lado del módulo lateral" },
+  { key: "storageWidth", label: "Ancho del módulo lateral mm" },
   { key: "description", label: "Descripción" },
   { key: "basePrice", label: "Precio base S/" },
   { key: "weeks", label: "Semanas" },
@@ -234,14 +243,34 @@ function booleanCell(
 }
 function categoryCell(value?: string): Product["category"] {
   if (!value?.trim()) return "Estanterías";
-  const category = seedProducts.find(
-    (product) => normalized(product.category) === normalized(value),
-  )?.category;
+  const category = productCategories.find(
+    (category) => normalized(category) === normalized(value),
+  );
   if (!category)
     throw new Error(
-      "Categoría: usa Estanterías, Libreros, Aparadores o Muebles de TV.",
+      `Categoría: usa ${productCategories.join(", ")}.`,
     );
   return category;
+}
+function constructionCell(cells: Partial<Record<Column, string>>): Product["construction"] {
+  if (!cells.construction?.trim()) {
+    if (cells.storageSide || cells.storageWidth)
+      throw new Error("Indica desk-storage en Tipo constructivo para configurar el módulo lateral.");
+    return undefined;
+  }
+  const aliases: Record<string, string> = {
+    cabinet: "cabinet", almacenaje: "cabinet",
+    open_shelf: "open-shelf", estante_sin_trasera: "open-shelf",
+    desk: "desk", escritorio: "desk",
+    desk_storage: "desk-storage", escritorio_con_modulo_lateral: "desk-storage",
+  };
+  const kind = aliases[normalized(cells.construction)] || cells.construction;
+  const side = cells.storageSide ? normalized(cells.storageSide) : undefined;
+  return constructionSchema.parse({
+    kind,
+    ...(side ? { storageSide: ({ izquierda: "left", derecha: "right" } as Record<string, string>)[side] || side } : {}),
+    ...(cells.storageWidth ? { storageWidth: numberCell(cells.storageWidth, 450, "Ancho del módulo lateral mm") } : {}),
+  });
 }
 function doorsCell(
   value: string | undefined,
@@ -384,9 +413,10 @@ export function importCatalogCSV(
         cells[column] = row.cells[index].trim();
       });
       const category = categoryCell(cells.category);
-      const fallback = seedProducts.find(
+      const construction = constructionCell(cells);
+      const fallback = construction ? productTemplate(construction.kind) : seedProducts.find(
         (product) => product.category === category,
-      )!;
+      ) || seedProducts[0];
       const numeric = (key: Column, value: number) =>
         numberCell(
           cells[key],
@@ -397,6 +427,7 @@ export function importCatalogCSV(
         id: cells.id || "",
         name: cells.name || "",
         category,
+        ...(construction ? { construction } : {}),
         description:
           cells.description ||
           `Mueble de melamina de 18 mm personalizable: ${cells.name || "nuevo modelo"}.`,
@@ -463,6 +494,9 @@ export function exportCatalogCSV(
       id: product.id,
       name: product.name,
       category: product.category,
+      construction: product.construction?.kind || "",
+      storageSide: product.construction?.kind === "desk-storage" ? product.construction.storageSide || "" : "",
+      storageWidth: product.construction?.kind === "desk-storage" ? product.construction.storageWidth ?? "" : "",
       description: product.description,
       basePrice: product.basePrice,
       weeks: product.weeks,

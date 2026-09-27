@@ -1,8 +1,93 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { createCameraMotion } from "../src/camera-motion.ts";
+import {
+  animationProgress,
+  createCameraMotion,
+  getResizeDirection,
+  getViewDirection,
+} from "../src/camera-motion.ts";
 import { fitCamera } from "../src/viewer-scene.ts";
+
+test("animation timing never extrapolates when a frame timestamp precedes its start", () => {
+  assert.deepEqual(
+    [-800, 0, 320, 640, 960].map((elapsed) =>
+      animationProgress(2000 + elapsed, 2000, 640),
+    ),
+    [0, 0, 0.5, 1, 1],
+  );
+  assert.equal(animationProgress(2000, 2000, 0), 1);
+});
+
+test("initial framing uses the requested isometric direction", () => {
+  const direction = getViewDirection("iso");
+  const bounds = new THREE.Box3(
+    new THREE.Vector3(-0.6, 0, -0.3),
+    new THREE.Vector3(0.6, 0.75, 0.3),
+  );
+  const camera = new THREE.PerspectiveCamera(34, 1.5, 0.01, 200);
+  const fit = fitCamera(camera, bounds, direction);
+  assert.ok(
+    camera.position.clone().sub(fit.center).normalize().distanceTo(direction) <
+      1e-10,
+  );
+  assert.ok(
+    Math.abs(THREE.MathUtils.radToDeg(Math.asin(direction.y)) - 13.4712726043) <
+      1e-8,
+  );
+});
+
+test("resize finishes the requested view instead of freezing an intermediate initial pose", () => {
+  const camera = new THREE.PerspectiveCamera(34, 1.5, 0.01, 200);
+  const bounds = new THREE.Box3(
+    new THREE.Vector3(-0.6, 0, -0.3),
+    new THREE.Vector3(0.6, 0.75, 0.3),
+  );
+  const iso = getViewDirection("iso");
+  const destination = fitCamera(camera, bounds, iso);
+  const finalPosition = camera.position.clone();
+  // Reproduce the former preliminary framing and an early RAF before ResizeObserver.
+  const initial = fitCamera(
+    camera,
+    bounds,
+    new THREE.Vector3(4, 3, 6).normalize(),
+  );
+  const target = initial.center.clone();
+  const sample = createCameraMotion(
+    camera,
+    target,
+    finalPosition,
+    destination.center,
+  );
+  const apply = (progress: number) => {
+    const pose = sample(progress, bounds);
+    target.copy(pose.target);
+    camera.position.copy(pose.position);
+  };
+  apply(1 - Math.pow(1 - -800 / 640, 3));
+  assert.ok(camera.position.clone().sub(target).normalize().y > 0.999);
+  let finished = false;
+  const direction = getResizeDirection(camera, target, () => {
+    finished = true;
+    apply(1);
+  });
+  const fit = fitCamera(camera, bounds, direction);
+  assert.equal(finished, true);
+  assert.ok(direction.distanceTo(iso) < 1e-10);
+  assert.ok(
+    camera.position.clone().sub(fit.center).normalize().distanceTo(iso) < 1e-10,
+  );
+});
+
+test("resize after a manual orbit preserves the current camera direction", () => {
+  const camera = new THREE.PerspectiveCamera(34, 1.5, 0.01, 200);
+  const target = new THREE.Vector3(0.2, 0.4, -0.1);
+  const direction = new THREE.Vector3(-0.8, 0.7, 1).normalize();
+  camera.position.copy(target).addScaledVector(direction, 4);
+  const originalPosition = camera.position.clone();
+  assert.ok(getResizeDirection(camera, target).distanceTo(direction) < 1e-10);
+  assert.deepEqual(camera.position.toArray(), originalPosition.toArray());
+});
 
 const views = [
   new THREE.Vector3(0, 0.001, 1),

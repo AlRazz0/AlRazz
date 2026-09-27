@@ -16,7 +16,11 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { api } from "../lib/api";
-import { money } from "../lib/furniture";
+import {
+  getConstruction,
+  getConstructionOptions,
+  money,
+} from "../lib/furniture";
 import type { Config } from "../lib/furniture";
 import type { PublicProduct, PublicSettings, Quote, Design } from "./types";
 import { Header, Footer } from "./App";
@@ -24,6 +28,7 @@ import { Choice } from "./UI";
 import Viewer, { type View, type ViewerHandle } from "./Viewer";
 import { materialLabel, materialBrands } from "./materials";
 import { MaterialSource, MaterialSwatch } from "./MaterialSwatch";
+import { constructionDescriptions } from "./construction-labels";
 const searchText = (value: string) =>
   value
     .normalize("NFD")
@@ -217,6 +222,8 @@ export default function Configurator() {
       </>
     );
   const displayedConfig = renderConfig || config;
+  const construction = getConstruction(product);
+  const distributionOptions = getConstructionOptions(product);
   const finish = settings.materials.find((m) => m.id === config.finish);
   const interiorFinish =
     config.interior === "same"
@@ -313,7 +320,7 @@ export default function Configurator() {
               <Switch
                 checked={open}
                 onCheckedChange={setOpen}
-                disabled={config.doors === "none"}
+                disabled={displayedConfig.doors === "none"}
                 aria-label="Abrir puertas"
               />{" "}
               Abrir puertas
@@ -373,10 +380,16 @@ export default function Configurator() {
             value={product.id}
             options={
               products.some((p) => p.id === product.id)
-                ? products.map((p) => ({ value: p.id, label: p.name }))
+                ? products.map((p) => ({
+                    value: p.id,
+                    label: `${p.category} · ${p.name}`,
+                  }))
                 : [
                     { value: product.id, label: product.name + " (guardado)" },
-                    ...products.map((p) => ({ value: p.id, label: p.name })),
+                    ...products.map((p) => ({
+                      value: p.id,
+                      label: `${p.category} · ${p.name}`,
+                    })),
                   ]
             }
             onChange={pick}
@@ -428,49 +441,69 @@ export default function Configurator() {
               </p>
             </TabsContent>
             <TabsContent value="distribucion">
-              <p className="tab-intro">Espacio para lo que importa.</p>
-              <Choice
-                label="Módulos verticales"
-                value={String(config.modules)}
-                options={[1, 2, 3, 4, 5, 6].map((n) => ({
-                  value: String(n),
-                  label: n + " módulos",
-                }))}
-                onChange={(v) => change({ ...config, modules: Number(v) })}
-              />
-              <Choice
-                label="Repisas por módulo"
-                value={String(config.shelves)}
-                options={[0, 1, 2, 3, 4, 5, 6, 7].map((n) => ({
-                  value: String(n),
-                  label: n + " repisas",
-                }))}
-                onChange={(v) => change({ ...config, shelves: Number(v) })}
-              />
-              <Choice
-                label="Puertas"
-                value={config.doors}
-                options={doorOptions}
-                onChange={(v) =>
-                  change({ ...config, doors: v as Config["doors"] })
-                }
-              />
-              <Choice
-                label="Tipo de apertura"
-                value={config.handle}
-                options={[
-                  { value: "push", label: "Sin jalador · Push" },
-                  { value: "exterior", label: "Jalador exterior" },
-                  { value: "embutido", label: "Jalador embutido" },
-                ]}
-                onChange={(v) =>
-                  change({ ...config, handle: v as Config["handle"] })
-                }
-              />
-              <p className="small-note">
-                El modelo y acabado exactos de los herrajes se confirman con
-                nuestro equipo.
+              <p className="tab-intro">
+                {constructionDescriptions[construction.kind]}
               </p>
+              {distributionOptions.modules.length > 1 && (
+                <Choice
+                  label="Módulos verticales"
+                  value={String(config.modules)}
+                  options={distributionOptions.modules.map((n) => ({
+                    value: String(n),
+                    label: n + (n === 1 ? " módulo" : " módulos"),
+                  }))}
+                  onChange={(v) => change({ ...config, modules: Number(v) })}
+                />
+              )}
+              {distributionOptions.shelves.length > 1 && (
+                <Choice
+                  label={
+                    construction.kind === "desk-storage"
+                      ? "Repisas en el módulo lateral"
+                      : "Repisas por módulo"
+                  }
+                  value={String(config.shelves)}
+                  options={distributionOptions.shelves.map((n) => ({
+                    value: String(n),
+                    label: n + (n === 1 ? " repisa" : " repisas"),
+                  }))}
+                  onChange={(v) => change({ ...config, shelves: Number(v) })}
+                />
+              )}
+              {distributionOptions.doors.length > 1 && (
+                <Choice
+                  label="Puertas"
+                  value={config.doors}
+                  options={doorOptions.filter((option) =>
+                    distributionOptions.doors.includes(
+                      option.value as Config["doors"],
+                    ),
+                  )}
+                  onChange={(v) =>
+                    change({ ...config, doors: v as Config["doors"] })
+                  }
+                />
+              )}
+              {config.doors !== "none" && (
+                <Choice
+                  label="Tipo de apertura"
+                  value={config.handle}
+                  options={[
+                    { value: "push", label: "Sin jalador · Push" },
+                    { value: "exterior", label: "Jalador exterior" },
+                    { value: "embutido", label: "Jalador embutido" },
+                  ]}
+                  onChange={(v) =>
+                    change({ ...config, handle: v as Config["handle"] })
+                  }
+                />
+              )}
+              {config.doors !== "none" && (
+                <p className="small-note">
+                  El modelo y acabado exactos de los herrajes se confirman con
+                  nuestro equipo.
+                </p>
+              )}
             </TabsContent>
             <TabsContent value="acabados">
               <p className="tab-intro">El acabado que hace tuyo el espacio.</p>

@@ -1,5 +1,34 @@
 import * as THREE from "three";
 
+export function getViewDirection(view: "iso" | "front" | "side" | "top") {
+  const direction = new THREE.Vector3();
+  if (view === "front") direction.set(0, 0.001, 1);
+  else if (view === "side") direction.set(1, 0.001, 0.001);
+  else if (view === "top") direction.set(0, 1, 0.001);
+  else direction.set(0.52, 0.27, 1);
+  return direction.normalize();
+}
+
+export function animationProgress(
+  now: number,
+  started: number,
+  duration: number,
+) {
+  return duration <= 0
+    ? 1
+    : THREE.MathUtils.clamp((now - started) / duration, 0, 1);
+}
+
+/** A resize finishes an active preset transition, but preserves a manual orbit. */
+export function getResizeDirection(
+  camera: THREE.PerspectiveCamera,
+  target: THREE.Vector3,
+  finishTransition?: () => void,
+) {
+  finishTransition?.();
+  return camera.position.clone().sub(target).normalize();
+}
+
 /** Fit each intermediate view, including a target that is still moving. */
 export function createCameraMotion(
   camera: THREE.PerspectiveCamera,

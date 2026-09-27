@@ -1,4 +1,4 @@
-# Administrar AlRazz
+# Administrar El capo
 
 El panel se abre en `/admin`. Introduce el correo autorizado y la contraseña; después completa el segundo paso con tu aplicación autenticadora, un código enviado al correo (si el servicio está activado) o un código de recuperación de un solo uso. Sin ese segundo paso no se abre el catálogo privado. No hay registro público. En desarrollo local, las credenciales y la vinculación están en archivos privados generados por `npm run setup:local`, nunca en la terminal ni en Git. Consulta la [guía de seguridad](admin-security.md).
 
@@ -13,6 +13,10 @@ El desafío caduca a los cinco minutos y admite intentos limitados. El código d
 5. Para retirar un modelo, pulsa **Visible** y confirma. Sus datos se conservan y puede volver a activarse.
 
 El identificador de un modelo existente es permanente. Todas las medidas están en milímetros, en pasos de 10 mm; el configurador valida luces, puertas y separaciones. El espesor de melamina de 18 mm y las reglas de fabricación permanecen en el motor compartido.
+
+**Tipo constructivo** separa la estructura de la categoría comercial: almacenaje con trasera, estante sin trasera, escritorio abierto o escritorio con módulo lateral. Al cambiar de tipo se propone una configuración compatible para revisar. En el escritorio con almacenaje puedes elegir lado y ancho exterior del módulo lateral; las repisas y puerta pertenecen a ese módulo. La categoría organiza la búsqueda, pero no cambia por sí sola la construcción. El cliente solo recibe controles aplicables al tipo elegido.
+
+La [colección de taller](coleccion-taller.md) añade 16 propuestas adaptadas de planos locales. El archivo JSON es una importación opcional; no reemplaza productos anteriores ni se carga de nuevo al iniciar. Las propuestas y su despiece requieren revisión de fabricación.
 
 ## Materiales, capacidad y costos
 
@@ -48,6 +52,8 @@ La vista 3D incluye un ambiente de estudio y una persona de referencia de **1,70
 ## Importar y exportar
 
 **Exportar** descarga el catálogo actual en CSV, incluidos los borradores. **Descargar plantilla CSV** proporciona la estructura admitida. El importador también recibe JSON con una lista de productos o un objeto `{ "products": [...] }`.
+
+Las columnas **Tipo constructivo**, **Lado del módulo lateral** y **Ancho del módulo lateral mm** conservan las nuevas estructuras al exportar/importar. Los CSV antiguos siguen funcionando sin esas columnas; para nuevos escritorios especifica `desk` o `desk-storage`. Un tipo desconocido o un parámetro lateral colocado en otra estructura genera un error, sin transformarse silenciosamente en una carcasa.
 
 La importación muestra una vista previa antes de escribir. Todos los modelos se crean como borradores. Si hay errores de estructura, identificadores duplicados o identificadores que ya existen, se debe corregir el archivo antes de confirmar. Importar no sobrescribe los modelos existentes; para actualizarlos, usa el editor. Máximo de archivo y datos preparados en la interfaz: 1 MB; máximo de 200 muebles por importación.
 
