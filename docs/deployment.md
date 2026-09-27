@@ -2,23 +2,48 @@
 
 GitHub conserva el código y valida cada cambio. Cloudflare ejecuta el Worker, sirve `dist/client` y conserva el catálogo y los diseños en D1. Publicar únicamente archivos en GitHub Pages no ejecutaría esta API ni permitiría que el panel guardase cambios compartidos entre visitantes.
 
-La condición del proyecto es **cero costo**. Este repositorio no compra dominios, activa suscripciones ni cambia planes. La dirección inicial puede ser `https://alrazz.<subdominio-de-la-cuenta>.workers.dev`. Workers Free y D1 tienen límites; al alcanzarlos puede dejar de funcionar parte de la web. No se ofrece capacidad ilimitada.
+La condición del proyecto es **cero costo**. Este repositorio no compra dominios, activa suscripciones ni cambia planes. La dirección asignada es [alrazz.alrazz-cusco.workers.dev](https://alrazz.alrazz-cusco.workers.dev). Workers Free y D1 tienen límites; al alcanzarlos puede dejar de funcionar parte de la web. No se ofrece capacidad ilimitada.
 
 ## Autenticación compatible con la modalidad gratuita
 
 La contraseña conserva el mismo hash scrypt y el segundo paso obligatorio. El cálculo costoso se ejecuta en `AdminPasswordVerifier`, un Durable Object privado basado en SQLite. Los Durable Objects SQLite están disponibles en Workers Free y cuentan con un presupuesto de CPU diferente del Worker público. No hay una ruta HTTP pública para ese verificador ni un fallback que ejecute scrypt en el Worker de 10 ms.
 
-La comprobación previa exige la vinculación `ADMIN_PASSWORD_VERIFIER` y la migración `v1-admin-password-verifier` con `new_sqlite_classes: ["AdminPasswordVerifier"]`, tanto en la configuración fuente como en la generada por el build. Si falta el servicio, el acceso falla cerrado. Hay que comprobar una autenticación real y sus métricas de CPU en el entorno alojado antes de dar por validada la producción. Los límites gratuitos de solicitudes, duración y almacenamiento siguen siendo aplicables; no se activa automáticamente un plan de pago al alcanzarlos.
+La comprobación previa exige la vinculación `ADMIN_PASSWORD_VERIFIER` y la migración `v1-admin-password-verifier` con `new_sqlite_classes: ["AdminPasswordVerifier"]`, tanto en la configuración fuente como en la generada por el build. Si falta el servicio, el acceso falla cerrado. El acceso completo ya se comprobó en Workers Free; sus métricas exactas de CPU y su capacidad bajo carga no se han medido. Los límites gratuitos de solicitudes, duración y almacenamiento siguen siendo aplicables; no se activa automáticamente un plan de pago al alcanzarlos.
 
-El flujo manual de GitHub Actions está preparado, pero aún faltan una cuenta conectada, D1 real y secretos nuevos de producción. El identificador D1 incluido en `wrangler.jsonc` es un ejemplo y se rechaza antes de consultar Cloudflare. Configurar el flujo no significa que la web ya esté en línea.
+## Estado del despliegue
 
-## Aprovisionamiento pendiente
+La cuenta ya está conectada y su panel confirmó **Workers Free, $0**. La base `alrazz-db` está creada, ambas migraciones SQL están aplicadas y `wrangler.jsonc` contiene su UUID real. Se aprovisionaron los cinco secretos administrativos nuevos de producción. Los controles siguen rechazando identificadores D1 de ejemplo; no deben desactivarse.
 
-1. Iniciar sesión en una cuenta de Cloudflare del propietario y comprobar en el panel que Workers está en **Free**, sin activar pagos. Los tokens OAuth de Wrangler y los tokens API deben permanecer privados.
-2. Crear credenciales nuevas de producción; no copiar las de la demostración local. Conservar la vinculación y migración del verificador SQLite en `wrangler.jsonc`.
-3. Crear una base D1 llamada `alrazz-db` en esa cuenta. Sustituir únicamente `database_id` de la vinculación `DB` en `wrangler.jsonc`. El UUID de la base es configuración, no una contraseña. Confirmar este cambio mediante PR.
-4. Aprovisionar los secretos de producción mediante Cloudflare o `wrangler secret put`: `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, `ADMIN_TOTP_SECRET`, `ADMIN_RECOVERY_HASHES` y `SESSION_SECRET`. El Durable Object hereda los secretos del mismo Worker; no necesita un token público adicional. Nunca usar `VITE_*` ni guardar valores en Git.
-5. Crear el entorno `production` en GitHub Actions. Añadir los secretos `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID`, y la variable `ALRAZZ_PUBLIC_URL` con el origen HTTPS completo, sin rutas. El token debe limitarse a esta cuenta con Workers Scripts: Edit y D1: Edit. No se solicita permiso de facturación ni se llama a APIs que cambien suscripciones. La primera provisión del subdominio `workers.dev` puede requerir intervención del propietario en el panel.
+La versión `6e8ce787-7d51-4694-984e-0f654c6f8187` está publicada y responde por HTTPS. Pasó `node scripts/check-deployment.mjs smoke`: portada, catálogo conectado y administrador protegido. La revisión en navegador confirmó la portada en español con cuatro modelos y 23 acabados. También se completó un acceso normal de producción con contraseña y TOTP, consulta del panel privado y cierre de sesión. No se crearon fixtures ni se modificó el catálogo; no se consumieron códigos de recuperación ni se enviaron correos.
+
+El flujo manual de GitHub Actions está preparado, pero falta su token API dedicado. La publicación inicial utilizó OAuth local de Wrangler; ese token temporal no se copia a GitHub.
+
+## Publicación desde el equipo autorizado
+
+Con los cambios revisados, las pruebas de la sección **Verificar** del README aprobadas y la cuenta todavía en Workers Free:
+
+```sh
+npx wrangler login
+node scripts/check-deployment.mjs config
+npm run build
+npm run db:remote -- --config wrangler.jsonc
+npm run deploy
+```
+
+Conservar la vinculación y migración SQLite del verificador. Los secretos permanecen en Cloudflare: `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, `ADMIN_TOTP_SECRET`, `ADMIN_RECOVERY_HASHES` y `SESSION_SECRET`. El Durable Object hereda los secretos del mismo Worker. No recrear la base ni sobrescribir credenciales en cada publicación; para una rotación explícita, seguir la [guía de seguridad](admin-security.md). Nunca usar `VITE_*` ni guardar valores privados en Git.
+
+Después del despliegue, ejecutar en PowerShell la comprobación pública de solo lectura:
+
+```powershell
+$env:ALRAZZ_PUBLIC_URL = 'https://alrazz.alrazz-cusco.workers.dev'
+node scripts/check-deployment.mjs smoke
+```
+
+No iniciar la batería `test:api` contra producción: sus fixtures están limitados a la base local. La comprobación pública no inicia sesión, crea diseños ni envía correos.
+
+## Habilitar la publicación desde GitHub
+
+Configurar el entorno `production` en GitHub Actions con los secretos `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID`, y la variable `ALRAZZ_PUBLIC_URL` con el origen HTTPS anterior. El token API debe ser dedicado a esta integración y limitarse a la cuenta con Workers Scripts: Edit y D1: Edit. No reutilizar el OAuth local. No se solicita permiso de facturación ni se llama a APIs que cambien suscripciones.
 
 El listado de secretos de Cloudflare permite comprobar sus nombres, no sus valores. La prueba final comprueba que la aplicación reconoce una configuración administrativa válida. El aprovisionamiento inicial del Worker y sus secretos se realiza antes del primer flujo; un Worker inexistente o sin secretos hace fallar la comprobación previa y no se publica a medias.
 

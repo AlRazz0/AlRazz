@@ -54,18 +54,17 @@ npm run test:api
 
 Las pruebas cubren motor, CSV, criptografía, autenticación, persistencia, aislamiento de visitantes, versiones y costos privados. GitHub Actions ejecuta tipos, pruebas unitarias, compilación y pruebas de seguridad contra Worker/D1 aislados con correo simulado, sin enviar mensajes reales. Integrar un PR no publica automáticamente la web.
 
-## Publicar después de aprobar
+## Publicación
 
-El destino preparado es **Cloudflare Workers con D1**, que sirve la web y su API desde el mismo origen. Se mantiene el requisito de **costo cero usando Workers Free**, dentro de sus cuotas. La verificación de contraseña se ejecuta en un Durable Object interno con backend SQLite, disponible en el plan gratuito, sin reducir la protección scrypt. El despliegue no activa suscripciones de pago.
+La web está disponible por HTTPS en [alrazz.alrazz-cusco.workers.dev](https://alrazz.alrazz-cusco.workers.dev). Se verificó **Workers Free ($0)** en el panel, D1 tiene ambas migraciones aplicadas y el Worker dispone de cinco secretos nuevos de producción. Pasaron la comprobación pública y un acceso real con contraseña, TOTP, consulta del panel privado y cierre de sesión. La portada muestra el catálogo en español con cuatro modelos y 23 acabados.
 
-1. Iniciar sesión en Cloudflare: `npx wrangler login`. Comprobar que la cuenta utiliza Workers Free.
-2. Crear D1: `npx wrangler d1 create alrazz-db`. Sustituir el identificador local de ejemplo en `wrangler.jsonc` por el devuelto.
-3. Aprovisionar un correo autorizado, hash scrypt de contraseña, semilla TOTP, hashes de recuperación y secreto de sesión nuevos. Configurarlos mediante `wrangler secret put` como `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, `ADMIN_TOTP_SECRET`, `ADMIN_RECOVERY_HASHES` y `SESSION_SECRET`. Para códigos por correo, configurar también `RESEND_API_KEY` y `ADMIN_EMAIL_FROM` con remitente verificado. Seguir la [guía de seguridad](docs/admin-security.md); no reutilizar credenciales locales.
-4. Configurar el entorno `production` de GitHub con el token de Cloudflare, el identificador de cuenta y la URL pública, siguiendo la [guía de publicación](docs/deployment.md).
-5. Ejecutar `Publicar AlRazz en Cloudflare` desde GitHub Actions sobre `main`. El flujo valida, aplica migraciones pendientes, publica y comprueba la respuesta pública.
-6. Validar el acceso completo y su consumo de CPU en Cloudflare Free. Entrar en el panel, configurar tarifas, materiales, WhatsApp y disponibilidad reales. Validar las piezas con el taller antes de aceptar pedidos.
+La web y su API se sirven desde el mismo origen; el catálogo permanece en D1. La contraseña se verifica en un Durable Object interno SQLite, disponible en el plan gratuito, sin reducir la protección scrypt. Se mantiene el requisito de **costo cero**, dentro de las cuotas gratuitas, sin activar suscripciones de pago.
 
-La [guía de publicación](docs/deployment.md) describe la conexión con GitHub y las comprobaciones previas. Antes de operar, verificar el flujo completo en el plan gratuito real; las pruebas locales no demuestran su presupuesto de CPU. No publicar el directorio completo `dist/` como archivos estáticos: la parte pública es `dist/client` y la API requiere su Worker. Nunca subir `.dev.vars`, cookies, secretos, `.wrangler/` ni `node_modules/`. No existe acceso administrativo predeterminado ni reclamación de propietario por el primer visitante.
+La primera publicación se realizó desde Wrangler con OAuth. El flujo manual de GitHub Actions está preparado, pero **falta un token API dedicado para habilitarlo**; no se ha copiado el OAuth de la sesión a GitHub. La [guía de publicación](docs/deployment.md) documenta ambas vías y la comprobación pública de solo lectura.
+
+Antes de operar comercialmente, configurar tarifas, materiales, WhatsApp y disponibilidad reales, y validar las piezas con el taller. El acceso completo ya funcionó en Workers Free; no se han medido sus métricas exactas de CPU ni su capacidad bajo carga. El envío de códigos por correo requiere configurar un remitente y proveedor, según la [guía de seguridad](docs/admin-security.md).
+
+No publicar el directorio completo `dist/` como archivos estáticos: la parte pública es `dist/client` y la API requiere su Worker. Nunca subir `.dev.vars`, cookies, secretos, `.wrangler/` ni `node_modules/`. No existe acceso administrativo predeterminado ni reclamación de propietario por el primer visitante.
 
 ## Alcance pendiente
 
@@ -76,7 +75,7 @@ La [guía de publicación](docs/deployment.md) describe la conexión con GitHub 
 - La disponibilidad es un ajuste orientativo, no una agenda de reservas ni una fecha comprometida.
 - Hay un correo administrativo autorizado con verificación en dos pasos; las cuentas de empleados y el restablecimiento automático de contraseña quedan pendientes. El envío de códigos por correo requiere activar un proveedor y verificar la recepción real.
 - Los enlaces de diseños se guardan en D1; la selección del visitante se vincula a una cookie. Guardar el enlace permite volver desde otro dispositivo.
-- No se ha publicado en producción. La prueba visual manual queda a revisión del propietario.
+- La portada y el acceso administrativo están comprobados en producción. La revisión comercial del catálogo y la validación de fabricación quedan a cargo del propietario.
 
 ## Código
 
