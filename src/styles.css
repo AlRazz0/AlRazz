@@ -804,6 +804,12 @@ footer > span {
   margin: auto;
 }
 .stage {
+  --stage-viewer-top: 35px;
+  --stage-controls-bottom: 142px;
+  --stage-controls-height: 44px;
+  --stage-viewer-bottom: calc(
+    var(--stage-controls-bottom) + var(--stage-controls-height) + 16px
+  );
   height: calc(100vh - 195px);
   min-height: 670px;
   position: sticky;
@@ -816,8 +822,9 @@ footer > span {
 }
 .stage > .viewer {
   position: absolute;
-  inset: 35px 0 130px;
-  height: calc(100% - 165px);
+  /* Keep the complete control bar outside the model and its annotations. */
+  inset: var(--stage-viewer-top) 0 var(--stage-viewer-bottom);
+  height: auto;
   z-index: 0;
 }
 .stage-title {
@@ -844,10 +851,12 @@ footer > span {
 }
 .stage-controls {
   display: flex;
+  align-items: center;
   justify-content: center;
   gap: 15px;
   position: absolute;
-  bottom: 142px;
+  bottom: var(--stage-controls-bottom);
+  height: var(--stage-controls-height);
   z-index: 2;
 }
 .view-buttons {
@@ -1426,6 +1435,8 @@ footer > span {
     display: none;
   }
   .stage {
+    --stage-viewer-top: 24px;
+    --stage-controls-bottom: 122px;
     height: 470px;
   }
   .stage-title {
@@ -1436,13 +1447,6 @@ footer > span {
     left: 22px;
     top: 50px;
     font-size: 10px;
-  }
-  .stage > .viewer {
-    inset: 24px 0 120px;
-    height: calc(100% - 144px);
-  }
-  .stage-controls {
-    bottom: 122px;
   }
   .view-buttons button {
     padding: 6px 11px;

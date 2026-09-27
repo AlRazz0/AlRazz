@@ -1,5 +1,9 @@
 # Dirección corta con Cloudflare Pages
 
+Dirección publicada y verificada: **https://alrazz.pages.dev**. La primera
+publicación se realizó mediante Direct Upload en el Dashboard, con el binding
+de producción `ALRAZZ` apuntando al Worker `alrazz`.
+
 Pages sirve una copia del frontend compilado y envía únicamente `/api/*` al
 Worker existente `alrazz` mediante el Service binding `ALRAZZ`. El Worker conserva
 D1, el verificador de contraseñas, las credenciales y la dirección `workers.dev`.
