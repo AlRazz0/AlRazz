@@ -58,7 +58,7 @@ Las pruebas cubren motor, CSV, criptografía, autenticación, persistencia, aisl
 
 ## Publicación
 
-La web está disponible por HTTPS en [alrazz.alrazz-cusco.workers.dev](https://alrazz.alrazz-cusco.workers.dev). Se verificó **Workers Free ($0)** en el panel, D1 tiene ambas migraciones aplicadas y el Worker dispone de cinco secretos de producción. Pasaron la comprobación pública y un acceso real con contraseña, TOTP, consulta del panel privado y cierre de sesión. La selección de acabados puede ampliarse desde administración sin volver a sembrar la base.
+La dirección principal es [alrazz.pages.dev](https://alrazz.pages.dev), con [administración](https://alrazz.pages.dev/admin). La dirección anterior [alrazz.alrazz-cusco.workers.dev](https://alrazz.alrazz-cusco.workers.dev) sigue disponible. Se verificó **Workers Free ($0)** en el panel, D1 tiene ambas migraciones aplicadas y el Worker conserva sus cinco secretos de producción. En ambas direcciones se verificaron las 82 referencias, 79 imágenes, cotización y acceso real con contraseña, TOTP y cierre de sesión; el despiece anónimo devuelve 401 y las mutaciones desde otro origen, 403. La selección de acabados puede ampliarse desde administración sin volver a sembrar la base.
 
 La web y su API se sirven desde el mismo origen; el catálogo permanece en D1. La contraseña se verifica en un Durable Object interno SQLite, disponible en el plan gratuito, sin reducir la protección scrypt. Se mantiene el requisito de **costo cero**, dentro de las cuotas gratuitas, sin activar suscripciones de pago.
 
