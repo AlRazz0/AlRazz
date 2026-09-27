@@ -1,0 +1,666 @@
+{
+  "products": [
+    {
+      "id": "mesa-estudio-120",
+      "name": "Mesa de Estudio 120",
+      "category": "Escritorios",
+      "description": "Una superficie de trabajo abierta con laterales de melamina y espacio libre para sentarte.",
+      "active": false,
+      "version": 1,
+      "order": 9,
+      "basePrice": 200,
+      "weeks": 3,
+      "construction": {
+        "kind": "desk"
+      },
+      "limits": {
+        "width": {
+          "min": 800,
+          "max": 1200
+        },
+        "height": {
+          "min": 700,
+          "max": 850
+        },
+        "depth": {
+          "min": 450,
+          "max": 750
+        }
+      },
+      "defaults": {
+        "width": 1200,
+        "height": 750,
+        "depth": 600,
+        "modules": 1,
+        "shelves": 0,
+        "doors": "none",
+        "finish": "hispano-roble-catania",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "escritorio-pedestal-120",
+      "name": "Escritorio Pedestal 120",
+      "category": "Escritorios",
+      "description": "Un escritorio compacto con pedestal derecho, puerta y repisa interior para guardar lo cotidiano.",
+      "active": false,
+      "version": 1,
+      "order": 10,
+      "basePrice": 200,
+      "weeks": 3,
+      "construction": {
+        "kind": "desk-storage",
+        "storageSide": "right",
+        "storageWidth": 450
+      },
+      "limits": {
+        "width": {
+          "min": 1070,
+          "max": 1460
+        },
+        "height": {
+          "min": 700,
+          "max": 850
+        },
+        "depth": {
+          "min": 450,
+          "max": 750
+        }
+      },
+      "defaults": {
+        "width": 1200,
+        "height": 750,
+        "depth": 600,
+        "modules": 1,
+        "shelves": 1,
+        "doors": "full",
+        "finish": "hispano-blanco-100",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "escritorio-lateral-150",
+      "name": "Escritorio Lateral 150",
+      "category": "Escritorios",
+      "description": "Trabajo y orden en un mismo mueble: un tablero amplio y un pedestal abierto a la izquierda.",
+      "active": false,
+      "version": 1,
+      "order": 11,
+      "basePrice": 200,
+      "weeks": 3,
+      "construction": {
+        "kind": "desk-storage",
+        "storageSide": "left",
+        "storageWidth": 500
+      },
+      "limits": {
+        "width": {
+          "min": 1120,
+          "max": 1510
+        },
+        "height": {
+          "min": 700,
+          "max": 850
+        },
+        "depth": {
+          "min": 450,
+          "max": 750
+        }
+      },
+      "defaults": {
+        "width": 1500,
+        "height": 800,
+        "depth": 600,
+        "modules": 1,
+        "shelves": 2,
+        "doors": "none",
+        "finish": "hispano-chiavenna",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "escritorio-estudio-150",
+      "name": "Escritorio Estudio 150",
+      "category": "Escritorios",
+      "description": "Un escritorio de líneas sencillas con pedestal derecho cerrado y dos repisas interiores.",
+      "active": false,
+      "version": 1,
+      "order": 12,
+      "basePrice": 200,
+      "weeks": 3,
+      "construction": {
+        "kind": "desk-storage",
+        "storageSide": "right",
+        "storageWidth": 500
+      },
+      "limits": {
+        "width": {
+          "min": 1120,
+          "max": 1510
+        },
+        "height": {
+          "min": 700,
+          "max": 850
+        },
+        "depth": {
+          "min": 450,
+          "max": 750
+        }
+      },
+      "defaults": {
+        "width": 1500,
+        "height": 770,
+        "depth": 600,
+        "modules": 1,
+        "shelves": 2,
+        "doors": "full",
+        "finish": "hispano-almendra-02",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "velador-puerta-50",
+      "name": "Velador Puerta 50",
+      "category": "Veladores",
+      "description": "Un velador compacto con puerta y repisa interior para mantener despejada tu habitación.",
+      "active": false,
+      "version": 1,
+      "order": 13,
+      "basePrice": 140,
+      "weeks": 3,
+      "construction": {
+        "kind": "cabinet"
+      },
+      "limits": {
+        "width": {
+          "min": 350,
+          "max": 650
+        },
+        "height": {
+          "min": 350,
+          "max": 800
+        },
+        "depth": {
+          "min": 300,
+          "max": 500
+        }
+      },
+      "defaults": {
+        "width": 500,
+        "height": 500,
+        "depth": 400,
+        "modules": 1,
+        "shelves": 1,
+        "doors": "full",
+        "finish": "hispano-almendra-02",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "zapatera-baja-78",
+      "name": "Zapatera Baja 78",
+      "category": "Zapateras",
+      "description": "Cuatro niveles abiertos para organizar calzado bajo y accesorios en un formato compacto.",
+      "active": false,
+      "version": 1,
+      "order": 14,
+      "basePrice": 180,
+      "weeks": 3,
+      "construction": {
+        "kind": "open-shelf"
+      },
+      "limits": {
+        "width": {
+          "min": 500,
+          "max": 780
+        },
+        "height": {
+          "min": 600,
+          "max": 1000
+        },
+        "depth": {
+          "min": 250,
+          "max": 400
+        }
+      },
+      "defaults": {
+        "width": 780,
+        "height": 760,
+        "depth": 300,
+        "modules": 1,
+        "shelves": 3,
+        "doors": "none",
+        "finish": "hispano-roble-catania",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "zapatera-vertical-148",
+      "name": "Zapatera Vertical 148",
+      "category": "Zapateras",
+      "description": "Dos columnas y seis niveles abiertos para ordenar calzado y cajas pequeñas por pares o grupos.",
+      "active": false,
+      "version": 1,
+      "order": 15,
+      "basePrice": 180,
+      "weeks": 3,
+      "construction": {
+        "kind": "open-shelf"
+      },
+      "limits": {
+        "width": {
+          "min": 1000,
+          "max": 1540
+        },
+        "height": {
+          "min": 1500,
+          "max": 2200
+        },
+        "depth": {
+          "min": 250,
+          "max": 400
+        }
+      },
+      "defaults": {
+        "width": 1480,
+        "height": 1830,
+        "depth": 300,
+        "modules": 2,
+        "shelves": 5,
+        "doors": "none",
+        "finish": "hispano-blanco-100",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "estante-cuadricula-141",
+      "name": "Estante Cuadrícula 141",
+      "category": "Estanterías",
+      "description": "Veinte compartimentos abiertos para combinar libros, cajas y objetos a la vista.",
+      "active": false,
+      "version": 1,
+      "order": 16,
+      "basePrice": 180,
+      "weeks": 3,
+      "construction": {
+        "kind": "open-shelf"
+      },
+      "limits": {
+        "width": {
+          "min": 1000,
+          "max": 2200
+        },
+        "height": {
+          "min": 1300,
+          "max": 2200
+        },
+        "depth": {
+          "min": 250,
+          "max": 450
+        }
+      },
+      "defaults": {
+        "width": 1410,
+        "height": 1810,
+        "depth": 330,
+        "modules": 4,
+        "shelves": 4,
+        "doors": "none",
+        "finish": "hispano-chiavenna",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "columna-abierta-35",
+      "name": "Columna Abierta 35",
+      "category": "Estanterías",
+      "description": "Cinco espacios abiertos en una columna estrecha para aprovechar rincones y paredes pequeñas.",
+      "active": false,
+      "version": 1,
+      "order": 17,
+      "basePrice": 180,
+      "weeks": 3,
+      "construction": {
+        "kind": "open-shelf"
+      },
+      "limits": {
+        "width": {
+          "min": 250,
+          "max": 600
+        },
+        "height": {
+          "min": 1500,
+          "max": 2200
+        },
+        "depth": {
+          "min": 250,
+          "max": 450
+        }
+      },
+      "defaults": {
+        "width": 350,
+        "height": 1860,
+        "depth": 300,
+        "modules": 1,
+        "shelves": 4,
+        "doors": "none",
+        "finish": "hispano-gris-suave",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "consola-abierta-236",
+      "name": "Consola Abierta 236",
+      "category": "Auxiliares",
+      "description": "Una consola larga y poco profunda, con ocho espacios abiertos para libros y objetos de uso diario.",
+      "active": false,
+      "version": 1,
+      "order": 18,
+      "basePrice": 140,
+      "weeks": 3,
+      "construction": {
+        "kind": "open-shelf"
+      },
+      "limits": {
+        "width": {
+          "min": 1600,
+          "max": 2800
+        },
+        "height": {
+          "min": 500,
+          "max": 1000
+        },
+        "depth": {
+          "min": 200,
+          "max": 400
+        }
+      },
+      "defaults": {
+        "width": 2360,
+        "height": 740,
+        "depth": 250,
+        "modules": 4,
+        "shelves": 1,
+        "doors": "none",
+        "finish": "hispano-blanco-100",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "biblioteca-compacta-90",
+      "name": "Biblioteca Compacta 90",
+      "category": "Libreros",
+      "description": "Ocho espacios abiertos en un librero compacto, pensado para libros y objetos de diferentes usos.",
+      "active": false,
+      "version": 1,
+      "order": 19,
+      "basePrice": 180,
+      "weeks": 3,
+      "construction": {
+        "kind": "open-shelf"
+      },
+      "limits": {
+        "width": {
+          "min": 600,
+          "max": 1500
+        },
+        "height": {
+          "min": 800,
+          "max": 1600
+        },
+        "depth": {
+          "min": 250,
+          "max": 450
+        }
+      },
+      "defaults": {
+        "width": 900,
+        "height": 1100,
+        "depth": 300,
+        "modules": 2,
+        "shelves": 3,
+        "doors": "none",
+        "finish": "hispano-roble-catania",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "auxiliar-cocina-60",
+      "name": "Auxiliar de Cocina 60",
+      "category": "Cocina",
+      "description": "Un módulo cerrado con puerta, repisa y superficie completa para añadir almacenaje a tu cocina.",
+      "active": false,
+      "version": 1,
+      "order": 20,
+      "basePrice": 140,
+      "weeks": 3,
+      "construction": {
+        "kind": "cabinet"
+      },
+      "limits": {
+        "width": {
+          "min": 400,
+          "max": 630
+        },
+        "height": {
+          "min": 700,
+          "max": 1000
+        },
+        "depth": {
+          "min": 450,
+          "max": 650
+        }
+      },
+      "defaults": {
+        "width": 600,
+        "height": 830,
+        "depth": 560,
+        "modules": 1,
+        "shelves": 1,
+        "doors": "full",
+        "finish": "hispano-blanco-100",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "modulo-cocina-85",
+      "name": "Módulo de Cocina 85",
+      "category": "Cocina",
+      "description": "Dos compartimentos con puertas en un módulo bajo de altura y fondo contenido.",
+      "active": false,
+      "version": 1,
+      "order": 21,
+      "basePrice": 140,
+      "weeks": 3,
+      "construction": {
+        "kind": "cabinet"
+      },
+      "limits": {
+        "width": {
+          "min": 600,
+          "max": 1200
+        },
+        "height": {
+          "min": 250,
+          "max": 600
+        },
+        "depth": {
+          "min": 250,
+          "max": 450
+        }
+      },
+      "defaults": {
+        "width": 850,
+        "height": 330,
+        "depth": 330,
+        "modules": 2,
+        "shelves": 0,
+        "doors": "full",
+        "finish": "hispano-gris-suave",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "aparador-abierto-143",
+      "name": "Aparador Abierto 143",
+      "category": "Aparadores",
+      "description": "Cuatro espacios amplios con fondo generoso para guardar vajilla, cajas o accesorios del comedor.",
+      "active": false,
+      "version": 1,
+      "order": 22,
+      "basePrice": 140,
+      "weeks": 3,
+      "construction": {
+        "kind": "cabinet"
+      },
+      "limits": {
+        "width": {
+          "min": 1000,
+          "max": 1540
+        },
+        "height": {
+          "min": 500,
+          "max": 1000
+        },
+        "depth": {
+          "min": 350,
+          "max": 600
+        }
+      },
+      "defaults": {
+        "width": 1430,
+        "height": 700,
+        "depth": 480,
+        "modules": 2,
+        "shelves": 1,
+        "doors": "none",
+        "finish": "hispano-almendra-02",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "recibidor-abierto-205",
+      "name": "Recibidor Abierto 205",
+      "category": "Auxiliares",
+      "description": "Una base de almacenaje para el recibidor, con tres columnas y seis espacios fáciles de organizar.",
+      "active": false,
+      "version": 1,
+      "order": 23,
+      "basePrice": 140,
+      "weeks": 3,
+      "construction": {
+        "kind": "cabinet"
+      },
+      "limits": {
+        "width": {
+          "min": 1500,
+          "max": 2300
+        },
+        "height": {
+          "min": 600,
+          "max": 1100
+        },
+        "depth": {
+          "min": 250,
+          "max": 450
+        }
+      },
+      "defaults": {
+        "width": 2050,
+        "height": 840,
+        "depth": 300,
+        "modules": 3,
+        "shelves": 1,
+        "doors": "none",
+        "finish": "hispano-chiavenna",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "repisa-doble-106",
+      "name": "Repisa Doble 106",
+      "category": "Estanterías",
+      "description": "Dos compartimentos horizontales de poca altura para acompañar una zona de trabajo o de lectura.",
+      "active": false,
+      "version": 1,
+      "order": 24,
+      "basePrice": 180,
+      "weeks": 3,
+      "construction": {
+        "kind": "open-shelf"
+      },
+      "limits": {
+        "width": {
+          "min": 700,
+          "max": 1500
+        },
+        "height": {
+          "min": 200,
+          "max": 450
+        },
+        "depth": {
+          "min": 250,
+          "max": 450
+        }
+      },
+      "defaults": {
+        "width": 1060,
+        "height": 200,
+        "depth": 340,
+        "modules": 2,
+        "shelves": 0,
+        "doors": "none",
+        "finish": "hispano-gris-grafito-02",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    }
+  ]
+}

@@ -1,12 +1,13 @@
 # El capo
 
-Plataforma en español para diseñar y cotizar muebles de **melamina de 18 mm**. Esta primera versión desarrolla una familia de almacenaje modular: estanterías, libreros, aparadores y muebles de TV. No incluye sofás.
+Plataforma en español para diseñar y cotizar muebles de **melamina de 18 mm**: almacenaje modular, estanterías sin trasera, escritorios abiertos y escritorios con módulo lateral. El catálogo incluye propuestas de libreros, aparadores, TV, veladores, zapateras y auxiliares de cocina. No incluye sofás.
 
 La identidad visible es **El capo**, con la firma **Muebles en melamina Marlon**. Los nombres técnicos del repositorio, alojamiento y autenticador se mantienen para conservar las conexiones existentes. Ver [identidad visual](docs/brand-identity.md) y [ampliación del catálogo](docs/catalog-expansion.md): cuatro propuestas adicionales importables y editables desde administración.
 
 ## Qué funciona
 
 - Catálogo conectado a una base de datos D1: crear, duplicar, editar, activar y ocultar modelos.
+- Colección adicional de [16 modelos de taller](docs/coleccion-taller.md), con tipo constructivo administrable, búsqueda por nombre/categoría y vistas de catálogo que se cargan al acercarse a pantalla para limitar contextos 3D.
 - Configurador 3D con giro y zoom, vistas frontal/lateral/superior, apertura de puertas y cotas de ancho, alto y fondo sobre el modelo. Las cotas siguen la cámara y se incluyen en el PNG si están activadas.
 - Selector con 82 referencias comerciales de Hispano, Vesto y Pelíkano, buscador y muestras oficiales alojadas en la propia web. El panel permite editar los acabados sin cambiar código; los colores y vetas del visor son orientativos y la disponibilidad local se confirma con el taller.
 - Motor compartido de geometría, restricciones, despiece y precio. El servidor calcula la cotización; no acepta precios del navegador.
@@ -76,7 +77,7 @@ No publicar el directorio completo `dist/` como archivos estáticos: la parte p�
 
 - La importación CSV/JSON ya funciona; la sincronización automática de Google Sheets requiere una conexión posterior.
 - Un GLB/SketchUp arbitrario no se convierte automáticamente en plantilla. El piloto genera geometría paramétrica de tableros.
-- Cajones, correderas, puertas corredizas, cocinas y nuevas familias requieren sus reglas y pruebas.
+- Cajones, correderas, puertas corredizas, cocinas completas con instalaciones o mecanismos y otras familias requieren sus reglas y pruebas.
 - El CSV aún no está homologado para una versión concreta de CutMaster. No incluye optimización de corte.
 - La disponibilidad es un ajuste orientativo, no una agenda de reservas ni una fecha comprometida.
 - Hay un correo administrativo autorizado con verificación en dos pasos; las cuentas de empleados y el restablecimiento automático de contraseña quedan pendientes. El envío de códigos por correo requiere activar un proveedor y verificar la recepción real.

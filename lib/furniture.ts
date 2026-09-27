@@ -100,16 +100,57 @@ const limit = z
     (value) => value.min <= value.max,
     "El mínimo debe ser menor o igual al máximo",
   );
+export const productCategories = [
+  "Estanterías",
+  "Libreros",
+  "Aparadores",
+  "Muebles de TV",
+  "Escritorios",
+  "Veladores",
+  "Zapateras",
+  "Auxiliares",
+  "Cocina",
+] as const;
+export const constructionKinds = [
+  "cabinet",
+  "open-shelf",
+  "desk",
+  "desk-storage",
+] as const;
+export const constructionSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("cabinet") }).strict(),
+  z.object({ kind: z.literal("open-shelf") }).strict(),
+  z.object({ kind: z.literal("desk") }).strict(),
+  z
+    .object({
+      kind: z.literal("desk-storage"),
+      storageSide: z.enum(["left", "right"]).optional(),
+      // Exterior pedestal width, including both of its 18 mm sides.
+      storageWidth: z
+        .number()
+        .finite()
+        .int()
+        .min(250)
+        .max(650)
+        .multipleOf(10)
+        .optional(),
+    })
+    .strict(),
+]);
+export type Construction = z.infer<typeof constructionSchema>;
+export type ResolvedConstruction =
+  | Exclude<Construction, { kind: "desk-storage" }>
+  | {
+      kind: "desk-storage";
+      storageSide: "left" | "right";
+      storageWidth: number;
+    };
 export const productSchema = z
   .object({
     id: z.string().regex(/^[a-z0-9-]{2,60}$/),
     name: z.string().trim().min(2).max(70),
-    category: z.enum([
-      "Estanterías",
-      "Libreros",
-      "Aparadores",
-      "Muebles de TV",
-    ]),
+    category: z.enum(productCategories),
+    construction: constructionSchema.optional(),
     description: z.string().trim().min(5).max(350),
     active: z.boolean(),
     version: z.number().int().min(1),
@@ -121,6 +162,41 @@ export const productSchema = z
   })
   .strict();
 export type Product = z.infer<typeof productSchema>;
+/** Resolve locally without adding defaults to stored products or snapshots. */
+export function getConstruction(
+  product: Pick<Product, "construction">,
+): ResolvedConstruction {
+  const construction = constructionSchema.parse(
+    product.construction ?? { kind: "cabinet" },
+  );
+  return construction.kind === "desk-storage"
+    ? {
+        kind: "desk-storage",
+        storageSide: construction.storageSide ?? "left",
+        storageWidth: construction.storageWidth ?? 450,
+      }
+    : construction;
+}
+export function getConstructionOptions(
+  product: Pick<Product, "construction">,
+): {
+  modules: number[];
+  shelves: number[];
+  doors: Config["doors"][];
+} {
+  const { kind } = getConstruction(product);
+  if (kind === "desk") return { modules: [1], shelves: [0], doors: ["none"] };
+  return {
+    modules: kind === "desk-storage" ? [1] : [1, 2, 3, 4, 5, 6],
+    shelves: [0, 1, 2, 3, 4, 5, 6, 7],
+    doors:
+      kind === "open-shelf"
+        ? ["none"]
+        : kind === "desk-storage"
+          ? ["none", "full"]
+          : ["none", "lower", "full"],
+  };
+}
 const seededMaterials = (): Material[] =>
   finishes.map((finish) => ({
     ...finish,
@@ -438,7 +514,52 @@ export function validateConfig(product: Product, config: Config): true {
         `Medida inválida: ${{ width: "ancho", height: "alto", depth: "fondo" }[key]}. Respeta el rango y los pasos de 10 mm.`,
       );
   }
-  const widths = moduleWidths(config);
+  const construction = getConstruction(product);
+  const options = getConstructionOptions(product);
+  if (
+    !options.modules.includes(config.modules) ||
+    !options.shelves.includes(config.shelves) ||
+    !options.doors.includes(config.doors)
+  )
+    throw new Error(
+      "La distribución no es compatible con la construcción de este modelo.",
+    );
+  if (construction.kind === "desk" || construction.kind === "desk-storage") {
+    if (
+      config.height < 700 ||
+      config.height > 850 ||
+      config.depth < 450 ||
+      config.depth > 750
+    )
+      throw new Error(
+        "El escritorio admite alto de 700 a 850 mm y fondo de 450 a 750 mm.",
+      );
+    const maximumWidth = construction.kind === "desk" ? 1200 : 1600;
+    if (config.width > maximumWidth)
+      throw new Error(
+        `Esta construcción de escritorio admite hasta ${maximumWidth} mm de ancho.`,
+      );
+    const kneeWidth =
+      construction.kind === "desk"
+        ? config.width - 2 * THICKNESS
+        : config.width - construction.storageWidth - THICKNESS;
+    if (
+      kneeWidth < 600 ||
+      (construction.kind === "desk-storage" && kneeWidth > 1000) ||
+      config.height - THICKNESS < 620
+    )
+      throw new Error(
+        "El hueco de trabajo requiere al menos 600 mm libres de ancho y 620 mm de alto; junto al pedestal admite hasta 1000 mm de ancho.",
+      );
+    // Unlike a shelf, a desktop has full-height side supports and a real rear apron.
+    // These bounded pilot layouts still require workshop joint/load validation.
+    if (construction.kind === "desk") return true;
+  }
+  const widths = moduleWidths(
+    construction.kind === "desk-storage"
+      ? { ...config, width: construction.storageWidth, modules: 1 }
+      : config,
+  );
   if (Math.min(...widths) < 180)
     throw new Error(
       "Cada módulo necesita al menos 180 mm libres. Reduce las divisiones.",
@@ -464,7 +585,8 @@ export function validateConfig(product: Product, config: Config): true {
     throw new Error(
       "Cada puerta necesita al menos 120 mm de altura. Aumenta la altura o elige una distribución abierta.",
     );
-  if (config.depth - THICKNESS - SHELF_REAR_GAP - SHELF_FRONT_SETBACK <= 0)
+  const backThickness = construction.kind === "open-shelf" ? 0 : THICKNESS;
+  if (config.depth - backThickness - SHELF_REAR_GAP - SHELF_FRONT_SETBACK <= 0)
     throw new Error("El fondo no permite alojar las repisas y sus holguras.");
   return true;
 }
@@ -488,13 +610,35 @@ export function buildFurniture(
   config: Config,
   inputSettings: Settings = defaultSettings,
 ): Result {
-  validateConfig(product, config);
+  return createFurnitureBuilder(inputSettings)(product, config);
+}
+/** A private, validated settings snapshot for several builds within one request. */
+export function createFurnitureBuilder(
+  inputSettings: Settings = defaultSettings,
+): (product: Product, config: Config) => Result {
   const settings = settingsSchema.parse(inputSettings);
+  const rates = new Map(
+    settings.materials.map((material) => [
+      material.id,
+      (material.price * settings.materialRate) / 100,
+    ]),
+  );
+  return (product, config) =>
+    buildWithSettings(product, config, settings, rates);
+}
+function buildWithSettings(
+  product: Product,
+  config: Config,
+  settings: Settings,
+  rates: ReadonlyMap<string, number>,
+): Result {
+  validateConfig(product, config);
   const outerMaterial = activeMaterial(settings, config.finish),
     innerMaterial = activeMaterial(
       settings,
       config.interior === "same" ? config.finish : config.interior,
     );
+  const construction = getConstruction(product);
   const t = THICKNESS,
     { width: W, height: H, depth: D } = config;
   const {
@@ -550,131 +694,270 @@ export function buildFurniture(
       ...(door ? { door: true } : {}),
     });
   }
-  add(
-    "LAT_IZQ",
-    "Lateral izquierdo",
-    H,
-    D,
-    [t, H, D],
-    [-W / 2 + t / 2, H / 2, 0],
-    "y",
-    "z",
-    outerMaterial,
-    frontEdge,
-  );
-  add(
-    "LAT_DER",
-    "Lateral derecho",
-    H,
-    D,
-    [t, H, D],
-    [W / 2 - t / 2, H / 2, 0],
-    "y",
-    "z",
-    outerMaterial,
-    frontEdge,
-  );
-  add(
-    "TECHO",
-    "Techo",
-    W - 2 * t,
-    D,
-    [W - 2 * t, t, D],
-    [0, H - t / 2, 0],
-    "x",
-    "z",
-    outerMaterial,
-    frontEdge,
-  );
-  add(
-    "PISO",
-    "Piso",
-    W - 2 * t,
-    D,
-    [W - 2 * t, t, D],
-    [0, t / 2, 0],
-    "x",
-    "z",
-    outerMaterial,
-    frontEdge,
-  );
-  add(
-    "FONDO",
-    "Trasera interior",
-    I,
-    W - 2 * t,
-    [W - 2 * t, I, t],
-    [0, H / 2, -D / 2 + t / 2],
-    "y",
-    "x",
-    innerMaterial,
-    plainEdges,
-  );
-  const shelfDepth = D - t - SHELF_REAR_GAP - SHELF_FRONT_SETBACK,
-    shelfZ = (t + SHELF_REAR_GAP - SHELF_FRONT_SETBACK) / 2;
-  const clearHeight = (shelfZone - config.shelves * t) / (config.shelves + 1);
-  let left = -W / 2 + t;
-  for (let module = 0; module < config.modules; module++) {
-    const bay = widths[module],
-      x = left + bay / 2;
-    if (lowerHeight)
+  if (construction.kind === "desk" || construction.kind === "desk-storage") {
+    const supportHeight = H - t;
+    const apronHeight = 180;
+    const sideEdges: Panel["edges"] = { ...frontEdge, left: "Grueso" };
+    add(
+      "TAPA",
+      "Tapa de escritorio",
+      W,
+      D,
+      [W, t, D],
+      [0, H - t / 2, 0],
+      "x",
+      "z",
+      outerMaterial,
+      doorEdges,
+    );
+    const support = (id: string, name: string, x: number) =>
       add(
-        `SEP_${module}`,
-        `Separador inferior ${module + 1}`,
-        bay - 2 * SIDE_CLEARANCE,
-        shelfDepth,
-        [bay - 2 * SIDE_CLEARANCE, t, shelfDepth],
-        [x, t + lowerHeight + t / 2, shelfZ],
-        "x",
-        "z",
-        innerMaterial,
-        frontEdge,
-      );
-    for (let shelf = 0; shelf < config.shelves; shelf++)
-      add(
-        `REPISA_${module}_${shelf}`,
-        `Repisa ${module + 1}.${shelf + 1}`,
-        bay - 2 * SIDE_CLEARANCE,
-        shelfDepth,
-        [bay - 2 * SIDE_CLEARANCE, t, shelfDepth],
-        [x, shelfStart + (shelf + 1) * clearHeight + shelf * t + t / 2, shelfZ],
-        "x",
-        "z",
-        innerMaterial,
-        frontEdge,
-      );
-    if (config.doors !== "none") {
-      const doorHeight = (lowerHeight || I) - 2 * FRONT_GAP,
-        doorWidth = bay - 2 * FRONT_GAP;
-      add(
-        `PUERTA_${module}`,
-        `Puerta ${module + 1}`,
-        doorHeight,
-        doorWidth,
-        [doorWidth, doorHeight, t],
-        [x, t + FRONT_GAP + doorHeight / 2, D / 2 - t / 2],
+        id,
+        name,
+        supportHeight,
+        D,
+        [t, supportHeight, D],
+        [x, supportHeight / 2, 0],
         "y",
-        "x",
+        "z",
         outerMaterial,
-        doorEdges,
-        true,
+        sideEdges,
       );
-    }
-    left += bay;
-    if (module < config.modules - 1) {
+    let kneeWidth = W - 2 * t;
+    let kneeCenter = 0;
+    if (construction.kind === "desk") {
+      support("LAT_IZQ", "Apoyo izquierdo", -W / 2 + t / 2);
+      support("LAT_DER", "Apoyo derecho", W / 2 - t / 2);
+    } else {
+      const storageWidth = construction.storageWidth;
+      const mirror = construction.storageSide === "left" ? 1 : -1;
+      const center = (-W / 2 + storageWidth / 2) * mirror;
+      const bay = storageWidth - 2 * t;
+      support(
+        "LAT_ALMACEN",
+        "Lateral exterior del pedestal",
+        (-W / 2 + t / 2) * mirror,
+      );
+      support(
+        "DIV_ALMACEN",
+        "Separación del pedestal y el hueco",
+        (-W / 2 + storageWidth - t / 2) * mirror,
+      );
+      support(
+        "APOYO_LIBRE",
+        "Apoyo exterior del hueco",
+        (W / 2 - t / 2) * mirror,
+      );
+      kneeWidth = W - storageWidth - t;
+      kneeCenter = ((storageWidth - t) / 2) * mirror;
       add(
-        `DIV_${module + 1}`,
-        `División ${module + 1}`,
-        I,
-        D - t,
-        [t, I, D - t],
-        [left + t / 2, H / 2, t / 2],
-        "y",
+        "PISO_ALMACEN",
+        "Piso del pedestal",
+        bay,
+        D,
+        [bay, t, D],
+        [center, t / 2, 0],
+        "x",
         "z",
         innerMaterial,
         frontEdge,
       );
-      left += t;
+      add(
+        "FONDO_ALMACEN",
+        "Trasera del pedestal",
+        I,
+        bay,
+        [bay, I, t],
+        [center, H / 2, -D / 2 + t / 2],
+        "y",
+        "x",
+        innerMaterial,
+        plainEdges,
+      );
+      const shelfDepth = D - t - SHELF_REAR_GAP - SHELF_FRONT_SETBACK;
+      const shelfZ = (t + SHELF_REAR_GAP - SHELF_FRONT_SETBACK) / 2;
+      const clearance = (I - config.shelves * t) / (config.shelves + 1);
+      for (let shelf = 0; shelf < config.shelves; shelf++)
+        add(
+          `REPISA_ALMACEN_${shelf}`,
+          `Repisa del pedestal ${shelf + 1}`,
+          bay - 2 * SIDE_CLEARANCE,
+          shelfDepth,
+          [bay - 2 * SIDE_CLEARANCE, t, shelfDepth],
+          [center, t + (shelf + 1) * clearance + shelf * t + t / 2, shelfZ],
+          "x",
+          "z",
+          innerMaterial,
+          frontEdge,
+        );
+      if (config.doors === "full") {
+        const doorHeight = I - 2 * FRONT_GAP,
+          doorWidth = bay - 2 * FRONT_GAP;
+        add(
+          "PUERTA_ALMACEN",
+          "Puerta del pedestal",
+          doorHeight,
+          doorWidth,
+          [doorWidth, doorHeight, t],
+          [center, H / 2, D / 2 - t / 2],
+          "y",
+          "x",
+          outerMaterial,
+          doorEdges,
+          true,
+        );
+      }
+    }
+    // The apron occupies only the rear 18 mm and touches supports/top without overlap.
+    add(
+      "FALDON",
+      "Faldón trasero de escritorio",
+      kneeWidth,
+      apronHeight,
+      [kneeWidth, apronHeight, t],
+      [kneeCenter, H - t - apronHeight / 2, -D / 2 + t / 2],
+      "x",
+      "y",
+      innerMaterial,
+      { ...plainEdges, left: "Grueso" },
+    );
+  } else {
+    const backThickness = construction.kind === "open-shelf" ? 0 : t;
+    const carcassEdges: Panel["edges"] =
+      construction.kind === "open-shelf"
+        ? { ...frontEdge, left: "Grueso" }
+        : frontEdge;
+    add(
+      "LAT_IZQ",
+      "Lateral izquierdo",
+      H,
+      D,
+      [t, H, D],
+      [-W / 2 + t / 2, H / 2, 0],
+      "y",
+      "z",
+      outerMaterial,
+      carcassEdges,
+    );
+    add(
+      "LAT_DER",
+      "Lateral derecho",
+      H,
+      D,
+      [t, H, D],
+      [W / 2 - t / 2, H / 2, 0],
+      "y",
+      "z",
+      outerMaterial,
+      carcassEdges,
+    );
+    add(
+      "TECHO",
+      "Techo",
+      W - 2 * t,
+      D,
+      [W - 2 * t, t, D],
+      [0, H - t / 2, 0],
+      "x",
+      "z",
+      outerMaterial,
+      carcassEdges,
+    );
+    add(
+      "PISO",
+      "Piso",
+      W - 2 * t,
+      D,
+      [W - 2 * t, t, D],
+      [0, t / 2, 0],
+      "x",
+      "z",
+      outerMaterial,
+      carcassEdges,
+    );
+    if (backThickness)
+      add(
+        "FONDO",
+        "Trasera interior",
+        I,
+        W - 2 * t,
+        [W - 2 * t, I, t],
+        [0, H / 2, -D / 2 + t / 2],
+        "y",
+        "x",
+        innerMaterial,
+        plainEdges,
+      );
+    const shelfDepth = D - backThickness - SHELF_REAR_GAP - SHELF_FRONT_SETBACK,
+      shelfZ = (backThickness + SHELF_REAR_GAP - SHELF_FRONT_SETBACK) / 2;
+    const clearHeight = (shelfZone - config.shelves * t) / (config.shelves + 1);
+    let left = -W / 2 + t;
+    for (let module = 0; module < config.modules; module++) {
+      const bay = widths[module],
+        x = left + bay / 2;
+      if (lowerHeight)
+        add(
+          `SEP_${module}`,
+          `Separador inferior ${module + 1}`,
+          bay - 2 * SIDE_CLEARANCE,
+          shelfDepth,
+          [bay - 2 * SIDE_CLEARANCE, t, shelfDepth],
+          [x, t + lowerHeight + t / 2, shelfZ],
+          "x",
+          "z",
+          innerMaterial,
+          carcassEdges,
+        );
+      for (let shelf = 0; shelf < config.shelves; shelf++)
+        add(
+          `REPISA_${module}_${shelf}`,
+          `Repisa ${module + 1}.${shelf + 1}`,
+          bay - 2 * SIDE_CLEARANCE,
+          shelfDepth,
+          [bay - 2 * SIDE_CLEARANCE, t, shelfDepth],
+          [
+            x,
+            shelfStart + (shelf + 1) * clearHeight + shelf * t + t / 2,
+            shelfZ,
+          ],
+          "x",
+          "z",
+          innerMaterial,
+          carcassEdges,
+        );
+      if (config.doors !== "none") {
+        const doorHeight = (lowerHeight || I) - 2 * FRONT_GAP,
+          doorWidth = bay - 2 * FRONT_GAP;
+        add(
+          `PUERTA_${module}`,
+          `Puerta ${module + 1}`,
+          doorHeight,
+          doorWidth,
+          [doorWidth, doorHeight, t],
+          [x, t + FRONT_GAP + doorHeight / 2, D / 2 - t / 2],
+          "y",
+          "x",
+          outerMaterial,
+          doorEdges,
+          true,
+        );
+      }
+      left += bay;
+      if (module < config.modules - 1) {
+        add(
+          `DIV_${module + 1}`,
+          `División ${module + 1}`,
+          I,
+          D - backThickness,
+          [t, I, D - backThickness],
+          [left + t / 2, H / 2, backThickness / 2],
+          "y",
+          "z",
+          innerMaterial,
+          carcassEdges,
+        );
+        left += t;
+      }
     }
   }
   const area = panels.reduce(
@@ -694,12 +977,6 @@ export function buildFurniture(
   const doorPanels = panels.filter((panel) => panel.door),
     doors = doorPanels.length,
     hardware = doors * settings.doorHardware;
-  const rates = new Map(
-    settings.materials.map((material) => [
-      material.id,
-      (material.price * settings.materialRate) / 100,
-    ]),
-  );
   const materials = panels.reduce(
     (sum, panel) =>
       sum + ((panel.length * panel.width) / 1e6) * rates.get(panel.material)!,
@@ -743,7 +1020,8 @@ export function buildFurniture(
       },
       {
         name: "Soportes de repisa",
-        quantity: config.modules * config.shelves * 4,
+        quantity:
+          panels.filter((panel) => panel.id.startsWith("REPISA_")).length * 4,
       },
     ].filter((accessory) => accessory.quantity > 0),
   };

@@ -7,7 +7,12 @@ import {
 } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { createCameraMotion } from "./camera-motion";
+import {
+  animationProgress,
+  createCameraMotion,
+  getResizeDirection,
+  getViewDirection,
+} from "./camera-motion";
 import { createSwatchTextures } from "./swatch-textures";
 import { createDimensionOverlay } from "./viewer-dimensions";
 import type { VisualPanel } from "../lib/public-geometry";
@@ -200,7 +205,11 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
       animationFrame = 0;
       if (disposed) return;
       for (const [channel, motion] of motions) {
-        const progress = Math.min(1, (now - motion.started) / motion.duration);
+        const progress = animationProgress(
+          now,
+          motion.started,
+          motion.duration,
+        );
         motion.update(1 - Math.pow(1 - progress, 3));
         if (progress === 1) motions.delete(channel);
       }
@@ -301,7 +310,12 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
       renderer.setSize(w, h);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
-      frame();
+      const direction = getResizeDirection(
+        camera,
+        controls.target,
+        motions.has("camera") ? settle : undefined,
+      );
+      frame(direction);
       render();
     };
     const ro = new ResizeObserver(resize);
@@ -417,7 +431,7 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
         r.group.add(hinge);
       } else r.group.add(mesh);
     });
-    if (needsInitialFrame) r.frame();
+    if (needsInitialFrame) r.frame(getViewDirection(view));
     r.render();
     return () => swatches.dispose();
   }, [panels, materials, handle, small]);
@@ -469,12 +483,7 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
   useEffect(() => {
     const r = runtime.current;
     if (!r) return;
-    const direction = new THREE.Vector3();
-    if (view === "front") direction.set(0, 0.001, 1);
-    else if (view === "side") direction.set(1, 0.001, 0.001);
-    else if (view === "top") direction.set(0, 1, 0.001);
-    else direction.set(0.52, 0.27, 1);
-    r.frame(direction.normalize(), true);
+    r.frame(getViewDirection(view), true);
   }, [width, height, depth, view, small, open, reference, environment]);
   return (
     <div className={"viewer " + (small ? "viewer-small" : "")} ref={mount}>

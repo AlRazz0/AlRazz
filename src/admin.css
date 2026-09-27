@@ -195,8 +195,16 @@
   border-top: 1px solid #e6dfd4;
   border-bottom: 1px solid #e6dfd4;
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   align-items: center;
+}
+.admin-construction-name {
+  margin-top: 3px;
+  color: #776b5d;
+}
+.admin-construction-settings {
+  margin: 18px 0;
 }
 .admin-search {
   display: flex;
@@ -293,16 +301,12 @@
   width: 51px;
   height: 53px;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3px;
-  background: var(--furniture-color);
+  place-items: center;
+  color: #514839;
+  background: color-mix(in srgb, var(--furniture-color), white 65%);
   padding: 4px;
   box-shadow: 3px 4px 0 #e9e2d7;
   flex-shrink: 0;
-}
-.admin-product-icon i {
-  border-bottom: 2px solid var(--furniture-color);
-  background: color-mix(in srgb, var(--furniture-color), white 45%);
 }
 .admin-cell-note {
   display: block;
@@ -1155,7 +1159,8 @@
     order: 0;
   }
   .admin-toolbar select {
-    flex: 1;
+    flex: 1 1 100%;
+    width: 100%;
     min-width: 0;
   }
   .admin-data-actions {

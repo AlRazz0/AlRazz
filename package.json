@@ -10,7 +10,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "check": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test tests/furniture.test.ts tests/auth.test.ts tests/deployment.test.mjs tests/camera.test.ts tests/swatch-textures.test.ts tests/viewer-dimensions.test.ts tests/pages.test.mjs tests/catalog-expansion.test.ts",
+    "test": "node --experimental-strip-types --test tests/furniture.test.ts tests/auth.test.ts tests/deployment.test.mjs tests/camera.test.ts tests/swatch-textures.test.ts tests/viewer-dimensions.test.ts tests/pages.test.mjs tests/catalog-expansion.test.ts tests/construction.test.ts tests/construction-csv.test.ts tests/workshop-collection.test.ts",
     "test:api": "node --experimental-strip-types --test tests/api.integration.mjs",
     "test:auth-api": "node --experimental-strip-types --test tests/auth.integration.mjs",
     "setup:local": "node scripts/setup-local.mjs",

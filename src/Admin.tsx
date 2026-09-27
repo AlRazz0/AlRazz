@@ -60,10 +60,14 @@ import {
 import { api, download } from "../lib/api";
 import {
   defaultSettings,
+  getConstruction,
+  getConstructionOptions,
+  productCategories,
   seedProducts,
   settingsSchema,
   validateProduct,
   type Config,
+  type Construction,
   type Product,
   type Result,
   type Settings,
@@ -79,6 +83,14 @@ import { mergeCommercialMaterials } from "../lib/material-catalog";
 import { materialLabel, materialBrands } from "./materials";
 import { MaterialSource, MaterialSwatch } from "./MaterialSwatch";
 import { Brand } from "./Brand";
+import {
+  constructionTemplates,
+  productTemplate,
+} from "../lib/product-templates";
+import {
+  constructionDescriptions,
+  constructionLabels,
+} from "./construction-labels";
 
 type AdminSnapshot = {
   admin: boolean;
@@ -108,12 +120,6 @@ type CutListSnapshot = {
   config: Config;
   result: Result;
 };
-const categories: Product["category"][] = [
-  "Estanterías",
-  "Libreros",
-  "Aparadores",
-  "Muebles de TV",
-];
 const dimensions = [
   { key: "width", name: "Ancho" },
   { key: "height", name: "Alto" },
@@ -271,6 +277,8 @@ export default function Admin() {
   const [notice, setNotice] = useState("");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [constructionFilter, setConstructionFilter] = useState("all");
   const [materialFilter, setMaterialFilter] = useState("all");
   const [materialSearch, setMaterialSearch] = useState("");
   const [editor, setEditor] = useState<Product | null>(null);
@@ -311,6 +319,24 @@ export default function Admin() {
   const editorDirty =
     !!editor &&
     (!original || JSON.stringify(editor) !== JSON.stringify(original));
+  // Numeric draft fields may temporarily be empty or outside their range.
+  // Resolve capabilities from the kind; validate the full draft when saving.
+  const editorConstructionBase = editor
+    ? getConstruction({
+        construction:
+          editor.construction?.kind === "desk-storage"
+            ? { kind: "desk-storage" }
+            : editor.construction,
+      })
+    : null;
+  const editorConstruction =
+    editorConstructionBase?.kind === "desk-storage" &&
+    editor?.construction?.kind === "desk-storage"
+      ? { ...editorConstructionBase, ...editor.construction }
+      : editorConstructionBase;
+  const editorOptions = editorConstructionBase
+    ? getConstructionOptions({ construction: editorConstructionBase })
+    : null;
 
   async function load() {
     setLoading(true);
@@ -374,14 +400,17 @@ export default function Admin() {
       products
         .filter(
           (product) =>
-            `${product.name} ${product.id} ${product.category}`
-              .toLocaleLowerCase("es")
-              .includes(search.toLocaleLowerCase("es")) &&
+            materialSearchText(
+              `${product.name} ${product.id} ${product.category} ${constructionLabels[getConstruction(product).kind]}`,
+            ).includes(materialSearchText(search.trim())) &&
+            (categoryFilter === "all" || product.category === categoryFilter) &&
+            (constructionFilter === "all" ||
+              getConstruction(product).kind === constructionFilter) &&
             (filter === "all" ||
               (filter === "visible" ? product.active : !product.active)),
         )
         .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name)),
-    [products, search, filter],
+    [products, search, filter, categoryFilter, constructionFilter],
   );
   const activeCount = products.filter((product) => product.active).length;
   const setSetting = <K extends keyof Settings>(key: K, value: Settings[K]) =>
@@ -394,6 +423,27 @@ export default function Admin() {
         ? { ...current, defaults: { ...current.defaults, [key]: value } }
         : null,
     );
+  function changeConstruction(kind: Construction["kind"]) {
+    const template = productTemplate(kind);
+    setEditor((current) =>
+      current
+        ? {
+            ...current,
+            construction: template.construction,
+            limits: clone(template.limits),
+            defaults: {
+              ...template.defaults,
+              finish: current.defaults.finish,
+              interior: current.defaults.interior,
+              handle: current.defaults.handle,
+              install: current.defaults.install,
+              transport: current.defaults.transport,
+            },
+          }
+        : null,
+    );
+    setEditorError("");
+  }
   const mergeProducts = (changed: Product[]) =>
     setProducts((current) => [
       ...current.filter(
@@ -1243,7 +1293,7 @@ export default function Admin() {
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
                     placeholder="Buscar un mueble…"
-                    aria-label="Buscar muebles por nombre, identificador o categoría"
+                    aria-label="Buscar muebles por nombre, identificador, categoría o construcción"
                   />
                 </label>
                 <select
@@ -1254,6 +1304,33 @@ export default function Admin() {
                   <option value="all">Todos los estados</option>
                   <option value="visible">Visibles</option>
                   <option value="draft">Borradores</option>
+                </select>
+                <select
+                  value={categoryFilter}
+                  onChange={(event) => setCategoryFilter(event.target.value)}
+                  aria-label="Filtrar por categoría"
+                >
+                  <option value="all">Todas las categorías</option>
+                  {productCategories.map((category) => (
+                    <option key={category}>{category}</option>
+                  ))}
+                </select>
+                <select
+                  value={constructionFilter}
+                  onChange={(event) =>
+                    setConstructionFilter(event.target.value)
+                  }
+                  aria-label="Filtrar por construcción"
+                >
+                  <option value="all">Todas las construcciones</option>
+                  {constructionTemplates.map((template) => {
+                    const kind = getConstruction(template).kind;
+                    return (
+                      <option key={kind} value={kind}>
+                        {constructionLabels[kind]}
+                      </option>
+                    );
+                  })}
                 </select>
                 <div className="admin-data-actions">
                   <button
@@ -1314,15 +1391,23 @@ export default function Admin() {
                               } as CSSProperties
                             }
                           >
-                            <i />
-                            <i />
-                            <i />
-                            <i />
+                            <Package
+                              size={24}
+                              strokeWidth={1.4}
+                              aria-hidden="true"
+                            />
                           </div>
                           <div>
                             <strong>{product.name}</strong>
                             <small>
                               {product.category} · {product.id}
+                            </small>
+                            <small className="admin-construction-name">
+                              {
+                                constructionLabels[
+                                  getConstruction(product).kind
+                                ]
+                              }
                             </small>
                           </div>
                         </div>
@@ -2066,7 +2151,7 @@ export default function Admin() {
           >
             <X size={21} />
           </button>
-          {editor && (
+          {editor && editorConstruction && editorOptions && (
             <form onSubmit={saveProduct}>
               <div className="admin-dialog-body">
                 {editorError && (
@@ -2074,39 +2159,65 @@ export default function Admin() {
                     {editorError}
                   </div>
                 )}
-                {!original && (
-                  <Field title="Modelo de partida">
-                    <select
-                      defaultValue=""
-                      onChange={(event) => {
-                        const template = seedProducts.find(
-                          (product) => product.id === event.target.value,
-                        );
-                        if (template)
-                          setEditor((current) =>
-                            current
-                              ? {
-                                  ...compatibleTemplate(template),
-                                  id: current.id,
-                                  name: current.name,
-                                  active: false,
-                                  version: 1,
-                                  order: current.order,
-                                }
-                              : null,
-                          );
-                      }}
-                    >
-                      <option value="" disabled>
-                        Selecciona una estructura
+                <Field
+                  title="Tipo de construcción"
+                  note="Al cambiar el tipo se restablecen las medidas, límites y distribución de su plantilla. La identidad, categoría y acabados se conservan."
+                >
+                  <select
+                    value={editorConstruction.kind}
+                    onChange={(event) =>
+                      changeConstruction(
+                        event.target.value as Construction["kind"],
+                      )
+                    }
+                  >
+                    {constructionTemplates.map((template) => (
+                      <option
+                        key={getConstruction(template).kind}
+                        value={getConstruction(template).kind}
+                      >
+                        {constructionLabels[getConstruction(template).kind]}
                       </option>
-                      {seedProducts.map((product) => (
-                        <option key={product.id} value={product.id}>
-                          {product.name} · {product.category}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
+                    ))}
+                  </select>
+                </Field>
+                <p className="admin-help">
+                  {constructionDescriptions[editorConstruction.kind]}
+                </p>
+                {editorConstruction.kind === "desk-storage" && (
+                  <div className="admin-form-grid admin-construction-settings">
+                    <Field
+                      title="Ubicación del módulo lateral"
+                      note="Mirando el escritorio de frente."
+                    >
+                      <select
+                        value={editorConstruction.storageSide}
+                        onChange={(event) =>
+                          setProduct("construction", {
+                            ...editorConstruction,
+                            storageSide: event.target.value as "left" | "right",
+                          })
+                        }
+                      >
+                        <option value="left">Izquierda</option>
+                        <option value="right">Derecha</option>
+                      </select>
+                    </Field>
+                    <NumberField
+                      title="Ancho exterior del módulo · mm"
+                      value={editorConstruction.storageWidth}
+                      min={250}
+                      max={650}
+                      step={10}
+                      change={(value) =>
+                        setProduct("construction", {
+                          ...editorConstruction,
+                          storageWidth: value,
+                        })
+                      }
+                      note="Incluye los laterales de 18 mm. El ancho del hueco de trabajo se valida al guardar."
+                    />
+                  </div>
                 )}
                 <h3>Información del modelo</h3>
                 <div className="admin-form-grid">
@@ -2150,7 +2261,7 @@ export default function Admin() {
                         )
                       }
                     >
-                      {categories.map((category) => (
+                      {productCategories.map((category) => (
                         <option key={category}>{category}</option>
                       ))}
                     </select>
@@ -2278,35 +2389,69 @@ export default function Admin() {
                 </div>
                 <h3>Configuración inicial</h3>
                 <div className="admin-form-grid">
-                  <NumberField
-                    title="Módulos verticales"
-                    value={editor.defaults.modules}
-                    min={1}
-                    max={6}
-                    change={(value) => setConfig("modules", value)}
-                  />
-                  <NumberField
-                    title="Repisas por módulo"
-                    value={editor.defaults.shelves}
-                    min={0}
-                    max={7}
-                    change={(value) => setConfig("shelves", value)}
-                  />
-                  <Field title="Puertas">
-                    <select
-                      value={editor.defaults.doors}
-                      onChange={(event) =>
-                        setConfig(
-                          "doors",
-                          event.target.value as Config["doors"],
-                        )
+                  {editorOptions.modules.length > 1 && (
+                    <Field title="Módulos verticales">
+                      <select
+                        value={editor.defaults.modules}
+                        onChange={(event) =>
+                          setConfig("modules", Number(event.target.value))
+                        }
+                      >
+                        {editorOptions.modules.map((value) => (
+                          <option key={value} value={value}>
+                            {value}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  )}
+                  {editorOptions.shelves.length > 1 && (
+                    <Field
+                      title={
+                        editorConstruction.kind === "desk-storage"
+                          ? "Repisas en el módulo lateral"
+                          : "Repisas por módulo"
                       }
                     >
-                      <option value="none">Sin puertas</option>
-                      <option value="lower">Puertas inferiores</option>
-                      <option value="full">Puertas completas</option>
-                    </select>
-                  </Field>
+                      <select
+                        value={editor.defaults.shelves}
+                        onChange={(event) =>
+                          setConfig("shelves", Number(event.target.value))
+                        }
+                      >
+                        {editorOptions.shelves.map((value) => (
+                          <option key={value} value={value}>
+                            {value}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  )}
+                  {editorOptions.doors.length > 1 && (
+                    <Field title="Puertas">
+                      <select
+                        value={editor.defaults.doors}
+                        onChange={(event) =>
+                          setConfig(
+                            "doors",
+                            event.target.value as Config["doors"],
+                          )
+                        }
+                      >
+                        {editorOptions.doors.map((value) => (
+                          <option key={value} value={value}>
+                            {
+                              {
+                                none: "Sin puertas",
+                                lower: "Puertas inferiores",
+                                full: "Puertas completas",
+                              }[value]
+                            }
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  )}
                   <Field title="Acabado exterior">
                     <select
                       value={editor.defaults.finish}
@@ -2338,21 +2483,23 @@ export default function Admin() {
                       ))}
                     </select>
                   </Field>
-                  <Field title="Sistema de apertura">
-                    <select
-                      value={editor.defaults.handle}
-                      onChange={(event) =>
-                        setConfig(
-                          "handle",
-                          event.target.value as Config["handle"],
-                        )
-                      }
-                    >
-                      <option value="push">Push</option>
-                      <option value="exterior">Jalador exterior</option>
-                      <option value="embutido">Jalador embutido</option>
-                    </select>
-                  </Field>
+                  {editor.defaults.doors !== "none" && (
+                    <Field title="Sistema de apertura">
+                      <select
+                        value={editor.defaults.handle}
+                        onChange={(event) =>
+                          setConfig(
+                            "handle",
+                            event.target.value as Config["handle"],
+                          )
+                        }
+                      >
+                        <option value="push">Push</option>
+                        <option value="exterior">Jalador exterior</option>
+                        <option value="embutido">Jalador embutido</option>
+                      </select>
+                    </Field>
+                  )}
                   <label className="admin-switch-label">
                     <Switch
                       checked={editor.defaults.install}
