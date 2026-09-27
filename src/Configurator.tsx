@@ -3,7 +3,6 @@ import {
   ArrowLeft,
   ArrowUpRight,
   Check,
-  Download,
   RotateCcw,
   Undo2,
   Redo2,
@@ -16,21 +15,7 @@ import { toast } from "sonner";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from "@/components/ui/table";
-import { api, download } from "../lib/api";
+import { api } from "../lib/api";
 import { money } from "../lib/furniture";
 import type { Config } from "../lib/furniture";
 import type { PublicProduct, PublicSettings, Quote, Design } from "./types";
@@ -44,38 +29,6 @@ const doorOptions = [
   { value: "lower", label: "Puertas inferiores" },
   { value: "full", label: "Puertas completas" },
 ];
-export function exportCuts(q: Quote, id = "AlRazz") {
-  const cell = (v: unknown) => {
-    const text = String(v);
-    const safe = /^[\s]*[=+@-]/.test(text) ? "'" + text : text;
-    return '"' + safe.replaceAll('"', '""') + '"';
-  };
-  const csv =
-    "\ufeff" +
-    [
-      "DESPIECE PRELIMINAR — NO AUTORIZADO PARA PRODUCCIÓN",
-      "Código;Pieza;Cantidad;Largo/alto mm;Ancho mm;Espesor mm;Material;Veta;Superior;Inferior;Izquierdo;Derecho",
-      ...q.panels.map((p) =>
-        [
-          p.id,
-          p.name,
-          1,
-          p.length,
-          p.width,
-          18,
-          p.materialName,
-          p.grain,
-          p.edges.top,
-          p.edges.bottom,
-          p.edges.left,
-          p.edges.right,
-        ]
-          .map(cell)
-          .join(";"),
-      ),
-    ].join("\r\n");
-  download(id + "-despiece.csv", csv, "text/csv;charset=utf-8");
-}
 export default function Configurator() {
   const [products, setProducts] = useState<PublicProduct[]>([]);
   const [product, setProduct] = useState<PublicProduct>();
@@ -100,7 +53,6 @@ export default function Configurator() {
   const [showEnvironment, setShowEnvironment] = useState(true);
   const [brandFilter, setBrandFilter] = useState("all");
   const [boardFilter, setBoardFilter] = useState("all");
-  const [cuts, setCuts] = useState(false);
   const viewer = useRef<ViewerHandle>(null);
   function load() {
     setLoading(true);
@@ -279,7 +231,7 @@ export default function Configurator() {
           {quote ? (
             <Viewer
               ref={viewer}
-              panels={quote.panels}
+              panels={quote.geometry}
               materials={settings.materials}
               {...(renderConfig || config)}
               view={view}
@@ -661,65 +613,9 @@ export default function Configurator() {
             >
               <RotateCcw size={15} /> Restablecer
             </button>
-            <button
-              disabled={!quote || pending || !!quoteError}
-              onClick={() => setCuts(true)}
-            >
-              <Download size={15} /> Ver despiece
-            </button>
           </div>
         </aside>
       </main>
-      <Dialog open={cuts} onOpenChange={setCuts}>
-        <DialogContent className="cut-dialog">
-          <DialogTitle>Despiece preliminar</DialogTitle>
-          <DialogDescription>
-            No autorizado para producción. Medidas en milímetros; primera
-            medida: largo o alto. Requiere validación del taller.
-          </DialogDescription>
-          {quote && (
-            <>
-              <div className="cut-summary">
-                <span>{quote.panels.length} piezas</span>
-                <span>{quote.area.toFixed(2)} m² de melamina</span>
-                <span>{quote.edges.toFixed(2)} m de tapacanto</span>
-              </div>
-              <div className="cut-scroll">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Pieza</TableHead>
-                      <TableHead>Largo/alto</TableHead>
-                      <TableHead>Ancho</TableHead>
-                      <TableHead>Espesor</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {quote.panels.map((p) => (
-                      <TableRow key={p.id}>
-                        <TableCell>{p.name}</TableCell>
-                        <TableCell>{p.length}</TableCell>
-                        <TableCell>{p.width}</TableCell>
-                        <TableCell>18</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-              <p className="small-note">
-                El CSV incluye material, veta y los cuatro bordes de cada pieza.
-                La compatibilidad con tu versión de CutMaster debe validarse.
-              </p>
-              <button
-                className="button rust"
-                onClick={() => exportCuts(quote, product.id)}
-              >
-                Descargar CSV completo <Download size={17} />
-              </button>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
       <Footer />
     </>
   );

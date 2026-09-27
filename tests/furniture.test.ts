@@ -29,6 +29,25 @@ const approximate = (actual: number, expected: number) =>
     `${actual} differs from ${expected}`,
   );
 const axis = { x: 0, y: 1, z: 2 } as const;
+test("older business settings preserve the primary contact and default the second contact", () => {
+  const { whatsappSecondary: _secondary, ...legacy } = defaultSettings;
+  const parsed = settingsSchema.parse({ ...legacy, whatsapp: "51900000001" });
+  assert.equal(parsed.whatsapp, "51900000001");
+  assert.equal(parsed.whatsappSecondary, "");
+  assert.equal(
+    settingsSchema.parse({ ...parsed, whatsappSecondary: "51900000002" })
+      .whatsappSecondary,
+    "51900000002",
+  );
+  assert.equal(
+    settingsSchema.safeParse({
+      ...parsed,
+      whatsappSecondary: "+51 900 000 002",
+    }).success,
+    false,
+  );
+});
+
 function verifyGeometry(product: Product, config: Config) {
   const result = buildFurniture(product, config);
   const expectedCount =

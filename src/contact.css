@@ -1,0 +1,139 @@
+.contact-links {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+}
+.contact-hint {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+  margin: 0 0 4px;
+}
+.contact-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 15px 18px;
+  border: 1px solid var(--border);
+  background: var(--background);
+  border-radius: 4px;
+  transition:
+    transform 240ms ease,
+    border-color 240ms ease,
+    background 240ms ease;
+}
+.contact-option > span {
+  display: grid;
+  gap: 1px;
+  flex: 1;
+}
+.contact-option small {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+.contact-option strong {
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+}
+.contact-option > svg:last-child {
+  transition: transform 240ms ease;
+}
+.contact-floating {
+  position: fixed;
+  bottom: max(24px, env(safe-area-inset-bottom));
+  right: 24px;
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+.contact-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #4d5148;
+  background: #303c32;
+  color: #fff;
+  padding: 15px 21px;
+  border-radius: 40px;
+  box-shadow: 0 6px 22px #211f1c20;
+  transition:
+    transform 240ms ease,
+    box-shadow 240ms ease;
+}
+.contact-trigger span {
+  font-size: 13px;
+}
+.contact-popover {
+  width: min(335px, calc(100vw - 32px));
+  padding: 22px;
+  background: var(--background);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 16px 50px #211f1c25;
+  display: grid;
+  gap: 10px;
+  transform-origin: bottom right;
+  animation: contact-appear 280ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.contact-popover > p {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.4;
+}
+.contact-popover .contact-option {
+  padding: 12px;
+}
+@keyframes contact-appear {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (hover: hover) {
+  .contact-option:hover {
+    transform: translateY(-2px);
+    border-color: #778471;
+    background: #f0eee6;
+  }
+  .contact-option:hover > svg:last-child {
+    transform: translate(2px, -2px);
+  }
+  .contact-trigger:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px #211f1c30;
+  }
+}
+@media (max-width: 600px) {
+  .contact-floating {
+    right: 16px;
+    bottom: max(16px, env(safe-area-inset-bottom));
+  }
+  .contact-trigger {
+    padding: 14px 18px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .contact-option,
+  .contact-option > svg:last-child,
+  .contact-trigger {
+    transition: none;
+  }
+  .contact-popover {
+    animation: none;
+  }
+}
+@media print {
+  .contact-floating {
+    display: none !important;
+  }
+}

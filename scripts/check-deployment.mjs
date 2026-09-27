@@ -223,6 +223,21 @@ async function smoke() {
       catalog.settings.materials.every((material) => !("price" in material)),
     "El catálogo público está exponiendo tarifas internas.",
   );
+  const visualKeys = new Set(["size", "position", "material", "door"]);
+  assert(
+    catalog.products.every(
+      (product) =>
+        product.preview &&
+        Object.keys(product.preview).every((key) =>
+          ["geometry", "price"].includes(key),
+        ) &&
+        Array.isArray(product.preview.geometry) &&
+        product.preview.geometry.every((panel) =>
+          Object.keys(panel).every((key) => visualKeys.has(key)),
+        ),
+    ),
+    "El catálogo público está exponiendo información de despiece o usa un contrato antiguo.",
+  );
   const admin = await getPublic(origin, "/api/store?action=admin", true);
   assert(
     admin.admin === false &&

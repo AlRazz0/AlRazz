@@ -1512,12 +1512,240 @@ footer > span {
     font-size: 12px;
   }
 }
+/* Finite entrances and deliberate interaction feedback; nothing runs at rest. */
+:root {
+  --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+.section[id] {
+  scroll-margin-top: 28px;
+}
+.hero-copy > * {
+  animation: welcome-copy 900ms var(--motion-ease) backwards;
+}
+.hero-copy > :nth-child(2) {
+  animation-delay: 90ms;
+}
+.hero-copy > :nth-child(3) {
+  animation-delay: 180ms;
+}
+.hero-copy > :nth-child(4) {
+  animation-delay: 260ms;
+}
+.hero-copy > :nth-child(5) {
+  animation-delay: 340ms;
+}
+.hero-photo img {
+  animation: welcome-image 1300ms var(--motion-ease) both;
+}
+.image-caption {
+  animation: welcome-copy 900ms 400ms var(--motion-ease) backwards;
+}
+@keyframes welcome-copy {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes welcome-image {
+  from {
+    opacity: 0.65;
+    transform: scale(1.045);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.site-header nav {
+  gap: clamp(20px, 2.3vw, 36px);
+}
+.site-header nav a {
+  position: relative;
+  padding: 7px 0;
+  transition: color 200ms ease;
+}
+.site-header nav a::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 320ms var(--motion-ease);
+}
+.site-header nav a:is(:hover, :focus-visible)::after {
+  transform: scaleX(1);
+}
+.button,
+.header-cta,
+.text-link,
+.bag {
+  transition:
+    background-color 220ms ease,
+    color 220ms ease,
+    box-shadow 260ms ease,
+    transform 260ms var(--motion-ease);
+}
+.button svg,
+.header-cta svg,
+.text-link svg,
+.product-arrow svg {
+  transition: transform 340ms var(--motion-ease);
+}
+.button:is(:hover, :focus-visible) svg,
+.header-cta:is(:hover, :focus-visible) svg {
+  transform: translate(2px, -2px);
+}
+.text-link:is(:hover, :focus-visible) svg {
+  transform: translateX(4px);
+}
+.button:not(:disabled):active,
+.bag:active {
+  transform: translateY(1px) scale(0.985);
+}
+.filter-row button {
+  transition:
+    color 220ms ease,
+    background-color 220ms ease,
+    border-color 220ms ease,
+    transform 260ms var(--motion-ease);
+}
+.filter-row button:active {
+  transform: scale(0.96);
+}
+.product-art {
+  transition:
+    box-shadow 400ms ease,
+    border-radius 400ms ease;
+}
+.product-art > .viewer,
+.product-art > img {
+  transition: transform 650ms var(--motion-ease);
+  transform-origin: center 65%;
+}
+.product-arrow {
+  transition:
+    background-color 250ms ease,
+    color 250ms ease,
+    transform 400ms var(--motion-ease);
+}
+.product-title h3 {
+  transition: color 220ms ease;
+}
+.material-samples a > span,
+.finish-grid button > span {
+  transition:
+    transform 350ms var(--motion-ease),
+    box-shadow 350ms ease;
+}
+.faq summary > span {
+  transition: transform 320ms var(--motion-ease);
+}
+.faq details[open] summary > span {
+  transform: rotate(45deg);
+}
+.faq details[open] > p {
+  animation: welcome-copy 380ms var(--motion-ease);
+}
+.home-contact {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 45px;
+  background: #eee5d7;
+  border-top: 1px solid #ddd1c0;
+  border-bottom: 1px solid #ddd1c0;
+}
+.home-contact h2 {
+  font-size: clamp(31px, 3.2vw, 47px);
+}
+.home-contact-copy {
+  max-width: 460px;
+  margin-top: 23px;
+  color: #746758;
+  font-size: 15px;
+  line-height: 1.7;
+}
+.home-contact-actions {
+  min-width: 0;
+}
+@media (hover: hover) and (pointer: fine) {
+  .button:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 7px 18px #36261613;
+  }
+  .product-card:is(:hover, :focus-visible) .product-art > .viewer,
+  .product-card:is(:hover, :focus-visible) .product-art > img {
+    transform: scale(1.035);
+  }
+  .product-card:is(:hover, :focus-visible) .product-art {
+    box-shadow: 0 14px 28px -18px #59422b55;
+  }
+  .product-card:is(:hover, :focus-visible) .product-arrow {
+    transform: translateY(-3px);
+    background: #a93f2d;
+    color: #fff;
+  }
+  .product-card:is(:hover, :focus-visible) .product-title h3 {
+    color: #a93f2d;
+  }
+  .material-samples a:hover > span,
+  .finish-grid button:hover > span {
+    transform: translateY(-4px);
+    box-shadow:
+      0 8px 14px -8px #4b352947,
+      inset 0 0 0 1px #0001;
+  }
+  .filter-row button:not(.active):hover {
+    background: #ece3d6;
+    border-color: #a99983;
+  }
+}
+@media (max-width: 1100px) {
+  .site-header nav {
+    gap: 18px;
+    font-size: 14px;
+  }
+  .header-cta {
+    gap: 13px;
+    font-size: 13px;
+  }
+}
+@media (max-width: 760px) {
+  .home-contact {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
   }
-  * {
+  *,
+  *::before,
+  *::after {
     transition: none !important;
+    animation: none !important;
+  }
+  .button,
+  .bag,
+  .product-art > .viewer,
+  .product-art > img,
+  .product-arrow,
+  .material-samples a > span,
+  .finish-grid button > span,
+  .filter-row button,
+  .button svg,
+  .header-cta svg,
+  .text-link svg {
+    transform: none !important;
   }
 }
 @media print {

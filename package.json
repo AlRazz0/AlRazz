@@ -10,7 +10,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "check": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test tests/furniture.test.ts tests/auth.test.ts tests/deployment.test.mjs",
+    "test": "node --experimental-strip-types --test tests/furniture.test.ts tests/auth.test.ts tests/deployment.test.mjs tests/camera.test.ts",
     "test:api": "node --experimental-strip-types --test tests/api.integration.mjs",
     "test:auth-api": "node --experimental-strip-types --test tests/auth.integration.mjs",
     "setup:local": "node scripts/setup-local.mjs",

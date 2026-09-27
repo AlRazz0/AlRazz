@@ -3,7 +3,6 @@ import {
   ArrowUpRight,
   Copy,
   Download,
-  MessageCircle,
   Trash2,
   Plus,
   Minus,
@@ -24,7 +23,7 @@ import { money } from "../lib/furniture";
 import type { Design, PublicSettings } from "./types";
 import { Header, Footer } from "./App";
 import Viewer from "./Viewer";
-import { exportCuts } from "./Configurator";
+import { ContactLinks } from "./ContactLinks";
 export default function Cart() {
   const [designs, setDesigns] = useState<Design[]>([]);
   const [settings, setSettings] = useState<PublicSettings>();
@@ -122,7 +121,7 @@ export default function Cart() {
                   <div className="cart-thumb">
                     <Viewer
                       small
-                      panels={d.result.panels}
+                      panels={d.result.geometry}
                       materials={d.materials}
                       {...d.config}
                     />
@@ -167,9 +166,6 @@ export default function Cart() {
                       >
                         <Copy size={14} /> Duplicar
                       </button>
-                      <button onClick={() => exportCuts(d.result, d.id)}>
-                        <Download size={14} /> Despiece
-                      </button>
                       <button
                         disabled={busy === d.id}
                         aria-label={"Eliminar " + d.product.name}
@@ -196,20 +192,8 @@ export default function Cart() {
                 guardados. El equipo confirmará las tarifas y condiciones
                 finales.
               </p>
-              {settings?.whatsapp ? (
-                <a
-                  className="button rust full"
-                  target="_blank"
-                  rel="noreferrer"
-                  href={
-                    "https://wa.me/" +
-                    settings.whatsapp +
-                    "?text=" +
-                    encodeURIComponent(message)
-                  }
-                >
-                  Cotizar por WhatsApp <MessageCircle size={20} />
-                </a>
+              {settings && (settings.whatsapp || settings.whatsappSecondary) ? (
+                <ContactLinks settings={settings} message={message} />
               ) : (
                 <div className="info-box">
                   El canal de WhatsApp aún está por confirmar. Puedes descargar

@@ -20,6 +20,7 @@ import {
   Package,
   Pencil,
   Plus,
+  Ruler,
   Search,
   Settings2,
   SlidersHorizontal,
@@ -64,6 +65,7 @@ import {
   validateProduct,
   type Config,
   type Product,
+  type Result,
   type Settings,
 } from "../lib/furniture";
 import {
@@ -90,6 +92,19 @@ type ImportPreview = {
   products: Product[];
   errors: { row: number; message: string }[];
 };
+type CutListSnapshot = {
+  source: "saved" | "current";
+  design: {
+    id: string;
+    name?: string;
+    quantity: number;
+    version: number;
+    created: string;
+  } | null;
+  product: { id: string; name: string };
+  config: Config;
+  result: Result;
+};
 const categories: Product["category"][] = [
   "Estanterías",
   "Libreros",
@@ -102,6 +117,55 @@ const dimensions = [
   { key: "depth", name: "Fondo" },
 ] as const;
 const clone = <T,>(value: T): T => structuredClone(value);
+function designIdFromReference(reference: string) {
+  const value = reference.trim();
+  const uuid =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (uuid.test(value)) return value.toLowerCase();
+  try {
+    const link = new URL(value, window.location.origin);
+    const id = link.searchParams.get("d") ?? "";
+    if (link.pathname.replace(/\/$/, "") === "/configurar" && uuid.test(id))
+      return id.toLowerCase();
+  } catch {
+    // The form reports invalid links without contacting the server.
+  }
+  throw Error(
+    "Pega el enlace del diseño guardado o su identificador completo.",
+  );
+}
+function exportCuts(result: Result, id: string) {
+  const cell = (value: unknown) => {
+    const text = String(value);
+    const safe = /^[\s]*[=+@-]/.test(text) ? "'" + text : text;
+    return '"' + safe.replaceAll('"', '""') + '"';
+  };
+  const csv =
+    "\ufeff" +
+    [
+      "DESPIECE PRELIMINAR — NO AUTORIZADO PARA PRODUCCIÓN",
+      "Código;Pieza;Cantidad;Largo/alto mm;Ancho mm;Espesor mm;Material;Veta;Superior;Inferior;Izquierdo;Derecho",
+      ...result.panels.map((panel) =>
+        [
+          panel.id,
+          panel.name,
+          1,
+          panel.length,
+          panel.width,
+          18,
+          panel.materialName,
+          panel.grain,
+          panel.edges.top,
+          panel.edges.bottom,
+          panel.edges.left,
+          panel.edges.right,
+        ]
+          .map(cell)
+          .join(";"),
+      ),
+    ].join("\r\n");
+  download(id + "-despiece.csv", csv, "text/csv;charset=utf-8");
+}
 function errorMessage(error: unknown) {
   if (error && typeof error === "object" && "issues" in error)
     return (
@@ -209,6 +273,11 @@ export default function Admin() {
     null,
   );
   const [importError, setImportError] = useState("");
+  const [cutSource, setCutSource] = useState<"current" | "saved">("current");
+  const [cutProductId, setCutProductId] = useState("");
+  const [cutDesignReference, setCutDesignReference] = useState("");
+  const [cutList, setCutList] = useState<CutListSnapshot | null>(null);
+  const [cutError, setCutError] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
   const emailInput = useRef<HTMLInputElement>(null);
   const codeInput = useRef<HTMLInputElement>(null);
@@ -220,6 +289,10 @@ export default function Admin() {
   const challengeExpired = challenge && secondsRemaining === 0;
   const emailRetrySeconds = Math.max(0, emailRetryAt - now);
   const numericCode = verificationMethod !== "recovery";
+  const cutProducts = products.filter((product) => product.active);
+  const selectedCutProduct =
+    cutProducts.find((product) => product.id === cutProductId) ??
+    cutProducts[0];
   const settingsDirty = JSON.stringify(settings) !== savedSettings;
   const editorDirty =
     !!editor &&
@@ -435,6 +508,9 @@ export default function Admin() {
       setEmailCodeSent(false);
       setEmailRetryAt(0);
       setProducts([]);
+      setCutList(null);
+      setCutDesignReference("");
+      setCutError("");
     } catch (cause) {
       setError(errorMessage(cause));
     } finally {
@@ -681,6 +757,35 @@ export default function Admin() {
       setImportPreview(null);
     } catch (cause) {
       setImportError(errorMessage(cause));
+    } finally {
+      setBusy(null);
+    }
+  }
+  async function loadCutList(event: FormEvent) {
+    event.preventDefault();
+    if (busy) return;
+    setBusy("cut-list");
+    setCutError("");
+    setCutList(null);
+    try {
+      if (cutSource === "current" && !selectedCutProduct)
+        throw Error(
+          "No hay modelos visibles. Puedes consultar un diseño guardado.",
+        );
+      const request =
+        cutSource === "saved"
+          ? {
+              op: "cut-list",
+              designId: designIdFromReference(cutDesignReference),
+            }
+          : {
+              op: "cut-list",
+              productId: selectedCutProduct.id,
+              config: selectedCutProduct.defaults,
+            };
+      setCutList(await api<CutListSnapshot>("", request));
+    } catch (cause) {
+      setCutError(errorMessage(cause));
     } finally {
       setBusy(null);
     }
@@ -1097,6 +1202,10 @@ export default function Admin() {
                 />
               )}
             </TabsTrigger>
+            <TabsTrigger value="cuts">
+              <Ruler size={17} />
+              Despiece
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="catalog">
             <section className="admin-panel">
@@ -1303,8 +1412,8 @@ export default function Admin() {
                 </div>
                 <div className="admin-form-grid admin-padded">
                   <Field
-                    title="WhatsApp comercial"
-                    note="Código de país + número, sin signos ni espacios. Vacío desactiva el contacto."
+                    title="WhatsApp comercial 1"
+                    note="Código de país + número, sin signos ni espacios. Vacío oculta este número."
                   >
                     <input
                       value={settings.whatsapp}
@@ -1312,6 +1421,19 @@ export default function Admin() {
                       inputMode="tel"
                       onChange={(event) =>
                         setSetting("whatsapp", event.target.value)
+                      }
+                    />
+                  </Field>
+                  <Field
+                    title="WhatsApp comercial 2"
+                    note="Segundo número de atención, opcional. Código de país + número, sin signos ni espacios."
+                  >
+                    <input
+                      value={settings.whatsappSecondary ?? ""}
+                      placeholder="Ej. 51987654321"
+                      inputMode="tel"
+                      onChange={(event) =>
+                        setSetting("whatsappSecondary", event.target.value)
                       }
                     />
                   </Field>
@@ -1654,6 +1776,178 @@ export default function Admin() {
                 </button>
               </div>
             </form>
+          </TabsContent>
+          <TabsContent value="cuts">
+            <section className="admin-panel">
+              <div className="admin-panel-heading">
+                <div>
+                  <h2>Despiece del taller</h2>
+                  <p>Consulta técnica privada para el equipo de AlRazz.</p>
+                </div>
+                <span className="admin-private">
+                  <LockKeyhole size={14} /> Acceso de administración
+                </span>
+              </div>
+              <div className="admin-cut-body">
+                <form onSubmit={loadCutList} className="admin-cut-form">
+                  <Field title="Consultar">
+                    <select
+                      value={cutSource}
+                      disabled={!!busy}
+                      onChange={(event) => {
+                        setCutSource(event.target.value as "current" | "saved");
+                        setCutList(null);
+                        setCutError("");
+                      }}
+                    >
+                      <option value="current">Modelo del catálogo</option>
+                      <option value="saved">Diseño guardado</option>
+                    </select>
+                  </Field>
+                  {cutSource === "current" ? (
+                    <Field
+                      title="Modelo visible"
+                      note="Se usa la configuración inicial que está guardada en el catálogo."
+                    >
+                      <select
+                        value={selectedCutProduct?.id ?? ""}
+                        required
+                        disabled={!!busy || !cutProducts.length}
+                        onChange={(event) => {
+                          setCutProductId(event.target.value);
+                          setCutList(null);
+                          setCutError("");
+                        }}
+                      >
+                        {!cutProducts.length && (
+                          <option value="">Sin modelos visibles</option>
+                        )}
+                        {cutProducts.map((product) => (
+                          <option key={product.id} value={product.id}>
+                            {product.name}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  ) : (
+                    <Field
+                      title="Enlace o identificador del diseño"
+                      note="Conserva las medidas y materiales de la versión guardada, aunque el catálogo cambie."
+                    >
+                      <input
+                        type="text"
+                        value={cutDesignReference}
+                        placeholder="Pega el enlace /configurar?d=…"
+                        maxLength={2048}
+                        autoComplete="off"
+                        spellCheck={false}
+                        required
+                        disabled={!!busy}
+                        onChange={(event) => {
+                          setCutDesignReference(event.target.value);
+                          setCutList(null);
+                          setCutError("");
+                        }}
+                      />
+                    </Field>
+                  )}
+                  <button
+                    className="button rust"
+                    disabled={
+                      !!busy ||
+                      (cutSource === "current"
+                        ? !selectedCutProduct
+                        : !cutDesignReference.trim())
+                    }
+                  >
+                    {busy === "cut-list" ? (
+                      <Loader2 size={17} className="admin-spin" />
+                    ) : (
+                      <Ruler size={17} />
+                    )}
+                    {busy === "cut-list"
+                      ? "Consultando…"
+                      : "Consultar despiece"}
+                  </button>
+                </form>
+                {cutError && (
+                  <div className="admin-message is-error" role="alert">
+                    {cutError}
+                  </div>
+                )}
+                {cutList && (
+                  <div className="admin-cut-result">
+                    <div className="admin-cut-heading">
+                      <div>
+                        <h3>{cutList.product.name}</h3>
+                        <p>
+                          {cutList.config.width} × {cutList.config.height} ×{" "}
+                          {cutList.config.depth} mm
+                          {cutList.source === "saved" && cutList.design
+                            ? ` · Diseño guardado · versión ${cutList.design.version} · ${cutList.design.quantity} unidad(es) solicitada(s)`
+                            : " · Configuración inicial del catálogo"}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        className="button outline"
+                        onClick={() =>
+                          exportCuts(
+                            cutList.result,
+                            cutList.design?.id ?? cutList.product.id,
+                          )
+                        }
+                      >
+                        <Download size={17} /> Descargar CSV
+                      </button>
+                    </div>
+                    <div className="admin-editor-note">
+                      <strong>
+                        Despiece preliminar. No autorizado para producción.
+                      </strong>
+                      <br />
+                      Medidas en milímetros; primera medida: largo o alto. La
+                      tabla y el CSV corresponden a una unidad del mueble y
+                      requieren validación del taller.
+                    </div>
+                    <div className="admin-cut-summary">
+                      <span>{cutList.result.panels.length} piezas</span>
+                      <span>
+                        {cutList.result.area.toFixed(2)} m² de melamina
+                      </span>
+                      <span>
+                        {cutList.result.edges.toFixed(2)} m de tapacanto
+                      </span>
+                    </div>
+                    <Table className="admin-table">
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Pieza</TableHead>
+                          <TableHead>Largo/alto</TableHead>
+                          <TableHead>Ancho</TableHead>
+                          <TableHead>Espesor</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {cutList.result.panels.map((panel) => (
+                          <TableRow key={panel.id}>
+                            <TableCell>{panel.name}</TableCell>
+                            <TableCell>{panel.length}</TableCell>
+                            <TableCell>{panel.width}</TableCell>
+                            <TableCell>18</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    <p className="admin-help admin-cut-export-note">
+                      El CSV incluye material, veta y los cuatro bordes de cada
+                      pieza. La compatibilidad con tu versión de CutMaster debe
+                      validarse.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </section>
           </TabsContent>
         </Tabs>
       </main>

@@ -12,6 +12,7 @@ import {
   type Database,
 } from "./admin-auth.ts";
 import { z } from "zod";
+import { publicGeometry } from "../lib/public-geometry";
 export { AdminPasswordVerifier } from "./admin-password.ts";
 import {
   buildFurniture,
@@ -221,6 +222,7 @@ async function readProduct(db: Database, id: string) {
 function publicSettings(settings: Settings) {
   return {
     whatsapp: settings.whatsapp,
+    whatsappSecondary: settings.whatsappSecondary,
     availability: settings.availability,
     leadWeeks: settings.leadWeeks,
     materials: publicMaterials(settings),
@@ -233,8 +235,7 @@ function publicProduct(product: Product, price: number) {
 }
 
 function publicResult(result: ReturnType<typeof buildFurniture>) {
-  const { panels, area, edges, doors, price, accessories } = result;
-  return { panels, area, edges, doors, price, accessories };
+  return { geometry: publicGeometry(result.panels), price: result.price };
 }
 
 function validateDomain<T>(operation: () => T): T {
@@ -279,6 +280,60 @@ type DesignRow = {
   created_at: string;
   snapshot: string;
 };
+
+async function cutList(db: Database, data: Record<string, unknown>) {
+  const selection = z
+    .union([
+      z
+        .object({ op: z.literal("cut-list"), designId: z.string().regex(UUID) })
+        .strict(),
+      z
+        .object({
+          op: z.literal("cut-list"),
+          productId,
+          config: configSchema,
+        })
+        .strict(),
+    ])
+    .parse(data);
+
+  if ("designId" in selection) {
+    const row = await db
+      .prepare("SELECT * FROM designs WHERE id=? AND deleted_at IS NULL")
+      .bind(selection.designId)
+      .first<DesignRow>();
+    if (!row)
+      throw new HttpError(
+        404,
+        "Este diseño ya no está disponible.",
+        "DESIGN_UNAVAILABLE",
+      );
+    // Historical cuts and cost calculations must not use today's catalog.
+    const snapshot = JSON.parse(row.snapshot) as Snapshot;
+    return json({
+      source: "saved",
+      design: {
+        id: row.id,
+        name: row.name,
+        quantity: row.quantity,
+        version: row.version,
+        created: row.created_at,
+      },
+      product: { id: snapshot.product.id, name: snapshot.product.name },
+      config: snapshot.config,
+      result: snapshot.result,
+    });
+  }
+
+  const snapshot = await calculate(db, selection);
+  return json({
+    source: "current",
+    design: null,
+    product: { id: snapshot.product.id, name: snapshot.product.name },
+    config: snapshot.config,
+    result: snapshot.result,
+  });
+}
 
 function publicDesign(row: DesignRow) {
   const snapshot = JSON.parse(row.snapshot) as Snapshot;
@@ -631,6 +686,7 @@ async function post(request: Request, env: Env, quote = false) {
   if (op === "remove-design") return mutateDesign(request, env.DB, data, true);
   if (op === "set-quantity") return mutateDesign(request, env.DB, data, false);
   await requireAdmin(request, env);
+  if (op === "cut-list") return cutList(env.DB, data);
   if (op === "product") return saveProduct(env.DB, data);
   if (op === "settings") return saveSettings(env.DB, data);
   if (op === "import") return importProducts(env.DB, data);
