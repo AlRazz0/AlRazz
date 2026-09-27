@@ -1,6 +1,8 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "alrazz",
+  "account_id": "0f2584e6ebbd78b3662bd09be7c2d98a",
+  "workers_dev": true,
   "main": "server/index.ts",
   "compatibility_date": "2026-05-22",
   "compatibility_flags": ["nodejs_compat"],
@@ -14,7 +16,7 @@
     {
       "binding": "DB",
       "database_name": "alrazz-db",
-      "database_id": "00000000-0000-4000-8000-000000000000",
+      "database_id": "488b5a1c-dea7-4603-a2ca-8682e92e0955",
       "migrations_dir": "migrations",
     },
   ],
