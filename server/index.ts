@@ -12,6 +12,7 @@ import {
   type Database,
 } from "./admin-auth.ts";
 import { z } from "zod";
+export { AdminPasswordVerifier } from "./admin-password.ts";
 import {
   buildFurniture,
   configSchema,

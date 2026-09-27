@@ -1,0 +1,54 @@
+name: Publicar AlRazz en Cloudflare
+
+# A push only validates the app. Publication is a separate, deliberate action.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: alrazz-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run check
+      - run: npm test
+      - run: npm run build
+      - run: npm run test:auth-api
+      - name: Comprobar configuración de publicación
+        run: node scripts/check-deployment.mjs preflight
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          ALRAZZ_PUBLIC_URL: ${{ vars.ALRAZZ_PUBLIC_URL }}
+      - name: Aplicar migraciones pendientes
+        run: npm run db:remote -- --config wrangler.jsonc
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CI: true
+      - name: Publicar Worker y archivos web
+        run: npm run deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CI: true
+      - name: Comprobar web, catálogo y acceso protegido
+        run: node scripts/check-deployment.mjs smoke
+        env:
+          ALRAZZ_PUBLIC_URL: ${{ vars.ALRAZZ_PUBLIC_URL }}

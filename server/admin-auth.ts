@@ -7,10 +7,10 @@ import {
   opaqueToken,
   sha256,
   validPasswordHash,
-  verifyPassword,
 } from "../lib/admin-crypto.ts";
 import { randomInt } from "node:crypto";
 import { emailAvailable, sendLoginCode, type MailEnv } from "./admin-mailer.ts";
+import type { AdminPasswordVerifier } from "./admin-password.ts";
 
 type D1Result<T = unknown> = {
   results: T[];
@@ -31,6 +31,7 @@ export interface AdminAuthEnv extends MailEnv {
   DB: Database;
   ADMIN_EMAIL?: string;
   ADMIN_PASSWORD_HASH?: string;
+  ADMIN_PASSWORD_VERIFIER?: DurableObjectNamespace<AdminPasswordVerifier>;
   ADMIN_TOTP_SECRET?: string;
   ADMIN_RECOVERY_HASHES?: string;
   SESSION_SECRET?: string;
@@ -340,10 +341,23 @@ export async function login(
   )
     invalidCredentials();
   // Run the same KDF for incorrect emails to avoid account enumeration by timing.
-  const passwordMatches = await verifyPassword(
-    data.password,
-    config.passwordHash,
-  );
+  let passwordMatches: boolean;
+  try {
+    const verifier = env.ADMIN_PASSWORD_VERIFIER;
+    if (!verifier) throw new Error("Missing password verifier.");
+    passwordMatches = await verifier
+      .get(verifier.idFromName("alrazz-admin"))
+      .verify(data.password, sha256(config.passwordHash));
+    if (typeof passwordMatches !== "boolean")
+      throw new Error("Invalid password verifier response.");
+  } catch {
+    // Never run the expensive KDF in the public Worker as a fallback.
+    throw new AuthError(
+      503,
+      "La verificación de acceso no está disponible. Inténtalo más tarde.",
+      "PASSWORD_VERIFIER_UNAVAILABLE",
+    );
+  }
   const emailMatches = equalStrings(
     sha256(data.email.trim().toLowerCase()),
     sha256(config.email),

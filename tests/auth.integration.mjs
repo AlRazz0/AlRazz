@@ -98,7 +98,7 @@ class Client {
   }
 }
 
-async function createHarness(extraBindings = {}) {
+async function createHarness(extraBindings = {}, { passwordVerifier = true } = {}) {
   const fetchMock = createFetchMock();
   fetchMock.disableNetConnect();
   let options = {
@@ -110,6 +110,14 @@ async function createHarness(extraBindings = {}) {
     compatibilityFlags: ["nodejs_compat"],
     bindings: { ...bindings, ...extraBindings },
     d1Databases: { DB: "isolated-auth-integration" },
+    durableObjects: passwordVerifier
+      ? {
+          ADMIN_PASSWORD_VERIFIER: {
+            className: "AdminPasswordVerifier",
+            useSQLite: true,
+          },
+        }
+      : {},
     fetchMock,
   };
   const mf = new Miniflare(options);
@@ -604,6 +612,130 @@ test("unconfigured email delivery fails closed while the authenticator remains u
     assert.equal(mail.status, 503);
     assert.equal((await client.verify("000000", "email")).status, 401);
     assert.equal((await client.verify()).status, 200);
+  } finally {
+    await h.close();
+  }
+});
+
+test("password verification requires the internal Durable Object and remains rate-limited on failure", async () => {
+  const h = await createHarness({}, { passwordVerifier: false });
+  try {
+    const client = h.client();
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const result = await client.login();
+      assert.equal(result.status, 503);
+      assert.equal(result.data.code, "PASSWORD_VERIFIER_UNAVAILABLE");
+      assert.ok(!JSON.stringify(result.data).includes(passwordHash));
+    }
+    assert.equal((await client.login()).status, 429);
+    assert.equal(await h.count("admin_auth_challenges"), 0);
+    assert.equal(await h.count("admin_auth_sessions"), 0);
+  } finally {
+    await h.close();
+  }
+});
+
+test("the password object validates its RPC boundary and rejects stale credential fingerprints", async () => {
+  // Exercise thrown RPC errors inside workerd. Miniflare's Node-side RPC proxy
+  // cannot currently deserialize rejected promises from a Durable Object.
+  // This HTTP probe exists only in the isolated test runtime, never the app.
+  const fetchMock = createFetchMock();
+  fetchMock.disableNetConnect();
+  const mf = new Miniflare({
+    workers: [
+      {
+        name: "password-boundary-probe",
+        modules: true,
+        compatibilityDate: "2026-05-22",
+        script: `export default {
+          async fetch(request, env) {
+            const { password, fingerprint } = await request.json();
+            const namespace = env.VERIFIER;
+            const verifier = namespace.get(namespace.idFromName("alrazz-admin"));
+            try {
+              const valid = await verifier.verify(password, fingerprint);
+              return Response.json({ ok: true, valid });
+            } catch (error) {
+              return Response.json({ ok: false, error: error.message });
+            }
+          }
+        };`,
+        durableObjects: {
+          VERIFIER: {
+            className: "AdminPasswordVerifier",
+            scriptName: "alrazz-password-boundary",
+            useSQLite: true,
+          },
+        },
+        fetchMock,
+      },
+      {
+        name: "alrazz-password-boundary",
+        modules: true,
+        scriptPath: fileURLToPath(
+          new URL("../dist/alrazz/index.js", import.meta.url),
+        ),
+        compatibilityDate: "2026-05-22",
+        compatibilityFlags: ["nodejs_compat"],
+        bindings: { ADMIN_PASSWORD_HASH: passwordHash },
+        fetchMock,
+      },
+    ],
+  });
+  async function verify(input, fingerprint) {
+    const response = await mf.dispatchFetch(base, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: input, fingerprint }),
+    });
+    assert.equal(response.status, 200);
+    return response.json();
+  }
+  try {
+    const fingerprint = sha256(passwordHash);
+    assert.deepEqual(await verify(password, fingerprint), {
+      ok: true,
+      valid: true,
+    });
+    assert.deepEqual(await verify("incorrect-password", fingerprint), {
+      ok: true,
+      valid: false,
+    });
+    for (const [input, expectedFingerprint] of [
+      [null, fingerprint],
+      [{ password }, fingerprint],
+      ["", fingerprint],
+      ["x".repeat(513), fingerprint],
+      [password, null],
+      [password, "not-a-fingerprint"],
+      [password, "f".repeat(64)],
+    ]) {
+      assert.deepEqual(await verify(input, expectedFingerprint), {
+        ok: false,
+        error: "Password verification unavailable.",
+      });
+    }
+  } finally {
+    await mf.dispose();
+    await fetchMock.close();
+  }
+});
+
+test("password verification is not exposed through a public HTTP route or operation", async () => {
+  const h = await createHarness();
+  try {
+    const client = h.client();
+    for (const path of ["/api/admin-password", "/api/verify-password"]) {
+      const result = await client.request(
+        { password, expectedHashFingerprint: sha256(passwordHash) },
+        { path },
+      );
+      assert.equal(result.status, 404);
+    }
+    const operation = await client.request({ op: "verify-password", password });
+    assert.ok([401, 404].includes(operation.status));
+    assert.equal(await h.count("admin_auth_challenges"), 0);
+    assert.equal(await h.count("admin_auth_sessions"), 0);
   } finally {
     await h.close();
   }
