@@ -1,0 +1,8 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "alrazz",
+  "account_id": "0f2584e6ebbd78b3662bd09be7c2d98a",
+  "pages_build_output_dir": "../../dist/pages",
+  "compatibility_date": "2026-05-22",
+  "services": [{ "binding": "ALRAZZ", "service": "alrazz" }],
+}

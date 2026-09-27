@@ -1,0 +1,2885 @@
+{
+  "reviewedAt": "2026-09-26",
+  "scope": "79 manufacturer designs and3 previously verified RH variants; selection, not a complete or local-stock catalog.",
+  "note": "Manufacturer names and original sample provenance. Digital display and average HEX are approximate, not calibrated manufacturer color values. Original labelled images remain labelled in selection UI; Pelikano uses flat approximate colour in3D to avoid displaying catalog marks on furniture.",
+  "assets": [
+    {
+      "id": "hispano-blanco-100",
+      "brand": "Hispano",
+      "name": "Blanco 100",
+      "sourceUrl": "https://tableroshispanos.es/productos/blanco-100/",
+      "imageUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/0073-Blanco-100-2-300x300.jpg",
+      "asset": "/images/materials/hispano-blanco-100-a06f976f.webp",
+      "sha256": "a06f976ff694749a9fbb4d0f36ad3ae9633c6eab1cb6036332d1dd11d9e8883c",
+      "width": 300,
+      "height": 300,
+      "bytes": 290,
+      "renderTexture": true,
+      "texture": "",
+      "evidence": {
+        "manufacturerSite": "https://tableroshispanos.es/",
+        "categories": [
+          {
+            "category": "Unicolores",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-unicolores/",
+            "officialCount": 11,
+            "selectedCount": 11
+          },
+          {
+            "category": "Maderas",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-maderas/",
+            "officialCount": 54,
+            "selectedCount": 20
+          }
+        ],
+        "thickness18": {
+          "sourceUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/PAQUETERIA-1.pdf",
+          "confirmed": "The general MELAMINA packing table includes 18 mm for 2440 x 1220, 2440 x 2100 and 2850 x 2100 mm boards.",
+          "designSpecific": false,
+          "peruStockConfirmed": false
+        },
+        "moistureResistance": {
+          "sourceUrl": "https://tableroshispanos.es/aglomerados/",
+          "technicalUrl": "https://tableroshispanos.es/wp-content/uploads/2023/11/ficha-aglomerados-hidrofugos.pdf",
+          "confirmed": "Manufacturer offers MDP P3 hydrophobic boards for humid indoor conditions. No finish-specific RH pairing or Cusco inventory was verified.",
+          "addRhVariants": false
+        },
+        "limits": [
+          "Manufacturer catalog for Spain/global reference, not confirmed Peru/Cusco stock.",
+          "texture=wood/solid is a renderer classification derived from official Maderas/Unicolores categories, not a verified physical surface finish.",
+          "imageUrl points to an official public swatch. No HEX values were invented or derived, and no image assets were downloaded.",
+          "Repeated Contempo/Beigue template text on product pages was not treated as per-design metadata.",
+          "No commercial SKU was inferred from internal WooCommerce codes."
+        ]
+      },
+      "note": "",
+      "sourceSha256": "a42aaa784466a0a3b841edc060fa12f502f644cbd7bd0234d4a2db1912207093",
+      "sourceBytes": 856,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "hispano-almendra-02",
+      "brand": "Hispano",
+      "name": "Almendra 02",
+      "sourceUrl": "https://tableroshispanos.es/productos/almendra-02/",
+      "imageUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/0072-Almendra-02-1-300x300.jpg",
+      "asset": "/images/materials/hispano-almendra-02-d84f20f0.webp",
+      "sha256": "d84f20f0fad64a3f0823fbaa53aa636d2945253f59b7b3742545e454130bb6bc",
+      "width": 300,
+      "height": 300,
+      "bytes": 242,
+      "renderTexture": true,
+      "texture": "",
+      "evidence": {
+        "manufacturerSite": "https://tableroshispanos.es/",
+        "categories": [
+          {
+            "category": "Unicolores",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-unicolores/",
+            "officialCount": 11,
+            "selectedCount": 11
+          },
+          {
+            "category": "Maderas",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-maderas/",
+            "officialCount": 54,
+            "selectedCount": 20
+          }
+        ],
+        "thickness18": {
+          "sourceUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/PAQUETERIA-1.pdf",
+          "confirmed": "The general MELAMINA packing table includes 18 mm for 2440 x 1220, 2440 x 2100 and 2850 x 2100 mm boards.",
+          "designSpecific": false,
+          "peruStockConfirmed": false
+        },
+        "moistureResistance": {
+          "sourceUrl": "https://tableroshispanos.es/aglomerados/",
+          "technicalUrl": "https://tableroshispanos.es/wp-content/uploads/2023/11/ficha-aglomerados-hidrofugos.pdf",
+          "confirmed": "Manufacturer offers MDP P3 hydrophobic boards for humid indoor conditions. No finish-specific RH pairing or Cusco inventory was verified.",
+          "addRhVariants": false
+        },
+        "limits": [
+          "Manufacturer catalog for Spain/global reference, not confirmed Peru/Cusco stock.",
+          "texture=wood/solid is a renderer classification derived from official Maderas/Unicolores categories, not a verified physical surface finish.",
+          "imageUrl points to an official public swatch. No HEX values were invented or derived, and no image assets were downloaded.",
+          "Repeated Contempo/Beigue template text on product pages was not treated as per-design metadata.",
+          "No commercial SKU was inferred from internal WooCommerce codes."
+        ]
+      },
+      "note": "",
+      "sourceSha256": "bd9749eeef99f0795442b59d9c89673f3056a28312e3cc15ae59bce437b7fbe8",
+      "sourceBytes": 828,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "hispano-gris-suave",
+      "brand": "Hispano",
+      "name": "Gris Suave",
+      "sourceUrl": "https://tableroshispanos.es/productos/gris-suave/",
+      "imageUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/0075-Gris-Suave-300x300.jpg",
+      "asset": "/images/materials/hispano-gris-suave-59176bed.webp",
+      "sha256": "59176bed87c0a879bcf8536769b590acc372172176b34be4eb4e40fe0dee0a5e",
+      "width": 300,
+      "height": 300,
+      "bytes": 226,
+      "renderTexture": true,
+      "texture": "",
+      "evidence": {
+        "manufacturerSite": "https://tableroshispanos.es/",
+        "categories": [
+          {
+            "category": "Unicolores",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-unicolores/",
+            "officialCount": 11,
+            "selectedCount": 11
+          },
+          {
+            "category": "Maderas",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-maderas/",
+            "officialCount": 54,
+            "selectedCount": 20
+          }
+        ],
+        "thickness18": {
+          "sourceUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/PAQUETERIA-1.pdf",
+          "confirmed": "The general MELAMINA packing table includes 18 mm for 2440 x 1220, 2440 x 2100 and 2850 x 2100 mm boards.",
+          "designSpecific": false,
+          "peruStockConfirmed": false
+        },
+        "moistureResistance": {
+          "sourceUrl": "https://tableroshispanos.es/aglomerados/",
+          "technicalUrl": "https://tableroshispanos.es/wp-content/uploads/2023/11/ficha-aglomerados-hidrofugos.pdf",
+          "confirmed": "Manufacturer offers MDP P3 hydrophobic boards for humid indoor conditions. No finish-specific RH pairing or Cusco inventory was verified.",
+          "addRhVariants": false
+        },
+        "limits": [
+          "Manufacturer catalog for Spain/global reference, not confirmed Peru/Cusco stock.",
+          "texture=wood/solid is a renderer classification derived from official Maderas/Unicolores categories, not a verified physical surface finish.",
+          "imageUrl points to an official public swatch. No HEX values were invented or derived, and no image assets were downloaded.",
+          "Repeated Contempo/Beigue template text on product pages was not treated as per-design metadata.",
+          "No commercial SKU was inferred from internal WooCommerce codes."
+        ]
+      },
+      "note": "",
+      "sourceSha256": "7b81df96963813c6ee4d5950d76b44550addd9d928a6af0aea5e78e5d078d459",
+      "sourceBytes": 826,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "hispano-gris-grafito-02",
+      "brand": "Hispano",
+      "name": "Gris Grafito 02",
+      "sourceUrl": "https://tableroshispanos.es/productos/gris-grafito-02/",
+      "imageUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/0074-Gris-grafito-02-1-300x300.jpg",
+      "asset": "/images/materials/hispano-gris-grafito-02-792cbee4.webp",
+      "sha256": "792cbee4eae6237ac198fc92f385cee6f29810cebf5565b4ccdc16e9852758ca",
+      "width": 300,
+      "height": 300,
+      "bytes": 228,
+      "renderTexture": true,
+      "texture": "",
+      "evidence": {
+        "manufacturerSite": "https://tableroshispanos.es/",
+        "categories": [
+          {
+            "category": "Unicolores",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-unicolores/",
+            "officialCount": 11,
+            "selectedCount": 11
+          },
+          {
+            "category": "Maderas",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-maderas/",
+            "officialCount": 54,
+            "selectedCount": 20
+          }
+        ],
+        "thickness18": {
+          "sourceUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/PAQUETERIA-1.pdf",
+          "confirmed": "The general MELAMINA packing table includes 18 mm for 2440 x 1220, 2440 x 2100 and 2850 x 2100 mm boards.",
+          "designSpecific": false,
+          "peruStockConfirmed": false
+        },
+        "moistureResistance": {
+          "sourceUrl": "https://tableroshispanos.es/aglomerados/",
+          "technicalUrl": "https://tableroshispanos.es/wp-content/uploads/2023/11/ficha-aglomerados-hidrofugos.pdf",
+          "confirmed": "Manufacturer offers MDP P3 hydrophobic boards for humid indoor conditions. No finish-specific RH pairing or Cusco inventory was verified.",
+          "addRhVariants": false
+        },
+        "limits": [
+          "Manufacturer catalog for Spain/global reference, not confirmed Peru/Cusco stock.",
+          "texture=wood/solid is a renderer classification derived from official Maderas/Unicolores categories, not a verified physical surface finish.",
+          "imageUrl points to an official public swatch. No HEX values were invented or derived, and no image assets were downloaded.",
+          "Repeated Contempo/Beigue template text on product pages was not treated as per-design metadata.",
+          "No commercial SKU was inferred from internal WooCommerce codes."
+        ]
+      },
+      "note": "",
+      "sourceSha256": "34bdff828e0cb92e4d8fe0bc30c7f6f4b0bfc7fe5b54428b3d94784324748a4f",
+      "sourceBytes": 826,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "hispano-negro",
+      "brand": "Hispano",
+      "name": "Negro",
+      "sourceUrl": "https://tableroshispanos.es/productos/negro/",
+      "imageUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/0076-Negro-2-300x300.jpg",
+      "asset": "/images/materials/hispano-negro-f39cb33a.webp",
+      "sha256": "f39cb33aefd96fcbd9ce0bbd4f32877a43bcb220eeb887363c24f626d33725c1",
+      "width": 300,
+      "height": 300,
+      "bytes": 224,
+      "renderTexture": true,
+      "texture": "",
+      "evidence": {
+        "manufacturerSite": "https://tableroshispanos.es/",
+        "categories": [
+          {
+            "category": "Unicolores",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-unicolores/",
+            "officialCount": 11,
+            "selectedCount": 11
+          },
+          {
+            "category": "Maderas",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-maderas/",
+            "officialCount": 54,
+            "selectedCount": 20
+          }
+        ],
+        "thickness18": {
+          "sourceUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/PAQUETERIA-1.pdf",
+          "confirmed": "The general MELAMINA packing table includes 18 mm for 2440 x 1220, 2440 x 2100 and 2850 x 2100 mm boards.",
+          "designSpecific": false,
+          "peruStockConfirmed": false
+        },
+        "moistureResistance": {
+          "sourceUrl": "https://tableroshispanos.es/aglomerados/",
+          "technicalUrl": "https://tableroshispanos.es/wp-content/uploads/2023/11/ficha-aglomerados-hidrofugos.pdf",
+          "confirmed": "Manufacturer offers MDP P3 hydrophobic boards for humid indoor conditions. No finish-specific RH pairing or Cusco inventory was verified.",
+          "addRhVariants": false
+        },
+        "limits": [
+          "Manufacturer catalog for Spain/global reference, not confirmed Peru/Cusco stock.",
+          "texture=wood/solid is a renderer classification derived from official Maderas/Unicolores categories, not a verified physical surface finish.",
+          "imageUrl points to an official public swatch. No HEX values were invented or derived, and no image assets were downloaded.",
+          "Repeated Contempo/Beigue template text on product pages was not treated as per-design metadata.",
+          "No commercial SKU was inferred from internal WooCommerce codes."
+        ]
+      },
+      "note": "",
+      "sourceSha256": "b435eb640d81e6c02090ac0b784482f33401b9166dee159cb71131926616d6c4",
+      "sourceBytes": 825,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "hispano-chiavenna",
+      "brand": "Hispano",
+      "name": "Chiavenna",
+      "sourceUrl": "https://tableroshispanos.es/productos/chiavenna/",
+      "imageUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/0017-Chiavenna-300x300.jpg",
+      "asset": "/images/materials/hispano-chiavenna-5bb210d8.webp",
+      "sha256": "5bb210d87660c71046d1af3e9d508a4118e9c5264333829b64d75f12afa3f333",
+      "width": 300,
+      "height": 300,
+      "bytes": 16020,
+      "renderTexture": true,
+      "texture": "",
+      "evidence": {
+        "manufacturerSite": "https://tableroshispanos.es/",
+        "categories": [
+          {
+            "category": "Unicolores",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-unicolores/",
+            "officialCount": 11,
+            "selectedCount": 11
+          },
+          {
+            "category": "Maderas",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-maderas/",
+            "officialCount": 54,
+            "selectedCount": 20
+          }
+        ],
+        "thickness18": {
+          "sourceUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/PAQUETERIA-1.pdf",
+          "confirmed": "The general MELAMINA packing table includes 18 mm for 2440 x 1220, 2440 x 2100 and 2850 x 2100 mm boards.",
+          "designSpecific": false,
+          "peruStockConfirmed": false
+        },
+        "moistureResistance": {
+          "sourceUrl": "https://tableroshispanos.es/aglomerados/",
+          "technicalUrl": "https://tableroshispanos.es/wp-content/uploads/2023/11/ficha-aglomerados-hidrofugos.pdf",
+          "confirmed": "Manufacturer offers MDP P3 hydrophobic boards for humid indoor conditions. No finish-specific RH pairing or Cusco inventory was verified.",
+          "addRhVariants": false
+        },
+        "limits": [
+          "Manufacturer catalog for Spain/global reference, not confirmed Peru/Cusco stock.",
+          "texture=wood/solid is a renderer classification derived from official Maderas/Unicolores categories, not a verified physical surface finish.",
+          "imageUrl points to an official public swatch. No HEX values were invented or derived, and no image assets were downloaded.",
+          "Repeated Contempo/Beigue template text on product pages was not treated as per-design metadata.",
+          "No commercial SKU was inferred from internal WooCommerce codes."
+        ]
+      },
+      "note": "",
+      "sourceSha256": "c530bdbd9f679ecf4b4816b30fff1d5024bc766ab3ba2a7287e5062d0d32f4cd",
+      "sourceBytes": 13822,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "hispano-roble-catania",
+      "brand": "Hispano",
+      "name": "Roble Catania",
+      "sourceUrl": "https://tableroshispanos.es/productos/roble-catania/",
+      "imageUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/0014-Roble-Catania-novedad--300x300.jpg",
+      "asset": "/images/materials/hispano-roble-catania-31332a27.webp",
+      "sha256": "31332a278097245b2187ca0dc7b5485f081c98dbd8b0821f16937325fcf4e930",
+      "width": 300,
+      "height": 300,
+      "bytes": 14006,
+      "renderTexture": true,
+      "texture": "",
+      "evidence": {
+        "manufacturerSite": "https://tableroshispanos.es/",
+        "categories": [
+          {
+            "category": "Unicolores",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-unicolores/",
+            "officialCount": 11,
+            "selectedCount": 11
+          },
+          {
+            "category": "Maderas",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-maderas/",
+            "officialCount": 54,
+            "selectedCount": 20
+          }
+        ],
+        "thickness18": {
+          "sourceUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/PAQUETERIA-1.pdf",
+          "confirmed": "The general MELAMINA packing table includes 18 mm for 2440 x 1220, 2440 x 2100 and 2850 x 2100 mm boards.",
+          "designSpecific": false,
+          "peruStockConfirmed": false
+        },
+        "moistureResistance": {
+          "sourceUrl": "https://tableroshispanos.es/aglomerados/",
+          "technicalUrl": "https://tableroshispanos.es/wp-content/uploads/2023/11/ficha-aglomerados-hidrofugos.pdf",
+          "confirmed": "Manufacturer offers MDP P3 hydrophobic boards for humid indoor conditions. No finish-specific RH pairing or Cusco inventory was verified.",
+          "addRhVariants": false
+        },
+        "limits": [
+          "Manufacturer catalog for Spain/global reference, not confirmed Peru/Cusco stock.",
+          "texture=wood/solid is a renderer classification derived from official Maderas/Unicolores categories, not a verified physical surface finish.",
+          "imageUrl points to an official public swatch. No HEX values were invented or derived, and no image assets were downloaded.",
+          "Repeated Contempo/Beigue template text on product pages was not treated as per-design metadata.",
+          "No commercial SKU was inferred from internal WooCommerce codes."
+        ]
+      },
+      "note": "",
+      "sourceSha256": "991ec84636d7c47e985581c1bc23058a6572668754f43563ac04d547299353d2",
+      "sourceBytes": 13176,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "hispano-roble-canyon",
+      "brand": "Hispano",
+      "name": "Roble Canyon",
+      "sourceUrl": "https://tableroshispanos.es/productos/roble-canyon/",
+      "imageUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/0012-Roble-Canyon-300x300.jpg",
+      "asset": "/images/materials/hispano-roble-canyon-adcd2794.webp",
+      "sha256": "adcd2794df381786d2b8f26be3f368409780600b73dd807b08db360864a7604c",
+      "width": 300,
+      "height": 300,
+      "bytes": 24126,
+      "renderTexture": true,
+      "texture": "",
+      "evidence": {
+        "manufacturerSite": "https://tableroshispanos.es/",
+        "categories": [
+          {
+            "category": "Unicolores",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-unicolores/",
+            "officialCount": 11,
+            "selectedCount": 11
+          },
+          {
+            "category": "Maderas",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-maderas/",
+            "officialCount": 54,
+            "selectedCount": 20
+          }
+        ],
+        "thickness18": {
+          "sourceUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/PAQUETERIA-1.pdf",
+          "confirmed": "The general MELAMINA packing table includes 18 mm for 2440 x 1220, 2440 x 2100 and 2850 x 2100 mm boards.",
+          "designSpecific": false,
+          "peruStockConfirmed": false
+        },
+        "moistureResistance": {
+          "sourceUrl": "https://tableroshispanos.es/aglomerados/",
+          "technicalUrl": "https://tableroshispanos.es/wp-content/uploads/2023/11/ficha-aglomerados-hidrofugos.pdf",
+          "confirmed": "Manufacturer offers MDP P3 hydrophobic boards for humid indoor conditions. No finish-specific RH pairing or Cusco inventory was verified.",
+          "addRhVariants": false
+        },
+        "limits": [
+          "Manufacturer catalog for Spain/global reference, not confirmed Peru/Cusco stock.",
+          "texture=wood/solid is a renderer classification derived from official Maderas/Unicolores categories, not a verified physical surface finish.",
+          "imageUrl points to an official public swatch. No HEX values were invented or derived, and no image assets were downloaded.",
+          "Repeated Contempo/Beigue template text on product pages was not treated as per-design metadata.",
+          "No commercial SKU was inferred from internal WooCommerce codes."
+        ]
+      },
+      "note": "",
+      "sourceSha256": "ed50fa8dd48d30f13a72d0bb0c96f00faba7555589377ba14e7145945c9cfdd5",
+      "sourceBytes": 17752,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "hispano-azul-mediterraneo",
+      "brand": "Hispano",
+      "name": "Azul Mediterráneo",
+      "sourceUrl": "https://tableroshispanos.es/productos/azul-mediterraneo/",
+      "imageUrl": "https://tableroshispanos.es/wp-content/uploads/2025/04/AzulMediterraeno-1378x2560-1-300x300.jpg",
+      "asset": "/images/materials/hispano-azul-mediterraneo-26ce9b78.webp",
+      "sha256": "26ce9b78e90afbac9b3017207cb4e2668ac0e23182250db166b93974431b1070",
+      "width": 300,
+      "height": 300,
+      "bytes": 242,
+      "renderTexture": true,
+      "texture": "",
+      "evidence": {
+        "manufacturerSite": "https://tableroshispanos.es/",
+        "categories": [
+          {
+            "category": "Unicolores",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-unicolores/",
+            "officialCount": 11,
+            "selectedCount": 11
+          },
+          {
+            "category": "Maderas",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-maderas/",
+            "officialCount": 54,
+            "selectedCount": 20
+          }
+        ],
+        "thickness18": {
+          "sourceUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/PAQUETERIA-1.pdf",
+          "confirmed": "The general MELAMINA packing table includes 18 mm for 2440 x 1220, 2440 x 2100 and 2850 x 2100 mm boards.",
+          "designSpecific": false,
+          "peruStockConfirmed": false
+        },
+        "moistureResistance": {
+          "sourceUrl": "https://tableroshispanos.es/aglomerados/",
+          "technicalUrl": "https://tableroshispanos.es/wp-content/uploads/2023/11/ficha-aglomerados-hidrofugos.pdf",
+          "confirmed": "Manufacturer offers MDP P3 hydrophobic boards for humid indoor conditions. No finish-specific RH pairing or Cusco inventory was verified.",
+          "addRhVariants": false
+        },
+        "limits": [
+          "Manufacturer catalog for Spain/global reference, not confirmed Peru/Cusco stock.",
+          "texture=wood/solid is a renderer classification derived from official Maderas/Unicolores categories, not a verified physical surface finish.",
+          "imageUrl points to an official public swatch. No HEX values were invented or derived, and no image assets were downloaded.",
+          "Repeated Contempo/Beigue template text on product pages was not treated as per-design metadata.",
+          "No commercial SKU was inferred from internal WooCommerce codes."
+        ]
+      },
+      "note": "",
+      "sourceSha256": "c8c8e348e02512c26d24dc1f37f59c717cd0bb2b5c7a6c091b3d8ce828f3d6d7",
+      "sourceBytes": 2133,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "hispano-taupe",
+      "brand": "Hispano",
+      "name": "Taupe",
+      "sourceUrl": "https://tableroshispanos.es/productos/taupe/",
+      "imageUrl": "https://tableroshispanos.es/wp-content/uploads/2025/04/Taupe-1378x2560-1-300x300.jpg",
+      "asset": "/images/materials/hispano-taupe-0ce2a323.webp",
+      "sha256": "0ce2a323bb1872bce1e73b715629ee7e45d16404e5f4a80e083c103fdb538e02",
+      "width": 300,
+      "height": 300,
+      "bytes": 238,
+      "renderTexture": true,
+      "texture": "",
+      "evidence": {
+        "manufacturerSite": "https://tableroshispanos.es/",
+        "categories": [
+          {
+            "category": "Unicolores",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-unicolores/",
+            "officialCount": 11,
+            "selectedCount": 11
+          },
+          {
+            "category": "Maderas",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-maderas/",
+            "officialCount": 54,
+            "selectedCount": 20
+          }
+        ],
+        "thickness18": {
+          "sourceUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/PAQUETERIA-1.pdf",
+          "confirmed": "The general MELAMINA packing table includes 18 mm for 2440 x 1220, 2440 x 2100 and 2850 x 2100 mm boards.",
+          "designSpecific": false,
+          "peruStockConfirmed": false
+        },
+        "moistureResistance": {
+          "sourceUrl": "https://tableroshispanos.es/aglomerados/",
+          "technicalUrl": "https://tableroshispanos.es/wp-content/uploads/2023/11/ficha-aglomerados-hidrofugos.pdf",
+          "confirmed": "Manufacturer offers MDP P3 hydrophobic boards for humid indoor conditions. No finish-specific RH pairing or Cusco inventory was verified.",
+          "addRhVariants": false
+        },
+        "limits": [
+          "Manufacturer catalog for Spain/global reference, not confirmed Peru/Cusco stock.",
+          "texture=wood/solid is a renderer classification derived from official Maderas/Unicolores categories, not a verified physical surface finish.",
+          "imageUrl points to an official public swatch. No HEX values were invented or derived, and no image assets were downloaded.",
+          "Repeated Contempo/Beigue template text on product pages was not treated as per-design metadata.",
+          "No commercial SKU was inferred from internal WooCommerce codes."
+        ]
+      },
+      "note": "",
+      "sourceSha256": "dfa107610d7af7cffbc31eae1acde7283de0a0f0481ee7e83dfecd1068234ca7",
+      "sourceBytes": 888,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "hispano-terracota",
+      "brand": "Hispano",
+      "name": "Terracota",
+      "sourceUrl": "https://tableroshispanos.es/productos/terracota/",
+      "imageUrl": "https://tableroshispanos.es/wp-content/uploads/2025/04/Terracota-1378x2560-1-300x300.jpg",
+      "asset": "/images/materials/hispano-terracota-ba101892.webp",
+      "sha256": "ba10189274b6e611ae26672ec8cf0a6460c006798dc5405b599406041417fe4d",
+      "width": 300,
+      "height": 300,
+      "bytes": 242,
+      "renderTexture": true,
+      "texture": "",
+      "evidence": {
+        "manufacturerSite": "https://tableroshispanos.es/",
+        "categories": [
+          {
+            "category": "Unicolores",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-unicolores/",
+            "officialCount": 11,
+            "selectedCount": 11
+          },
+          {
+            "category": "Maderas",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-maderas/",
+            "officialCount": 54,
+            "selectedCount": 20
+          }
+        ],
+        "thickness18": {
+          "sourceUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/PAQUETERIA-1.pdf",
+          "confirmed": "The general MELAMINA packing table includes 18 mm for 2440 x 1220, 2440 x 2100 and 2850 x 2100 mm boards.",
+          "designSpecific": false,
+          "peruStockConfirmed": false
+        },
+        "moistureResistance": {
+          "sourceUrl": "https://tableroshispanos.es/aglomerados/",
+          "technicalUrl": "https://tableroshispanos.es/wp-content/uploads/2023/11/ficha-aglomerados-hidrofugos.pdf",
+          "confirmed": "Manufacturer offers MDP P3 hydrophobic boards for humid indoor conditions. No finish-specific RH pairing or Cusco inventory was verified.",
+          "addRhVariants": false
+        },
+        "limits": [
+          "Manufacturer catalog for Spain/global reference, not confirmed Peru/Cusco stock.",
+          "texture=wood/solid is a renderer classification derived from official Maderas/Unicolores categories, not a verified physical surface finish.",
+          "imageUrl points to an official public swatch. No HEX values were invented or derived, and no image assets were downloaded.",
+          "Repeated Contempo/Beigue template text on product pages was not treated as per-design metadata.",
+          "No commercial SKU was inferred from internal WooCommerce codes."
+        ]
+      },
+      "note": "",
+      "sourceSha256": "77f7d3da7d7e040b259ee6e61dcf2f07638c3af617f978eb13848eb815441d6b",
+      "sourceBytes": 2133,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "hispano-texas",
+      "brand": "Hispano",
+      "name": "Texas",
+      "sourceUrl": "https://tableroshispanos.es/productos/texas/",
+      "imageUrl": "https://tableroshispanos.es/wp-content/uploads/2025/09/Texas-D0164CR080-300x300.png",
+      "asset": "/images/materials/hispano-texas-481bbb7c.webp",
+      "sha256": "481bbb7c70b4bf85e94f5793f3e875737fedb83c10010af231d6b802be08ba84",
+      "width": 300,
+      "height": 300,
+      "bytes": 238,
+      "renderTexture": true,
+      "texture": "",
+      "evidence": {
+        "manufacturerSite": "https://tableroshispanos.es/",
+        "categories": [
+          {
+            "category": "Unicolores",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-unicolores/",
+            "officialCount": 11,
+            "selectedCount": 11
+          },
+          {
+            "category": "Maderas",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-maderas/",
+            "officialCount": 54,
+            "selectedCount": 20
+          }
+        ],
+        "thickness18": {
+          "sourceUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/PAQUETERIA-1.pdf",
+          "confirmed": "The general MELAMINA packing table includes 18 mm for 2440 x 1220, 2440 x 2100 and 2850 x 2100 mm boards.",
+          "designSpecific": false,
+          "peruStockConfirmed": false
+        },
+        "moistureResistance": {
+          "sourceUrl": "https://tableroshispanos.es/aglomerados/",
+          "technicalUrl": "https://tableroshispanos.es/wp-content/uploads/2023/11/ficha-aglomerados-hidrofugos.pdf",
+          "confirmed": "Manufacturer offers MDP P3 hydrophobic boards for humid indoor conditions. No finish-specific RH pairing or Cusco inventory was verified.",
+          "addRhVariants": false
+        },
+        "limits": [
+          "Manufacturer catalog for Spain/global reference, not confirmed Peru/Cusco stock.",
+          "texture=wood/solid is a renderer classification derived from official Maderas/Unicolores categories, not a verified physical surface finish.",
+          "imageUrl points to an official public swatch. No HEX values were invented or derived, and no image assets were downloaded.",
+          "Repeated Contempo/Beigue template text on product pages was not treated as per-design metadata.",
+          "No commercial SKU was inferred from internal WooCommerce codes."
+        ]
+      },
+      "note": "",
+      "sourceSha256": "861a8ca4f0de76438fc18e8b62f789c2055b679d3a182d8331a4b1d25d61170a",
+      "sourceBytes": 127,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "hispano-blanco-nieve",
+      "brand": "Hispano",
+      "name": "Blanco Nieve",
+      "sourceUrl": "https://tableroshispanos.es/productos/blanco-nieve/",
+      "imageUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/0073-Blanco-100-1-300x300.jpg",
+      "asset": "/images/materials/hispano-blanco-nieve-a06f976f.webp",
+      "sha256": "a06f976ff694749a9fbb4d0f36ad3ae9633c6eab1cb6036332d1dd11d9e8883c",
+      "width": 300,
+      "height": 300,
+      "bytes": 290,
+      "renderTexture": true,
+      "texture": "",
+      "evidence": {
+        "manufacturerSite": "https://tableroshispanos.es/",
+        "categories": [
+          {
+            "category": "Unicolores",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-unicolores/",
+            "officialCount": 11,
+            "selectedCount": 11
+          },
+          {
+            "category": "Maderas",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-maderas/",
+            "officialCount": 54,
+            "selectedCount": 20
+          }
+        ],
+        "thickness18": {
+          "sourceUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/PAQUETERIA-1.pdf",
+          "confirmed": "The general MELAMINA packing table includes 18 mm for 2440 x 1220, 2440 x 2100 and 2850 x 2100 mm boards.",
+          "designSpecific": false,
+          "peruStockConfirmed": false
+        },
+        "moistureResistance": {
+          "sourceUrl": "https://tableroshispanos.es/aglomerados/",
+          "technicalUrl": "https://tableroshispanos.es/wp-content/uploads/2023/11/ficha-aglomerados-hidrofugos.pdf",
+          "confirmed": "Manufacturer offers MDP P3 hydrophobic boards for humid indoor conditions. No finish-specific RH pairing or Cusco inventory was verified.",
+          "addRhVariants": false
+        },
+        "limits": [
+          "Manufacturer catalog for Spain/global reference, not confirmed Peru/Cusco stock.",
+          "texture=wood/solid is a renderer classification derived from official Maderas/Unicolores categories, not a verified physical surface finish.",
+          "imageUrl points to an official public swatch. No HEX values were invented or derived, and no image assets were downloaded.",
+          "Repeated Contempo/Beigue template text on product pages was not treated as per-design metadata.",
+          "No commercial SKU was inferred from internal WooCommerce codes."
+        ]
+      },
+      "note": "",
+      "sourceSha256": "a42aaa784466a0a3b841edc060fa12f502f644cbd7bd0234d4a2db1912207093",
+      "sourceBytes": 856,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "hispano-blanco-galaico",
+      "brand": "Hispano",
+      "name": "Blanco Galaico",
+      "sourceUrl": "https://tableroshispanos.es/productos/blanco-galaico/",
+      "imageUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/0073-Blanco-100-1-300x300.jpg",
+      "asset": "/images/materials/hispano-blanco-galaico-a06f976f.webp",
+      "sha256": "a06f976ff694749a9fbb4d0f36ad3ae9633c6eab1cb6036332d1dd11d9e8883c",
+      "width": 300,
+      "height": 300,
+      "bytes": 290,
+      "renderTexture": true,
+      "texture": "",
+      "evidence": {
+        "manufacturerSite": "https://tableroshispanos.es/",
+        "categories": [
+          {
+            "category": "Unicolores",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-unicolores/",
+            "officialCount": 11,
+            "selectedCount": 11
+          },
+          {
+            "category": "Maderas",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-maderas/",
+            "officialCount": 54,
+            "selectedCount": 20
+          }
+        ],
+        "thickness18": {
+          "sourceUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/PAQUETERIA-1.pdf",
+          "confirmed": "The general MELAMINA packing table includes 18 mm for 2440 x 1220, 2440 x 2100 and 2850 x 2100 mm boards.",
+          "designSpecific": false,
+          "peruStockConfirmed": false
+        },
+        "moistureResistance": {
+          "sourceUrl": "https://tableroshispanos.es/aglomerados/",
+          "technicalUrl": "https://tableroshispanos.es/wp-content/uploads/2023/11/ficha-aglomerados-hidrofugos.pdf",
+          "confirmed": "Manufacturer offers MDP P3 hydrophobic boards for humid indoor conditions. No finish-specific RH pairing or Cusco inventory was verified.",
+          "addRhVariants": false
+        },
+        "limits": [
+          "Manufacturer catalog for Spain/global reference, not confirmed Peru/Cusco stock.",
+          "texture=wood/solid is a renderer classification derived from official Maderas/Unicolores categories, not a verified physical surface finish.",
+          "imageUrl points to an official public swatch. No HEX values were invented or derived, and no image assets were downloaded.",
+          "Repeated Contempo/Beigue template text on product pages was not treated as per-design metadata.",
+          "No commercial SKU was inferred from internal WooCommerce codes."
+        ]
+      },
+      "note": "",
+      "sourceSha256": "a42aaa784466a0a3b841edc060fa12f502f644cbd7bd0234d4a2db1912207093",
+      "sourceBytes": 856,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "hispano-garden-oak",
+      "brand": "Hispano",
+      "name": "Garden Oak",
+      "sourceUrl": "https://tableroshispanos.es/productos/garden-oak/",
+      "imageUrl": "https://tableroshispanos.es/wp-content/uploads/2025/04/GardenOak-1378x2560-1-300x300.jpg",
+      "asset": "/images/materials/hispano-garden-oak-38d49e67.webp",
+      "sha256": "38d49e67bd3aa1887266dcd1947cbc5357b642c1fe72416e05fdc62a80dcd86f",
+      "width": 300,
+      "height": 300,
+      "bytes": 12844,
+      "renderTexture": true,
+      "texture": "",
+      "evidence": {
+        "manufacturerSite": "https://tableroshispanos.es/",
+        "categories": [
+          {
+            "category": "Unicolores",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-unicolores/",
+            "officialCount": 11,
+            "selectedCount": 11
+          },
+          {
+            "category": "Maderas",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-maderas/",
+            "officialCount": 54,
+            "selectedCount": 20
+          }
+        ],
+        "thickness18": {
+          "sourceUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/PAQUETERIA-1.pdf",
+          "confirmed": "The general MELAMINA packing table includes 18 mm for 2440 x 1220, 2440 x 2100 and 2850 x 2100 mm boards.",
+          "designSpecific": false,
+          "peruStockConfirmed": false
+        },
+        "moistureResistance": {
+          "sourceUrl": "https://tableroshispanos.es/aglomerados/",
+          "technicalUrl": "https://tableroshispanos.es/wp-content/uploads/2023/11/ficha-aglomerados-hidrofugos.pdf",
+          "confirmed": "Manufacturer offers MDP P3 hydrophobic boards for humid indoor conditions. No finish-specific RH pairing or Cusco inventory was verified.",
+          "addRhVariants": false
+        },
+        "limits": [
+          "Manufacturer catalog for Spain/global reference, not confirmed Peru/Cusco stock.",
+          "texture=wood/solid is a renderer classification derived from official Maderas/Unicolores categories, not a verified physical surface finish.",
+          "imageUrl points to an official public swatch. No HEX values were invented or derived, and no image assets were downloaded.",
+          "Repeated Contempo/Beigue template text on product pages was not treated as per-design metadata.",
+          "No commercial SKU was inferred from internal WooCommerce codes."
+        ]
+      },
+      "note": "",
+      "sourceSha256": "793fe432fa02d12237f71b5d6b28339b5eee9a5dfd9a483019857f85ec0a23d7",
+      "sourceBytes": 12402,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "hispano-vicenza",
+      "brand": "Hispano",
+      "name": "Vicenza",
+      "sourceUrl": "https://tableroshispanos.es/productos/vicenza/",
+      "imageUrl": "https://tableroshispanos.es/wp-content/uploads/2025/04/CaliforniaElm-1378x2560-1-300x300.jpg",
+      "asset": "/images/materials/hispano-vicenza-28957bef.webp",
+      "sha256": "28957bef5b9441be295619166bb3e596542ae010ee0f627833e627266af51d6a",
+      "width": 300,
+      "height": 300,
+      "bytes": 13472,
+      "renderTexture": true,
+      "texture": "",
+      "evidence": {
+        "manufacturerSite": "https://tableroshispanos.es/",
+        "categories": [
+          {
+            "category": "Unicolores",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-unicolores/",
+            "officialCount": 11,
+            "selectedCount": 11
+          },
+          {
+            "category": "Maderas",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-maderas/",
+            "officialCount": 54,
+            "selectedCount": 20
+          }
+        ],
+        "thickness18": {
+          "sourceUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/PAQUETERIA-1.pdf",
+          "confirmed": "The general MELAMINA packing table includes 18 mm for 2440 x 1220, 2440 x 2100 and 2850 x 2100 mm boards.",
+          "designSpecific": false,
+          "peruStockConfirmed": false
+        },
+        "moistureResistance": {
+          "sourceUrl": "https://tableroshispanos.es/aglomerados/",
+          "technicalUrl": "https://tableroshispanos.es/wp-content/uploads/2023/11/ficha-aglomerados-hidrofugos.pdf",
+          "confirmed": "Manufacturer offers MDP P3 hydrophobic boards for humid indoor conditions. No finish-specific RH pairing or Cusco inventory was verified.",
+          "addRhVariants": false
+        },
+        "limits": [
+          "Manufacturer catalog for Spain/global reference, not confirmed Peru/Cusco stock.",
+          "texture=wood/solid is a renderer classification derived from official Maderas/Unicolores categories, not a verified physical surface finish.",
+          "imageUrl points to an official public swatch. No HEX values were invented or derived, and no image assets were downloaded.",
+          "Repeated Contempo/Beigue template text on product pages was not treated as per-design metadata.",
+          "No commercial SKU was inferred from internal WooCommerce codes."
+        ]
+      },
+      "note": "",
+      "sourceSha256": "9fb1ade76331de9aa3bb434be31db25d48e3095332d2bf10c054c64070f75257",
+      "sourceBytes": 12447,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "hispano-vulcano",
+      "brand": "Hispano",
+      "name": "Vulcano",
+      "sourceUrl": "https://tableroshispanos.es/productos/vulcano/",
+      "imageUrl": "https://tableroshispanos.es/wp-content/uploads/2025/04/Vulcano-1378x2560-1-300x300.jpg",
+      "asset": "/images/materials/hispano-vulcano-949adb99.webp",
+      "sha256": "949adb990c0eb3e96e3ecca11ded6ecf9c2a9a73789e914e2a10e4e658ea6f27",
+      "width": 300,
+      "height": 300,
+      "bytes": 13876,
+      "renderTexture": true,
+      "texture": "",
+      "evidence": {
+        "manufacturerSite": "https://tableroshispanos.es/",
+        "categories": [
+          {
+            "category": "Unicolores",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-unicolores/",
+            "officialCount": 11,
+            "selectedCount": 11
+          },
+          {
+            "category": "Maderas",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-maderas/",
+            "officialCount": 54,
+            "selectedCount": 20
+          }
+        ],
+        "thickness18": {
+          "sourceUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/PAQUETERIA-1.pdf",
+          "confirmed": "The general MELAMINA packing table includes 18 mm for 2440 x 1220, 2440 x 2100 and 2850 x 2100 mm boards.",
+          "designSpecific": false,
+          "peruStockConfirmed": false
+        },
+        "moistureResistance": {
+          "sourceUrl": "https://tableroshispanos.es/aglomerados/",
+          "technicalUrl": "https://tableroshispanos.es/wp-content/uploads/2023/11/ficha-aglomerados-hidrofugos.pdf",
+          "confirmed": "Manufacturer offers MDP P3 hydrophobic boards for humid indoor conditions. No finish-specific RH pairing or Cusco inventory was verified.",
+          "addRhVariants": false
+        },
+        "limits": [
+          "Manufacturer catalog for Spain/global reference, not confirmed Peru/Cusco stock.",
+          "texture=wood/solid is a renderer classification derived from official Maderas/Unicolores categories, not a verified physical surface finish.",
+          "imageUrl points to an official public swatch. No HEX values were invented or derived, and no image assets were downloaded.",
+          "Repeated Contempo/Beigue template text on product pages was not treated as per-design metadata.",
+          "No commercial SKU was inferred from internal WooCommerce codes."
+        ]
+      },
+      "note": "",
+      "sourceSha256": "adee35f14e571a408a8b8ce68e3de00f0b7fd6772d824a794b0580c34b000aca",
+      "sourceBytes": 13824,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "hispano-allegro",
+      "brand": "Hispano",
+      "name": "Allegro",
+      "sourceUrl": "https://tableroshispanos.es/productos/allegro/",
+      "imageUrl": "https://tableroshispanos.es/wp-content/uploads/2023/12/0081-Allegro-300x300.jpg",
+      "asset": "/images/materials/hispano-allegro-eed96a1e.webp",
+      "sha256": "eed96a1ee81c69b9c1b76d6dd1d2c3fc6b2d620d8cec7b0f6dec351fecfdb27e",
+      "width": 300,
+      "height": 300,
+      "bytes": 10274,
+      "renderTexture": true,
+      "texture": "",
+      "evidence": {
+        "manufacturerSite": "https://tableroshispanos.es/",
+        "categories": [
+          {
+            "category": "Unicolores",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-unicolores/",
+            "officialCount": 11,
+            "selectedCount": 11
+          },
+          {
+            "category": "Maderas",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-maderas/",
+            "officialCount": 54,
+            "selectedCount": 20
+          }
+        ],
+        "thickness18": {
+          "sourceUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/PAQUETERIA-1.pdf",
+          "confirmed": "The general MELAMINA packing table includes 18 mm for 2440 x 1220, 2440 x 2100 and 2850 x 2100 mm boards.",
+          "designSpecific": false,
+          "peruStockConfirmed": false
+        },
+        "moistureResistance": {
+          "sourceUrl": "https://tableroshispanos.es/aglomerados/",
+          "technicalUrl": "https://tableroshispanos.es/wp-content/uploads/2023/11/ficha-aglomerados-hidrofugos.pdf",
+          "confirmed": "Manufacturer offers MDP P3 hydrophobic boards for humid indoor conditions. No finish-specific RH pairing or Cusco inventory was verified.",
+          "addRhVariants": false
+        },
+        "limits": [
+          "Manufacturer catalog for Spain/global reference, not confirmed Peru/Cusco stock.",
+          "texture=wood/solid is a renderer classification derived from official Maderas/Unicolores categories, not a verified physical surface finish.",
+          "imageUrl points to an official public swatch. No HEX values were invented or derived, and no image assets were downloaded.",
+          "Repeated Contempo/Beigue template text on product pages was not treated as per-design metadata.",
+          "No commercial SKU was inferred from internal WooCommerce codes."
+        ]
+      },
+      "note": "",
+      "sourceSha256": "ca4c827df992edabc1a113278c7b6e134f7477227da31151d53a47a711eebd56",
+      "sourceBytes": 16409,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "hispano-olmo-alaska",
+      "brand": "Hispano",
+      "name": "Olmo Alaska",
+      "sourceUrl": "https://tableroshispanos.es/productos/olmo-alaska/",
+      "imageUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/0010-Olmo-Alaska-1-300x300.jpg",
+      "asset": "/images/materials/hispano-olmo-alaska-9123aa47.webp",
+      "sha256": "9123aa47176c94ebefe0de533453037cc1f7b7c207eaee80b39e075a61615d5f",
+      "width": 300,
+      "height": 300,
+      "bytes": 5806,
+      "renderTexture": true,
+      "texture": "",
+      "evidence": {
+        "manufacturerSite": "https://tableroshispanos.es/",
+        "categories": [
+          {
+            "category": "Unicolores",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-unicolores/",
+            "officialCount": 11,
+            "selectedCount": 11
+          },
+          {
+            "category": "Maderas",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-maderas/",
+            "officialCount": 54,
+            "selectedCount": 20
+          }
+        ],
+        "thickness18": {
+          "sourceUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/PAQUETERIA-1.pdf",
+          "confirmed": "The general MELAMINA packing table includes 18 mm for 2440 x 1220, 2440 x 2100 and 2850 x 2100 mm boards.",
+          "designSpecific": false,
+          "peruStockConfirmed": false
+        },
+        "moistureResistance": {
+          "sourceUrl": "https://tableroshispanos.es/aglomerados/",
+          "technicalUrl": "https://tableroshispanos.es/wp-content/uploads/2023/11/ficha-aglomerados-hidrofugos.pdf",
+          "confirmed": "Manufacturer offers MDP P3 hydrophobic boards for humid indoor conditions. No finish-specific RH pairing or Cusco inventory was verified.",
+          "addRhVariants": false
+        },
+        "limits": [
+          "Manufacturer catalog for Spain/global reference, not confirmed Peru/Cusco stock.",
+          "texture=wood/solid is a renderer classification derived from official Maderas/Unicolores categories, not a verified physical surface finish.",
+          "imageUrl points to an official public swatch. No HEX values were invented or derived, and no image assets were downloaded.",
+          "Repeated Contempo/Beigue template text on product pages was not treated as per-design metadata.",
+          "No commercial SKU was inferred from internal WooCommerce codes."
+        ]
+      },
+      "note": "",
+      "sourceSha256": "8ffbfc73e325752eb2b678cf35e7c328b7526cec1e88c7fdd4b5ee29cf6c6203",
+      "sourceBytes": 6426,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "hispano-roble-bavaria",
+      "brand": "Hispano",
+      "name": "Roble Bavaria",
+      "sourceUrl": "https://tableroshispanos.es/productos/roble-bavaria/",
+      "imageUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/0011-Roble-Bavaria-300x300.jpg",
+      "asset": "/images/materials/hispano-roble-bavaria-d19fddb2.webp",
+      "sha256": "d19fddb2c42c5c7cb968b9c380b41a9e529dba30d7ee4c691b348a3d14275b33",
+      "width": 300,
+      "height": 300,
+      "bytes": 16486,
+      "renderTexture": true,
+      "texture": "",
+      "evidence": {
+        "manufacturerSite": "https://tableroshispanos.es/",
+        "categories": [
+          {
+            "category": "Unicolores",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-unicolores/",
+            "officialCount": 11,
+            "selectedCount": 11
+          },
+          {
+            "category": "Maderas",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-maderas/",
+            "officialCount": 54,
+            "selectedCount": 20
+          }
+        ],
+        "thickness18": {
+          "sourceUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/PAQUETERIA-1.pdf",
+          "confirmed": "The general MELAMINA packing table includes 18 mm for 2440 x 1220, 2440 x 2100 and 2850 x 2100 mm boards.",
+          "designSpecific": false,
+          "peruStockConfirmed": false
+        },
+        "moistureResistance": {
+          "sourceUrl": "https://tableroshispanos.es/aglomerados/",
+          "technicalUrl": "https://tableroshispanos.es/wp-content/uploads/2023/11/ficha-aglomerados-hidrofugos.pdf",
+          "confirmed": "Manufacturer offers MDP P3 hydrophobic boards for humid indoor conditions. No finish-specific RH pairing or Cusco inventory was verified.",
+          "addRhVariants": false
+        },
+        "limits": [
+          "Manufacturer catalog for Spain/global reference, not confirmed Peru/Cusco stock.",
+          "texture=wood/solid is a renderer classification derived from official Maderas/Unicolores categories, not a verified physical surface finish.",
+          "imageUrl points to an official public swatch. No HEX values were invented or derived, and no image assets were downloaded.",
+          "Repeated Contempo/Beigue template text on product pages was not treated as per-design metadata.",
+          "No commercial SKU was inferred from internal WooCommerce codes."
+        ]
+      },
+      "note": "",
+      "sourceSha256": "348733030205dfb4d22eb6c458337ac4d44c13a13b2571336ad218d7b2c191b9",
+      "sourceBytes": 13220,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "hispano-pino-capuchino",
+      "brand": "Hispano",
+      "name": "Pino Capuchino",
+      "sourceUrl": "https://tableroshispanos.es/productos/pino-capuchino/",
+      "imageUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/0013-Pino-Capuchino-1-300x300.jpg",
+      "asset": "/images/materials/hispano-pino-capuchino-247b30a8.webp",
+      "sha256": "247b30a8818a38c5448846d4900e4a35e61390bab3bb19e125b72c404c78c91b",
+      "width": 300,
+      "height": 300,
+      "bytes": 14370,
+      "renderTexture": true,
+      "texture": "",
+      "evidence": {
+        "manufacturerSite": "https://tableroshispanos.es/",
+        "categories": [
+          {
+            "category": "Unicolores",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-unicolores/",
+            "officialCount": 11,
+            "selectedCount": 11
+          },
+          {
+            "category": "Maderas",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-maderas/",
+            "officialCount": 54,
+            "selectedCount": 20
+          }
+        ],
+        "thickness18": {
+          "sourceUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/PAQUETERIA-1.pdf",
+          "confirmed": "The general MELAMINA packing table includes 18 mm for 2440 x 1220, 2440 x 2100 and 2850 x 2100 mm boards.",
+          "designSpecific": false,
+          "peruStockConfirmed": false
+        },
+        "moistureResistance": {
+          "sourceUrl": "https://tableroshispanos.es/aglomerados/",
+          "technicalUrl": "https://tableroshispanos.es/wp-content/uploads/2023/11/ficha-aglomerados-hidrofugos.pdf",
+          "confirmed": "Manufacturer offers MDP P3 hydrophobic boards for humid indoor conditions. No finish-specific RH pairing or Cusco inventory was verified.",
+          "addRhVariants": false
+        },
+        "limits": [
+          "Manufacturer catalog for Spain/global reference, not confirmed Peru/Cusco stock.",
+          "texture=wood/solid is a renderer classification derived from official Maderas/Unicolores categories, not a verified physical surface finish.",
+          "imageUrl points to an official public swatch. No HEX values were invented or derived, and no image assets were downloaded.",
+          "Repeated Contempo/Beigue template text on product pages was not treated as per-design metadata.",
+          "No commercial SKU was inferred from internal WooCommerce codes."
+        ]
+      },
+      "note": "",
+      "sourceSha256": "1d87d13666edabf935db2945e64d9440951fb05fdfca29fee260b05bf4ec23fb",
+      "sourceBytes": 14195,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "hispano-cedro-02",
+      "brand": "Hispano",
+      "name": "Cedro 02",
+      "sourceUrl": "https://tableroshispanos.es/productos/cedro-02/",
+      "imageUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/0015-Cedro-02-300x300.jpg",
+      "asset": "/images/materials/hispano-cedro-02-66c76aee.webp",
+      "sha256": "66c76aeeb4ef971b32fef4de96c3c5288b677ea782da809fd11c88000df72836",
+      "width": 300,
+      "height": 300,
+      "bytes": 10150,
+      "renderTexture": true,
+      "texture": "",
+      "evidence": {
+        "manufacturerSite": "https://tableroshispanos.es/",
+        "categories": [
+          {
+            "category": "Unicolores",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-unicolores/",
+            "officialCount": 11,
+            "selectedCount": 11
+          },
+          {
+            "category": "Maderas",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-maderas/",
+            "officialCount": 54,
+            "selectedCount": 20
+          }
+        ],
+        "thickness18": {
+          "sourceUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/PAQUETERIA-1.pdf",
+          "confirmed": "The general MELAMINA packing table includes 18 mm for 2440 x 1220, 2440 x 2100 and 2850 x 2100 mm boards.",
+          "designSpecific": false,
+          "peruStockConfirmed": false
+        },
+        "moistureResistance": {
+          "sourceUrl": "https://tableroshispanos.es/aglomerados/",
+          "technicalUrl": "https://tableroshispanos.es/wp-content/uploads/2023/11/ficha-aglomerados-hidrofugos.pdf",
+          "confirmed": "Manufacturer offers MDP P3 hydrophobic boards for humid indoor conditions. No finish-specific RH pairing or Cusco inventory was verified.",
+          "addRhVariants": false
+        },
+        "limits": [
+          "Manufacturer catalog for Spain/global reference, not confirmed Peru/Cusco stock.",
+          "texture=wood/solid is a renderer classification derived from official Maderas/Unicolores categories, not a verified physical surface finish.",
+          "imageUrl points to an official public swatch. No HEX values were invented or derived, and no image assets were downloaded.",
+          "Repeated Contempo/Beigue template text on product pages was not treated as per-design metadata.",
+          "No commercial SKU was inferred from internal WooCommerce codes."
+        ]
+      },
+      "note": "",
+      "sourceSha256": "9ac0f4c3ae57cd90e75b7e609dd482537c20973150fed0df7470d50dfb610997",
+      "sourceBytes": 9664,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "hispano-roble-century",
+      "brand": "Hispano",
+      "name": "Roble Century",
+      "sourceUrl": "https://tableroshispanos.es/productos/roble-century/",
+      "imageUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/0016-Roble-Century-1-300x300.jpg",
+      "asset": "/images/materials/hispano-roble-century-1add3ed9.webp",
+      "sha256": "1add3ed9a32cd2b96874a1b437df06e997d801554d6bc8cb66e61f15ba70119c",
+      "width": 300,
+      "height": 300,
+      "bytes": 15028,
+      "renderTexture": true,
+      "texture": "",
+      "evidence": {
+        "manufacturerSite": "https://tableroshispanos.es/",
+        "categories": [
+          {
+            "category": "Unicolores",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-unicolores/",
+            "officialCount": 11,
+            "selectedCount": 11
+          },
+          {
+            "category": "Maderas",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-maderas/",
+            "officialCount": 54,
+            "selectedCount": 20
+          }
+        ],
+        "thickness18": {
+          "sourceUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/PAQUETERIA-1.pdf",
+          "confirmed": "The general MELAMINA packing table includes 18 mm for 2440 x 1220, 2440 x 2100 and 2850 x 2100 mm boards.",
+          "designSpecific": false,
+          "peruStockConfirmed": false
+        },
+        "moistureResistance": {
+          "sourceUrl": "https://tableroshispanos.es/aglomerados/",
+          "technicalUrl": "https://tableroshispanos.es/wp-content/uploads/2023/11/ficha-aglomerados-hidrofugos.pdf",
+          "confirmed": "Manufacturer offers MDP P3 hydrophobic boards for humid indoor conditions. No finish-specific RH pairing or Cusco inventory was verified.",
+          "addRhVariants": false
+        },
+        "limits": [
+          "Manufacturer catalog for Spain/global reference, not confirmed Peru/Cusco stock.",
+          "texture=wood/solid is a renderer classification derived from official Maderas/Unicolores categories, not a verified physical surface finish.",
+          "imageUrl points to an official public swatch. No HEX values were invented or derived, and no image assets were downloaded.",
+          "Repeated Contempo/Beigue template text on product pages was not treated as per-design metadata.",
+          "No commercial SKU was inferred from internal WooCommerce codes."
+        ]
+      },
+      "note": "",
+      "sourceSha256": "2c051eb23213c3dddd2674d0a87a2758ba3b29ffcb18cfb9b6d03d7965176109",
+      "sourceBytes": 13213,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "hispano-tropical-chocolate",
+      "brand": "Hispano",
+      "name": "Tropical Chocolate",
+      "sourceUrl": "https://tableroshispanos.es/productos/tropical-chocolate/",
+      "imageUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/0018-Tropical-Chocolate-300x300.jpg",
+      "asset": "/images/materials/hispano-tropical-chocolate-35e7c829.webp",
+      "sha256": "35e7c829d621d373c1727f53859d08a78ce73b98eb48223c976dc6bf14436248",
+      "width": 300,
+      "height": 300,
+      "bytes": 10606,
+      "renderTexture": true,
+      "texture": "",
+      "evidence": {
+        "manufacturerSite": "https://tableroshispanos.es/",
+        "categories": [
+          {
+            "category": "Unicolores",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-unicolores/",
+            "officialCount": 11,
+            "selectedCount": 11
+          },
+          {
+            "category": "Maderas",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-maderas/",
+            "officialCount": 54,
+            "selectedCount": 20
+          }
+        ],
+        "thickness18": {
+          "sourceUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/PAQUETERIA-1.pdf",
+          "confirmed": "The general MELAMINA packing table includes 18 mm for 2440 x 1220, 2440 x 2100 and 2850 x 2100 mm boards.",
+          "designSpecific": false,
+          "peruStockConfirmed": false
+        },
+        "moistureResistance": {
+          "sourceUrl": "https://tableroshispanos.es/aglomerados/",
+          "technicalUrl": "https://tableroshispanos.es/wp-content/uploads/2023/11/ficha-aglomerados-hidrofugos.pdf",
+          "confirmed": "Manufacturer offers MDP P3 hydrophobic boards for humid indoor conditions. No finish-specific RH pairing or Cusco inventory was verified.",
+          "addRhVariants": false
+        },
+        "limits": [
+          "Manufacturer catalog for Spain/global reference, not confirmed Peru/Cusco stock.",
+          "texture=wood/solid is a renderer classification derived from official Maderas/Unicolores categories, not a verified physical surface finish.",
+          "imageUrl points to an official public swatch. No HEX values were invented or derived, and no image assets were downloaded.",
+          "Repeated Contempo/Beigue template text on product pages was not treated as per-design metadata.",
+          "No commercial SKU was inferred from internal WooCommerce codes."
+        ]
+      },
+      "note": "",
+      "sourceSha256": "62fd9d42e036640488f53df6d6202d8b330c597924ebd83d9dea9a3295b81f03",
+      "sourceBytes": 8961,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "hispano-roble-croma",
+      "brand": "Hispano",
+      "name": "Roble Croma",
+      "sourceUrl": "https://tableroshispanos.es/productos/roble-croma/",
+      "imageUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/0019-Roble-Croma-1-300x300.jpg",
+      "asset": "/images/materials/hispano-roble-croma-8ca0ba7e.webp",
+      "sha256": "8ca0ba7ec2db7a4f18753f44ef4ddc4a5f7391681ed29ace8247d2241d7d62fa",
+      "width": 300,
+      "height": 300,
+      "bytes": 16174,
+      "renderTexture": true,
+      "texture": "",
+      "evidence": {
+        "manufacturerSite": "https://tableroshispanos.es/",
+        "categories": [
+          {
+            "category": "Unicolores",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-unicolores/",
+            "officialCount": 11,
+            "selectedCount": 11
+          },
+          {
+            "category": "Maderas",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-maderas/",
+            "officialCount": 54,
+            "selectedCount": 20
+          }
+        ],
+        "thickness18": {
+          "sourceUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/PAQUETERIA-1.pdf",
+          "confirmed": "The general MELAMINA packing table includes 18 mm for 2440 x 1220, 2440 x 2100 and 2850 x 2100 mm boards.",
+          "designSpecific": false,
+          "peruStockConfirmed": false
+        },
+        "moistureResistance": {
+          "sourceUrl": "https://tableroshispanos.es/aglomerados/",
+          "technicalUrl": "https://tableroshispanos.es/wp-content/uploads/2023/11/ficha-aglomerados-hidrofugos.pdf",
+          "confirmed": "Manufacturer offers MDP P3 hydrophobic boards for humid indoor conditions. No finish-specific RH pairing or Cusco inventory was verified.",
+          "addRhVariants": false
+        },
+        "limits": [
+          "Manufacturer catalog for Spain/global reference, not confirmed Peru/Cusco stock.",
+          "texture=wood/solid is a renderer classification derived from official Maderas/Unicolores categories, not a verified physical surface finish.",
+          "imageUrl points to an official public swatch. No HEX values were invented or derived, and no image assets were downloaded.",
+          "Repeated Contempo/Beigue template text on product pages was not treated as per-design metadata.",
+          "No commercial SKU was inferred from internal WooCommerce codes."
+        ]
+      },
+      "note": "",
+      "sourceSha256": "00f8d99e6b8cca9b9b38de5cb658790aad346de0f93d7570fc2334cb6782d0ed",
+      "sourceBytes": 13797,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "hispano-roble-dolcetto",
+      "brand": "Hispano",
+      "name": "Roble Dolcetto",
+      "sourceUrl": "https://tableroshispanos.es/productos/roble-dolcetto/",
+      "imageUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/0020-Roble-Dolcetto-300x300.jpg",
+      "asset": "/images/materials/hispano-roble-dolcetto-1a16adc7.webp",
+      "sha256": "1a16adc77774787cca1f499a5f912a371bf41e3572aa76baad8a5252a7302182",
+      "width": 300,
+      "height": 300,
+      "bytes": 23188,
+      "renderTexture": true,
+      "texture": "",
+      "evidence": {
+        "manufacturerSite": "https://tableroshispanos.es/",
+        "categories": [
+          {
+            "category": "Unicolores",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-unicolores/",
+            "officialCount": 11,
+            "selectedCount": 11
+          },
+          {
+            "category": "Maderas",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-maderas/",
+            "officialCount": 54,
+            "selectedCount": 20
+          }
+        ],
+        "thickness18": {
+          "sourceUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/PAQUETERIA-1.pdf",
+          "confirmed": "The general MELAMINA packing table includes 18 mm for 2440 x 1220, 2440 x 2100 and 2850 x 2100 mm boards.",
+          "designSpecific": false,
+          "peruStockConfirmed": false
+        },
+        "moistureResistance": {
+          "sourceUrl": "https://tableroshispanos.es/aglomerados/",
+          "technicalUrl": "https://tableroshispanos.es/wp-content/uploads/2023/11/ficha-aglomerados-hidrofugos.pdf",
+          "confirmed": "Manufacturer offers MDP P3 hydrophobic boards for humid indoor conditions. No finish-specific RH pairing or Cusco inventory was verified.",
+          "addRhVariants": false
+        },
+        "limits": [
+          "Manufacturer catalog for Spain/global reference, not confirmed Peru/Cusco stock.",
+          "texture=wood/solid is a renderer classification derived from official Maderas/Unicolores categories, not a verified physical surface finish.",
+          "imageUrl points to an official public swatch. No HEX values were invented or derived, and no image assets were downloaded.",
+          "Repeated Contempo/Beigue template text on product pages was not treated as per-design metadata.",
+          "No commercial SKU was inferred from internal WooCommerce codes."
+        ]
+      },
+      "note": "",
+      "sourceSha256": "61ac0b1924fae103965633ce9bd6bb79586db43bb00a6fcfe70604cc667fae7c",
+      "sourceBytes": 17635,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "hispano-nogal-habana",
+      "brand": "Hispano",
+      "name": "Nogal Habana",
+      "sourceUrl": "https://tableroshispanos.es/productos/nogal-habana/",
+      "imageUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/0021-Nogal-Habana-1-300x300.jpg",
+      "asset": "/images/materials/hispano-nogal-habana-3eaa1d87.webp",
+      "sha256": "3eaa1d87b94c694df603d7c6452d7154f0bffa4d58d5abe5c019384a83976552",
+      "width": 300,
+      "height": 300,
+      "bytes": 19560,
+      "renderTexture": true,
+      "texture": "",
+      "evidence": {
+        "manufacturerSite": "https://tableroshispanos.es/",
+        "categories": [
+          {
+            "category": "Unicolores",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-unicolores/",
+            "officialCount": 11,
+            "selectedCount": 11
+          },
+          {
+            "category": "Maderas",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-maderas/",
+            "officialCount": 54,
+            "selectedCount": 20
+          }
+        ],
+        "thickness18": {
+          "sourceUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/PAQUETERIA-1.pdf",
+          "confirmed": "The general MELAMINA packing table includes 18 mm for 2440 x 1220, 2440 x 2100 and 2850 x 2100 mm boards.",
+          "designSpecific": false,
+          "peruStockConfirmed": false
+        },
+        "moistureResistance": {
+          "sourceUrl": "https://tableroshispanos.es/aglomerados/",
+          "technicalUrl": "https://tableroshispanos.es/wp-content/uploads/2023/11/ficha-aglomerados-hidrofugos.pdf",
+          "confirmed": "Manufacturer offers MDP P3 hydrophobic boards for humid indoor conditions. No finish-specific RH pairing or Cusco inventory was verified.",
+          "addRhVariants": false
+        },
+        "limits": [
+          "Manufacturer catalog for Spain/global reference, not confirmed Peru/Cusco stock.",
+          "texture=wood/solid is a renderer classification derived from official Maderas/Unicolores categories, not a verified physical surface finish.",
+          "imageUrl points to an official public swatch. No HEX values were invented or derived, and no image assets were downloaded.",
+          "Repeated Contempo/Beigue template text on product pages was not treated as per-design metadata.",
+          "No commercial SKU was inferred from internal WooCommerce codes."
+        ]
+      },
+      "note": "",
+      "sourceSha256": "b6e429ae20c76a6c0d25f6e089d4af3579f7b121f1308c74fe8260e782dd54fe",
+      "sourceBytes": 16349,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "hispano-sonoma-eiche",
+      "brand": "Hispano",
+      "name": "Sonoma Eiche",
+      "sourceUrl": "https://tableroshispanos.es/productos/sonoma-eiche/",
+      "imageUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/0055-Sonoma-Eiche-1.jpg",
+      "asset": "/images/materials/hispano-sonoma-eiche-bc97f355.webp",
+      "sha256": "bc97f35554b7d22cd3f0729ea4100ff58557229f4c417a87ee677fd9f6e3cb9f",
+      "width": 512,
+      "height": 768,
+      "bytes": 145688,
+      "renderTexture": true,
+      "texture": "",
+      "evidence": {
+        "manufacturerSite": "https://tableroshispanos.es/",
+        "categories": [
+          {
+            "category": "Unicolores",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-unicolores/",
+            "officialCount": 11,
+            "selectedCount": 11
+          },
+          {
+            "category": "Maderas",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-maderas/",
+            "officialCount": 54,
+            "selectedCount": 20
+          }
+        ],
+        "thickness18": {
+          "sourceUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/PAQUETERIA-1.pdf",
+          "confirmed": "The general MELAMINA packing table includes 18 mm for 2440 x 1220, 2440 x 2100 and 2850 x 2100 mm boards.",
+          "designSpecific": false,
+          "peruStockConfirmed": false
+        },
+        "moistureResistance": {
+          "sourceUrl": "https://tableroshispanos.es/aglomerados/",
+          "technicalUrl": "https://tableroshispanos.es/wp-content/uploads/2023/11/ficha-aglomerados-hidrofugos.pdf",
+          "confirmed": "Manufacturer offers MDP P3 hydrophobic boards for humid indoor conditions. No finish-specific RH pairing or Cusco inventory was verified.",
+          "addRhVariants": false
+        },
+        "limits": [
+          "Manufacturer catalog for Spain/global reference, not confirmed Peru/Cusco stock.",
+          "texture=wood/solid is a renderer classification derived from official Maderas/Unicolores categories, not a verified physical surface finish.",
+          "imageUrl points to an official public swatch. No HEX values were invented or derived, and no image assets were downloaded.",
+          "Repeated Contempo/Beigue template text on product pages was not treated as per-design metadata.",
+          "No commercial SKU was inferred from internal WooCommerce codes."
+        ]
+      },
+      "note": "",
+      "sourceSha256": "ef9c224594f7c9881d8b197e0dd72c4b588783716608625003a388fb09e840ef",
+      "sourceBytes": 931605,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "hispano-roble-spirit",
+      "brand": "Hispano",
+      "name": "Roble Spirit",
+      "sourceUrl": "https://tableroshispanos.es/productos/roble-spirit/",
+      "imageUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/0056-Roble-Spirit-1.jpg",
+      "asset": "/images/materials/hispano-roble-spirit-342912c0.webp",
+      "sha256": "342912c0bbd476d0458c28bf65f8dcbe6d84ec8513c6cc8fc92ab84aaca8008a",
+      "width": 512,
+      "height": 768,
+      "bytes": 135450,
+      "renderTexture": true,
+      "texture": "",
+      "evidence": {
+        "manufacturerSite": "https://tableroshispanos.es/",
+        "categories": [
+          {
+            "category": "Unicolores",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-unicolores/",
+            "officialCount": 11,
+            "selectedCount": 11
+          },
+          {
+            "category": "Maderas",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-maderas/",
+            "officialCount": 54,
+            "selectedCount": 20
+          }
+        ],
+        "thickness18": {
+          "sourceUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/PAQUETERIA-1.pdf",
+          "confirmed": "The general MELAMINA packing table includes 18 mm for 2440 x 1220, 2440 x 2100 and 2850 x 2100 mm boards.",
+          "designSpecific": false,
+          "peruStockConfirmed": false
+        },
+        "moistureResistance": {
+          "sourceUrl": "https://tableroshispanos.es/aglomerados/",
+          "technicalUrl": "https://tableroshispanos.es/wp-content/uploads/2023/11/ficha-aglomerados-hidrofugos.pdf",
+          "confirmed": "Manufacturer offers MDP P3 hydrophobic boards for humid indoor conditions. No finish-specific RH pairing or Cusco inventory was verified.",
+          "addRhVariants": false
+        },
+        "limits": [
+          "Manufacturer catalog for Spain/global reference, not confirmed Peru/Cusco stock.",
+          "texture=wood/solid is a renderer classification derived from official Maderas/Unicolores categories, not a verified physical surface finish.",
+          "imageUrl points to an official public swatch. No HEX values were invented or derived, and no image assets were downloaded.",
+          "Repeated Contempo/Beigue template text on product pages was not treated as per-design metadata.",
+          "No commercial SKU was inferred from internal WooCommerce codes."
+        ]
+      },
+      "note": "",
+      "sourceSha256": "89acb102046dcf829fe91b1090e49af975a36c4ce08a6ce902c017d4a4bf5bf4",
+      "sourceBytes": 828336,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "hispano-roble-tellurian",
+      "brand": "Hispano",
+      "name": "Roble Tellurian",
+      "sourceUrl": "https://tableroshispanos.es/productos/roble-tellurian/",
+      "imageUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/0057-Roble-Tellurian-1.jpg",
+      "asset": "/images/materials/hispano-roble-tellurian-a085276f.webp",
+      "sha256": "a085276f91f4bdd54586964103a959852baf663ba1ffa2a8cb2a7f79a94add6b",
+      "width": 512,
+      "height": 768,
+      "bytes": 103856,
+      "renderTexture": true,
+      "texture": "",
+      "evidence": {
+        "manufacturerSite": "https://tableroshispanos.es/",
+        "categories": [
+          {
+            "category": "Unicolores",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-unicolores/",
+            "officialCount": 11,
+            "selectedCount": 11
+          },
+          {
+            "category": "Maderas",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-maderas/",
+            "officialCount": 54,
+            "selectedCount": 20
+          }
+        ],
+        "thickness18": {
+          "sourceUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/PAQUETERIA-1.pdf",
+          "confirmed": "The general MELAMINA packing table includes 18 mm for 2440 x 1220, 2440 x 2100 and 2850 x 2100 mm boards.",
+          "designSpecific": false,
+          "peruStockConfirmed": false
+        },
+        "moistureResistance": {
+          "sourceUrl": "https://tableroshispanos.es/aglomerados/",
+          "technicalUrl": "https://tableroshispanos.es/wp-content/uploads/2023/11/ficha-aglomerados-hidrofugos.pdf",
+          "confirmed": "Manufacturer offers MDP P3 hydrophobic boards for humid indoor conditions. No finish-specific RH pairing or Cusco inventory was verified.",
+          "addRhVariants": false
+        },
+        "limits": [
+          "Manufacturer catalog for Spain/global reference, not confirmed Peru/Cusco stock.",
+          "texture=wood/solid is a renderer classification derived from official Maderas/Unicolores categories, not a verified physical surface finish.",
+          "imageUrl points to an official public swatch. No HEX values were invented or derived, and no image assets were downloaded.",
+          "Repeated Contempo/Beigue template text on product pages was not treated as per-design metadata.",
+          "No commercial SKU was inferred from internal WooCommerce codes."
+        ]
+      },
+      "note": "",
+      "sourceSha256": "e909189b203fa01ec540c4cdb77bbe920a8a861680011cb1c59b28833f2c4513",
+      "sourceBytes": 712536,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "hispano-olmo-gris",
+      "brand": "Hispano",
+      "name": "Olmo Gris",
+      "sourceUrl": "https://tableroshispanos.es/productos/olmo-gris/",
+      "imageUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/0030-Olmo-Gris-1.jpg",
+      "asset": "/images/materials/hispano-olmo-gris-5559e97e.webp",
+      "sha256": "5559e97e0c5779aa4bafd847c0ca5dd709b6c4f9c7fa7a5dd0b80fba5140bb8a",
+      "width": 512,
+      "height": 768,
+      "bytes": 128244,
+      "renderTexture": true,
+      "texture": "",
+      "evidence": {
+        "manufacturerSite": "https://tableroshispanos.es/",
+        "categories": [
+          {
+            "category": "Unicolores",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-unicolores/",
+            "officialCount": 11,
+            "selectedCount": 11
+          },
+          {
+            "category": "Maderas",
+            "sourceUrl": "https://tableroshispanos.es/catalogo/categorias-maderas/",
+            "officialCount": 54,
+            "selectedCount": 20
+          }
+        ],
+        "thickness18": {
+          "sourceUrl": "https://tableroshispanos.es/wp-content/uploads/2023/10/PAQUETERIA-1.pdf",
+          "confirmed": "The general MELAMINA packing table includes 18 mm for 2440 x 1220, 2440 x 2100 and 2850 x 2100 mm boards.",
+          "designSpecific": false,
+          "peruStockConfirmed": false
+        },
+        "moistureResistance": {
+          "sourceUrl": "https://tableroshispanos.es/aglomerados/",
+          "technicalUrl": "https://tableroshispanos.es/wp-content/uploads/2023/11/ficha-aglomerados-hidrofugos.pdf",
+          "confirmed": "Manufacturer offers MDP P3 hydrophobic boards for humid indoor conditions. No finish-specific RH pairing or Cusco inventory was verified.",
+          "addRhVariants": false
+        },
+        "limits": [
+          "Manufacturer catalog for Spain/global reference, not confirmed Peru/Cusco stock.",
+          "texture=wood/solid is a renderer classification derived from official Maderas/Unicolores categories, not a verified physical surface finish.",
+          "imageUrl points to an official public swatch. No HEX values were invented or derived, and no image assets were downloaded.",
+          "Repeated Contempo/Beigue template text on product pages was not treated as per-design metadata.",
+          "No commercial SKU was inferred from internal WooCommerce codes."
+        ]
+      },
+      "note": "",
+      "sourceSha256": "543202a1732c1edd979e9b2f87f6af13e39163b8038657b35c03cf1f2ceaf639",
+      "sourceBytes": 936931,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "vesto-blanco",
+      "brand": "Vesto",
+      "name": "Blanco",
+      "sourceUrl": "https://arauco.com/peru/marcas/vesto/blanco/",
+      "imageUrl": "https://arauco.com/peru/wp-content/uploads/sites/22/2018/01/135-BLANCO-1-1.jpg",
+      "asset": "/images/materials/vesto-blanco-4c5f4891.webp",
+      "sha256": "4c5f489163b8e42d543abd80ab4c0b4a9ee547d6d57c9271236774bd6bce23a2",
+      "width": 752,
+      "height": 768,
+      "bytes": 1556,
+      "renderTexture": true,
+      "texture": "frost",
+      "evidence": {
+        "verified": true,
+        "sourceUrl": "https://arauco.com/peru/ayuda-para-tus-proyectos/optimizador-de-corte/",
+        "listedFormats": [
+          "Blanco Nieve 2440 x 2150 x 18 mm",
+          "Blanco 2440 x 2150 x 18 mm"
+        ]
+      },
+      "note": "Muestra plana del propio diseño enlazada en su ficha oficial Arauco Perú. Inspección visual: sin ambiente, perspectiva, rótulos ni marcas sobre la superficie. La referencia digital no garantiza coincidencia con la muestra física.",
+      "sourceSha256": "237f87c1d6f317209621fa6c186e01ba3de9c21c2fc8ad9f670e30f2c29528d9",
+      "sourceBytes": 1486426,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design.",
+      "manufacturerCode": "135",
+      "codeSourceUrl": "https://arauco.com/peru/marcas/vesto/blanco/"
+    },
+    {
+      "id": "vesto-almendra",
+      "brand": "Vesto",
+      "name": "Almendra",
+      "sourceUrl": "https://arauco.com/peru/marcas/vesto/almendra/",
+      "imageUrl": "https://arauco.com/peru/wp-content/uploads/sites/22/2018/01/180-ALMENDRA-1-1.jpg",
+      "asset": "/images/materials/vesto-almendra-f3717bd1.webp",
+      "sha256": "f3717bd19be0e99049999b863581d2970e782b8ec9a76fc60a57bb1b1ef5c68f",
+      "width": 751,
+      "height": 768,
+      "bytes": 3620,
+      "renderTexture": true,
+      "texture": "frost",
+      "evidence": {
+        "verified": true,
+        "sourceUrl": "https://arauco.com/peru/ayuda-para-tus-proyectos/optimizador-de-corte/",
+        "listedFormats": [
+          "Almendra 2440 x 2150 x 18 mm"
+        ]
+      },
+      "note": "Muestra plana del propio diseño enlazada en su ficha oficial Arauco Perú. Inspección visual: sin ambiente, perspectiva, rótulos ni marcas sobre la superficie. La referencia digital no garantiza coincidencia con la muestra física.",
+      "sourceSha256": "186b2d6dcbfda655d7affe0d047fda212547fba0d5aab1e0571e1c60d912490a",
+      "sourceBytes": 2125007,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design.",
+      "manufacturerCode": "180",
+      "codeSourceUrl": "https://arauco.com/peru/marcas/vesto/almendra/"
+    },
+    {
+      "id": "vesto-negro",
+      "brand": "Vesto",
+      "name": "Negro",
+      "sourceUrl": "https://arauco.com/peru/marcas/vesto/negro/",
+      "imageUrl": "https://arauco.com/peru/wp-content/uploads/sites/22/2018/01/303-NEGRO-1-1.jpg",
+      "asset": "/images/materials/vesto-negro-9129a344.webp",
+      "sha256": "9129a344fbbe651d18a24aca620292b44df3c35f79367cce9f545db71c30ad34",
+      "width": 510,
+      "height": 768,
+      "bytes": 1074,
+      "renderTexture": true,
+      "texture": "frost",
+      "evidence": {
+        "verified": true,
+        "sourceUrl": "https://arauco.com/peru/ayuda-para-tus-proyectos/optimizador-de-corte/",
+        "listedFormats": [
+          "Negro 2440 x 2150 x 18 mm"
+        ]
+      },
+      "note": "Muestra plana del propio diseño enlazada en su ficha oficial Arauco Perú. Inspección visual: sin ambiente, perspectiva, rótulos ni marcas sobre la superficie. La referencia digital no garantiza coincidencia con la muestra física.",
+      "sourceSha256": "75b5b660b1f3bb348035fe06be8db3715f4280e2a41ad111d884b25cb1283641",
+      "sourceBytes": 3195025,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design.",
+      "manufacturerCode": "303",
+      "codeSourceUrl": "https://arauco.com/peru/marcas/vesto/negro/"
+    },
+    {
+      "id": "vesto-wengue",
+      "brand": "Vesto",
+      "name": "Wengue",
+      "sourceUrl": "https://arauco.com/peru/marcas/vesto/roble-dakar-wengue/",
+      "imageUrl": "https://arauco.com/peru/wp-content/uploads/sites/22/2018/01/031-ROBLE-DAKAR-WENGUE-1-1.jpg",
+      "asset": "/images/materials/vesto-wengue-651455d9.webp",
+      "sha256": "651455d935d4c81164be74522c9d70ca5e4d33d31dbb9138fa07243ba18975f5",
+      "width": 384,
+      "height": 768,
+      "bytes": 37730,
+      "renderTexture": true,
+      "texture": "frost",
+      "evidence": {
+        "verified": true,
+        "sourceUrl": "https://arauco.com/peru/ayuda-para-tus-proyectos/optimizador-de-corte/",
+        "listedFormats": [
+          "Wengue Oscuro 2440 x 2150 x 18 mm",
+          "Wengue 2440 x 2150 x 18 mm"
+        ]
+      },
+      "note": "Muestra plana del propio diseño enlazada en su ficha oficial Arauco Perú. Inspección visual: sin ambiente, perspectiva, rótulos ni marcas sobre la superficie. La referencia digital no garantiza coincidencia con la muestra física.",
+      "sourceSha256": "c2a1b79437a97038c3c6a4edd3b1d669f4c656a5bd51bfd6696940d9f7a2a443",
+      "sourceBytes": 4530240,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design.",
+      "manufacturerCode": "031",
+      "codeSourceUrl": "https://arauco.com/peru/marcas/vesto/roble-dakar-wengue/"
+    },
+    {
+      "id": "vesto-roble-cava",
+      "brand": "Vesto",
+      "name": "Roble Cava",
+      "sourceUrl": "https://arauco.com/peru/marcas/vesto/roble-cava/",
+      "imageUrl": "https://arauco.com/peru/wp-content/uploads/sites/22/2018/01/078-ROBLE-CAVA-2-1.jpg",
+      "asset": "/images/materials/vesto-roble-cava-d70ea72a.webp",
+      "sha256": "d70ea72a781ada827262e487e0b5139555a7869ab83fb8d582e818a90f8b9d08",
+      "width": 384,
+      "height": 768,
+      "bytes": 95986,
+      "renderTexture": true,
+      "texture": "woodtext",
+      "evidence": {
+        "verified": true,
+        "sourceUrl": "https://arauco.com/peru/ayuda-para-tus-proyectos/optimizador-de-corte/",
+        "listedFormats": [
+          "Roble Cava 2440 x 2150 x 18 mm"
+        ]
+      },
+      "note": "Muestra plana del propio diseño enlazada en su ficha oficial Arauco Perú. Inspección visual: sin ambiente, perspectiva, rótulos ni marcas sobre la superficie. La referencia digital no garantiza coincidencia con la muestra física.",
+      "sourceSha256": "25cf67ea16460f99568a57fe4dd2f4748d33e9c73fcb1ce7541d40e21e28dcb9",
+      "sourceBytes": 6478055,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design.",
+      "manufacturerCode": "078",
+      "codeSourceUrl": "https://arauco.com/peru/marcas/vesto/roble-cava/"
+    },
+    {
+      "id": "vesto-caramel",
+      "brand": "Vesto",
+      "name": "Caramel",
+      "sourceUrl": "https://arauco.com/peru/marcas/vesto/caramel/",
+      "imageUrl": "https://arauco.com/peru/wp-content/uploads/sites/22/2018/01/022-CARAMEL-1-1.jpg",
+      "asset": "/images/materials/vesto-caramel-e73718cd.webp",
+      "sha256": "e73718cdbc82a7b32a59fe390d9a58df8ae81188527989eee2bd900a1a7928ab",
+      "width": 354,
+      "height": 768,
+      "bytes": 42838,
+      "renderTexture": true,
+      "texture": "mate natural",
+      "evidence": {
+        "verified": true,
+        "sourceUrl": "https://arauco.com/peru/ayuda-para-tus-proyectos/optimizador-de-corte/",
+        "listedFormats": [
+          "Caramel 2440 x 2150 x 18 mm"
+        ]
+      },
+      "note": "Muestra plana del propio diseño enlazada en su ficha oficial Arauco Perú. Inspección visual: sin ambiente, perspectiva, rótulos ni marcas sobre la superficie. La referencia digital no garantiza coincidencia con la muestra física.",
+      "sourceSha256": "953a30fbd4e366d1284889878c548bf91b5c2c463c158b30ced3a57228a216a9",
+      "sourceBytes": 6971535,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design.",
+      "manufacturerCode": "022",
+      "codeSourceUrl": "https://arauco.com/peru/marcas/vesto/caramel/"
+    },
+    {
+      "id": "vesto-arcilla",
+      "brand": "Vesto",
+      "name": "Arcilla",
+      "sourceUrl": "https://arauco.com/peru/marcas/nuevos-disenos/arcilla/",
+      "imageUrl": "https://arauco.com/peru/wp-content/uploads/sites/22/2025/07/Arcilla-2-scaled.jpg",
+      "asset": "/images/materials/vesto-arcilla-bc3048aa.webp",
+      "sha256": "bc3048aa58836edd6e85d894bed382674db7eab3cf54480d4aa65fe6d8cb9b6e",
+      "width": 768,
+      "height": 512,
+      "bytes": 10528,
+      "renderTexture": true,
+      "texture": "super mate",
+      "evidence": {
+        "verified": true,
+        "sourceUrl": "https://arauco.com/peru/ayuda-para-tus-proyectos/optimizador-de-corte/",
+        "listedFormats": [
+          "Arcilla 2500 x 1830 x 18mm"
+        ]
+      },
+      "note": "Muestra plana del propio diseño enlazada en su ficha oficial Arauco Perú. Inspección visual: sin ambiente, perspectiva, rótulos ni marcas sobre la superficie. La referencia digital no garantiza coincidencia con la muestra física.",
+      "sourceSha256": "fd725218776fe108c0ea52848790925fef17ada153d9a78ba70562db97ffc2a0",
+      "sourceBytes": 417094,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design.",
+      "manufacturerCode": "125",
+      "codeSourceUrl": "https://arauco.com/peru/marcas/nuevos-disenos/arcilla/"
+    },
+    {
+      "id": "vesto-corteza",
+      "brand": "Vesto",
+      "name": "Corteza",
+      "sourceUrl": "https://arauco.com/peru/marcas/nuevos-disenos/corteza/",
+      "imageUrl": "https://arauco.com/peru/wp-content/uploads/sites/22/2025/07/Corteza-scaled.jpg",
+      "asset": "/images/materials/vesto-corteza-78d77af9.webp",
+      "sha256": "78d77af99bc48dc6b84a53c2256a0887437b15e0768e7e97ad406edc938ea2d3",
+      "width": 383,
+      "height": 768,
+      "bytes": 82814,
+      "renderTexture": true,
+      "texture": "mate natural",
+      "evidence": {
+        "verified": true,
+        "sourceUrl": "https://arauco.com/peru/ayuda-para-tus-proyectos/optimizador-de-corte/",
+        "listedFormats": [
+          "Corteza 2440x2150 x 18mm"
+        ]
+      },
+      "note": "Muestra plana del propio diseño enlazada en su ficha oficial Arauco Perú. Inspección visual: sin ambiente, perspectiva, rótulos ni marcas sobre la superficie. La referencia digital no garantiza coincidencia con la muestra física.",
+      "sourceSha256": "32b83193c60889fdc6d034410797f33fb57ee54acc2d7b8da8daf0566984a04d",
+      "sourceBytes": 721474,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design.",
+      "manufacturerCode": "042",
+      "codeSourceUrl": "https://arauco.com/peru/marcas/nuevos-disenos/corteza/"
+    },
+    {
+      "id": "vesto-enebro",
+      "brand": "Vesto",
+      "name": "Enebro",
+      "sourceUrl": "https://arauco.com/peru/marcas/nuevos-disenos/enebro/",
+      "imageUrl": "https://arauco.com/peru/wp-content/uploads/sites/22/2025/07/Enebro-2-scaled.jpg",
+      "asset": "/images/materials/vesto-enebro-47b9aac7.webp",
+      "sha256": "47b9aac78e0ab4f6f13101036c4b012637bee64b960a47349255fe8d65124550",
+      "width": 359,
+      "height": 768,
+      "bytes": 2138,
+      "renderTexture": true,
+      "texture": "super mate",
+      "evidence": {
+        "verified": true,
+        "sourceUrl": "https://arauco.com/peru/ayuda-para-tus-proyectos/optimizador-de-corte/",
+        "listedFormats": [
+          "Enebro 2500 x 1830 x 18 mm"
+        ]
+      },
+      "note": "Muestra plana del propio diseño enlazada en su ficha oficial Arauco Perú. Inspección visual: sin ambiente, perspectiva, rótulos ni marcas sobre la superficie. La referencia digital no garantiza coincidencia con la muestra física.",
+      "sourceSha256": "f09283e8ea81a02be67dccd8c803b973e421fda840e7cfa065172d2eec3ae66a",
+      "sourceBytes": 54523,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design.",
+      "manufacturerCode": "123",
+      "codeSourceUrl": "https://arauco.com/peru/marcas/nuevos-disenos/enebro/"
+    },
+    {
+      "id": "vesto-toffee",
+      "brand": "Vesto",
+      "name": "Toffee",
+      "sourceUrl": "https://arauco.com/peru/marcas/vesto/toffee/",
+      "imageUrl": "https://arauco.com/peru/wp-content/uploads/sites/22/2023/08/AR565FA507A.jpeg",
+      "asset": "/images/materials/vesto-toffee-ad5cdc03.webp",
+      "sha256": "ad5cdc03859d1312cba4eb8b5e2cccfabdc45c17d6fbc046ee0c33b609bb0f0a",
+      "width": 768,
+      "height": 768,
+      "bytes": 121656,
+      "renderTexture": true,
+      "texture": "textura synchro",
+      "evidence": {
+        "verified": true,
+        "sourceUrl": "https://arauco.com/peru/ayuda-para-tus-proyectos/optimizador-de-corte/",
+        "listedFormats": [
+          "Toffee 2500 x 1830 x 18mm"
+        ]
+      },
+      "note": "Muestra plana del propio diseño enlazada en su ficha oficial Arauco Perú. Inspección visual: sin ambiente, perspectiva, rótulos ni marcas sobre la superficie. La referencia digital no garantiza coincidencia con la muestra física.",
+      "sourceSha256": "35300c288fb6cc17cafcb0fb14165f3aa0e6a4a62b2283d788a51254f54b8a5f",
+      "sourceBytes": 913954,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design.",
+      "manufacturerCode": "102",
+      "codeSourceUrl": "https://arauco.com/peru/marcas/vesto/toffee/"
+    },
+    {
+      "id": "vesto-nougat",
+      "brand": "Vesto",
+      "name": "Nougat",
+      "sourceUrl": "https://arauco.com/peru/marcas/sinkronia/nougat/",
+      "imageUrl": "https://arauco.com/peru/wp-content/uploads/sites/22/2021/12/01_4962_MUESTRA_70x70_101_NOUGAT_1200x1200px_300Dpi_16Nov_21.jpg",
+      "asset": "/images/materials/vesto-nougat-23a8f91d.webp",
+      "sha256": "23a8f91d6ca84fabfb4f6b95b7d331352ac14c11efa15a074ee23260db765cfd",
+      "width": 768,
+      "height": 768,
+      "bytes": 82956,
+      "renderTexture": true,
+      "texture": "textura synchro",
+      "evidence": {
+        "verified": true,
+        "sourceUrl": "https://arauco.com/peru/ayuda-para-tus-proyectos/optimizador-de-corte/",
+        "listedFormats": [
+          "Nougat 2500 x 1830 x 18 mm"
+        ]
+      },
+      "note": "Muestra plana del propio diseño enlazada en su ficha oficial Arauco Perú. Inspección visual: sin ambiente, perspectiva, rótulos ni marcas sobre la superficie. La referencia digital no garantiza coincidencia con la muestra física.",
+      "sourceSha256": "3b7c44aa9afe4bc3f0d50c37255cba788380f7e2cf4bbc9165a89b8b094fdbd6",
+      "sourceBytes": 675990,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design.",
+      "manufacturerCode": "101",
+      "codeSourceUrl": "https://arauco.com/peru/marcas/sinkronia/nougat/"
+    },
+    {
+      "id": "vesto-cocoa",
+      "brand": "Vesto",
+      "name": "Cocoa",
+      "sourceUrl": "https://arauco.com/peru/marcas/sinkronia/cocoa/",
+      "imageUrl": "https://arauco.com/peru/wp-content/uploads/sites/22/2021/12/01_4962_MUESTRA_70x70_103_COCOA_1200x1200px_300Dpi_16Nov_21.jpg",
+      "asset": "/images/materials/vesto-cocoa-94b4ed33.webp",
+      "sha256": "94b4ed332268d5810f3ef9955c2c1a267fcd5a8c83706802f5345486a811fa76",
+      "width": 768,
+      "height": 768,
+      "bytes": 113388,
+      "renderTexture": true,
+      "texture": "textura synchro",
+      "evidence": {
+        "verified": true,
+        "sourceUrl": "https://arauco.com/peru/ayuda-para-tus-proyectos/optimizador-de-corte/",
+        "listedFormats": [
+          "Cocoa 2500 x 1830 x 18 mm"
+        ]
+      },
+      "note": "Muestra plana del propio diseño enlazada en su ficha oficial Arauco Perú. Inspección visual: sin ambiente, perspectiva, rótulos ni marcas sobre la superficie. La referencia digital no garantiza coincidencia con la muestra física.",
+      "sourceSha256": "f0312b475af67f87d15886c2ca79c32db36c4ca253326b3f90fb6da345555088",
+      "sourceBytes": 898198,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design.",
+      "manufacturerCode": "103",
+      "codeSourceUrl": "https://arauco.com/peru/wp-content/uploads/sites/22/2023/08/20x15_FOLLETO_BALANCE_PERU_2023_V2-2.pdf"
+    },
+    {
+      "id": "vesto-titanio",
+      "brand": "Vesto",
+      "name": "Titanio",
+      "sourceUrl": "https://arauco.com/peru/marcas/vesto/titanio/",
+      "imageUrl": "https://arauco.com/peru/wp-content/uploads/sites/22/2023/08/AR829CB7A14.jpeg",
+      "asset": "/images/materials/vesto-titanio-1ec8eed0.webp",
+      "sha256": "1ec8eed021fc0a5a83c7acdcf45114cba816032a2b45596b12906e4e0bfceb58",
+      "width": 768,
+      "height": 576,
+      "bytes": 36464,
+      "renderTexture": true,
+      "texture": "super mate",
+      "evidence": {
+        "verified": true,
+        "sourceUrl": "https://arauco.com/peru/ayuda-para-tus-proyectos/optimizador-de-corte/",
+        "listedFormats": [
+          "Titanio 2440 x 2150 x 18"
+        ]
+      },
+      "note": "Muestra plana del propio diseño enlazada en su ficha oficial Arauco Perú. Inspección visual: sin ambiente, perspectiva, rótulos ni marcas sobre la superficie. La referencia digital no garantiza coincidencia con la muestra física.",
+      "sourceSha256": "92f583048f6bfca79a08dbc0eeae35e83a6a557bf0751e50d9a97e3f4e96913d",
+      "sourceBytes": 79053,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design.",
+      "manufacturerCode": "171",
+      "codeSourceUrl": "https://arauco.com/peru/marcas/vesto/titanio/"
+    },
+    {
+      "id": "vesto-vizcaya",
+      "brand": "Vesto",
+      "name": "Vizcaya",
+      "sourceUrl": "https://arauco.com/peru/marcas/innovacion/vizcaya/",
+      "imageUrl": "https://arauco.com/peru/wp-content/uploads/sites/22/2021/12/01_4962_MUESTRA_70x70_155_VIZCAYA_1200x1200px_300Dpi_16Nov_21.jpg",
+      "asset": "/images/materials/vesto-vizcaya-6dc03afc.webp",
+      "sha256": "6dc03afc7ccde9ff954ee2d07de90652ec2b6e4e45827f08bfe559ecd648a061",
+      "width": 768,
+      "height": 768,
+      "bytes": 68486,
+      "renderTexture": true,
+      "texture": "textura super mate",
+      "evidence": {
+        "verified": true,
+        "sourceUrl": "https://arauco.com/peru/ayuda-para-tus-proyectos/optimizador-de-corte/",
+        "listedFormats": [
+          "Vizcaya 2440 x 2150 x 18 mm"
+        ]
+      },
+      "note": "Muestra plana del propio diseño enlazada en su ficha oficial Arauco Perú. Inspección visual: sin ambiente, perspectiva, rótulos ni marcas sobre la superficie. La referencia digital no garantiza coincidencia con la muestra física.",
+      "sourceSha256": "8224cceaa5a3bf29ea6200b81ba8bd3011521e7153453b2c3a9b97436ffe870d",
+      "sourceBytes": 589072,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design.",
+      "manufacturerCode": "155",
+      "codeSourceUrl": "https://arauco.com/peru/marcas/innovacion/vizcaya/"
+    },
+    {
+      "id": "vesto-antalya",
+      "brand": "Vesto",
+      "name": "Antalya",
+      "sourceUrl": "https://arauco.com/peru/marcas/vesto/antalya-2/",
+      "imageUrl": "https://arauco.com/peru/wp-content/uploads/sites/22/2021/12/01_4962_MUESTRA_70x70_154_ANTALYA_1200x1200px_300Dpi_16Nov_21.jpg",
+      "asset": "/images/materials/vesto-antalya-953cce25.webp",
+      "sha256": "953cce25ee92ff7a806fb96568f4e5cc4b1d322e85efeb64316f79630affcbe0",
+      "width": 768,
+      "height": 768,
+      "bytes": 164790,
+      "renderTexture": true,
+      "texture": "textura super mate",
+      "evidence": {
+        "verified": true,
+        "sourceUrl": "https://arauco.com/peru/ayuda-para-tus-proyectos/optimizador-de-corte/",
+        "listedFormats": [
+          "Antalya 2440 x 2150 x 18 mm"
+        ]
+      },
+      "note": "Muestra plana del propio diseño enlazada en su ficha oficial Arauco Perú. Inspección visual: sin ambiente, perspectiva, rótulos ni marcas sobre la superficie. La referencia digital no garantiza coincidencia con la muestra física.",
+      "sourceSha256": "b39866f7ab6b53e259cc618ad130645f8344e3e96e7d47850c4cc8eb725330ca",
+      "sourceBytes": 997433,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design.",
+      "manufacturerCode": "154",
+      "codeSourceUrl": "https://arauco.com/peru/marcas/vesto/antalya-2/"
+    },
+    {
+      "id": "vesto-saffron",
+      "brand": "Vesto",
+      "name": "Saffron",
+      "sourceUrl": "https://arauco.com/peru/marcas/vesto/saffron/",
+      "imageUrl": "https://arauco.com/peru/wp-content/uploads/sites/22/2021/04/01_4962_MUESTRA_70x70_092_SAFFRON_1200x1200px_300Dpi_16Nov_21.jpg",
+      "asset": "/images/materials/vesto-saffron-bdfdacf6.webp",
+      "sha256": "bdfdacf67686349b89d936226f6b91c8d8d4a8ee94350fcb8d92c5de8dd8fff4",
+      "width": 768,
+      "height": 768,
+      "bytes": 78954,
+      "renderTexture": true,
+      "texture": "super mate",
+      "evidence": {
+        "verified": true,
+        "sourceUrl": "https://arauco.com/peru/ayuda-para-tus-proyectos/optimizador-de-corte/",
+        "listedFormats": [
+          "Saffron 2440 x 2150 x 18 mm"
+        ]
+      },
+      "note": "Muestra plana del propio diseño enlazada en su ficha oficial Arauco Perú. Inspección visual: sin ambiente, perspectiva, rótulos ni marcas sobre la superficie. La referencia digital no garantiza coincidencia con la muestra física.",
+      "sourceSha256": "febcadcd6cc983cd2fa0d6cdc01e2af4a2b8d07d4a7f4bf6e9c3e17f4621e949",
+      "sourceBytes": 818170,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design.",
+      "manufacturerCode": "092",
+      "codeSourceUrl": "https://arauco.com/peru/marcas/vesto/saffron/"
+    },
+    {
+      "id": "vesto-espresso",
+      "brand": "Vesto",
+      "name": "Espresso",
+      "sourceUrl": "https://arauco.com/peru/marcas/vesto/espresso/",
+      "imageUrl": "https://arauco.com/peru/wp-content/uploads/sites/22/2018/12/Espresso.jpg",
+      "asset": "/images/materials/vesto-espresso-023e650e.webp",
+      "sha256": "023e650e05a438c9d5493ef7adc1c348064d1b28a8bbda0efcd18babade50f7b",
+      "width": 563,
+      "height": 768,
+      "bytes": 85098,
+      "renderTexture": true,
+      "texture": "mate natural",
+      "evidence": {
+        "verified": true,
+        "sourceUrl": "https://arauco.com/peru/ayuda-para-tus-proyectos/optimizador-de-corte/",
+        "listedFormats": [
+          "Espresso 2440 x 2150 x 18 mm"
+        ]
+      },
+      "note": "Muestra plana del propio diseño enlazada en su ficha oficial Arauco Perú. Inspección visual: sin ambiente, perspectiva, rótulos ni marcas sobre la superficie. La referencia digital no garantiza coincidencia con la muestra física.",
+      "sourceSha256": "3daa643ba3233f478ff2d2360e130f6c9657ece739a1832f9599d7d84f9c5d7d",
+      "sourceBytes": 675597,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design.",
+      "manufacturerCode": "034",
+      "codeSourceUrl": "https://arauco.com/peru/marcas/vesto/espresso/"
+    },
+    {
+      "id": "vesto-verde-jade",
+      "brand": "Vesto",
+      "name": "Verde Jade",
+      "sourceUrl": "https://arauco.com/peru/marcas/vesto/verde-jade/",
+      "imageUrl": "https://arauco.com/peru/wp-content/uploads/sites/22/2023/08/Jade.jpeg",
+      "asset": "/images/materials/vesto-verde-jade-d605d891.webp",
+      "sha256": "d605d891c5f9ea15574557956cf965e2e6294c6d875d12f15da4cb2e545afe0e",
+      "width": 517,
+      "height": 768,
+      "bytes": 794,
+      "renderTexture": true,
+      "texture": "super mate",
+      "evidence": {
+        "verified": true,
+        "sourceUrl": "https://arauco.com/peru/ayuda-para-tus-proyectos/optimizador-de-corte/",
+        "listedFormats": [
+          "Verde Jade 2440 x 2150 x 18",
+          "Verde Jade 2500 x 1830 x 18mm"
+        ]
+      },
+      "note": "Muestra plana del propio diseño enlazada en su ficha oficial Arauco Perú. Inspección visual: sin ambiente, perspectiva, rótulos ni marcas sobre la superficie. La referencia digital no garantiza coincidencia con la muestra física.",
+      "sourceSha256": "77a906fd9f5ee786b2696ea8ed9b01387f01f47adf9fb83fcbaa8ba4c5e97d8e",
+      "sourceBytes": 4536,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design.",
+      "manufacturerCode": "174",
+      "codeSourceUrl": "https://arauco.com/peru/marcas/vesto/verde-jade/"
+    },
+    {
+      "id": "vesto-azul-marino",
+      "brand": "Vesto",
+      "name": "Azul marino",
+      "sourceUrl": "https://arauco.com/peru/marcas/vesto/azul-marino/",
+      "imageUrl": "https://arauco.com/peru/wp-content/uploads/sites/22/2023/08/Tuareg.jpeg",
+      "asset": "/images/materials/vesto-azul-marino-5cf81f87.webp",
+      "sha256": "5cf81f87b0ef3b5e9ada5a94116303927d15a5cfb0203cffb0857cf736ce777b",
+      "width": 564,
+      "height": 768,
+      "bytes": 866,
+      "renderTexture": true,
+      "texture": "super mate",
+      "evidence": {
+        "verified": true,
+        "sourceUrl": "https://arauco.com/peru/ayuda-para-tus-proyectos/optimizador-de-corte/",
+        "listedFormats": [
+          "Azul marino 2440 x 2150 x 18",
+          "Azul marino 2500 x 1830 x 18mm"
+        ]
+      },
+      "note": "Muestra plana del propio diseño enlazada en su ficha oficial Arauco Perú. Inspección visual: sin ambiente, perspectiva, rótulos ni marcas sobre la superficie. La referencia digital no garantiza coincidencia con la muestra física.",
+      "sourceSha256": "d6a5fb4567ae78799eaa15f2071fc6e71f86e8f2819062e7f6cee4b6b861b0a0",
+      "sourceBytes": 6810,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design.",
+      "manufacturerCode": "114",
+      "codeSourceUrl": "https://arauco.com/peru/marcas/vesto/azul-marino/"
+    },
+    {
+      "id": "vesto-maras",
+      "brand": "Vesto",
+      "name": "Maras",
+      "sourceUrl": "https://arauco.com/peru/marcas/unicolores/maras/",
+      "imageUrl": "https://arauco.com/peru/wp-content/uploads/sites/22/2021/04/01_4962_MUESTRA_70x70_173_HIMALAYA_1200x1200px_300Dpi_16Nov_21.jpg",
+      "asset": "/images/materials/vesto-maras-03757a38.webp",
+      "sha256": "03757a38918c917ce05d55b9021cd8e65954f83deb048e146057a120755d218f",
+      "width": 768,
+      "height": 768,
+      "bytes": 13090,
+      "renderTexture": true,
+      "texture": "super mate",
+      "evidence": {
+        "verified": true,
+        "sourceUrl": "https://arauco.com/peru/ayuda-para-tus-proyectos/optimizador-de-corte/",
+        "listedFormats": [
+          "Maras 2440 x 2150 x 18",
+          "Maras 2500 x 1830 x 18mm"
+        ]
+      },
+      "note": "Muestra plana del propio diseño enlazada en su ficha oficial Arauco Perú. Inspección visual: sin ambiente, perspectiva, rótulos ni marcas sobre la superficie. La referencia digital no garantiza coincidencia con la muestra física.",
+      "sourceSha256": "4c3f3c906ae16765dd2750e5a42d1a9ff65bb7ca3a9c7fe221f178bf93d60f0a",
+      "sourceBytes": 533769,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design.",
+      "manufacturerCode": "173",
+      "codeSourceUrl": "https://arauco.com/peru/wp-content/uploads/sites/22/2023/08/20x15_FOLLETO_BALANCE_PERU_2023_V2-2.pdf"
+    },
+    {
+      "id": "vesto-taupe",
+      "brand": "Vesto",
+      "name": "Taupe",
+      "sourceUrl": "https://arauco.com/peru/marcas/unicolores/taupe-2/",
+      "imageUrl": "https://arauco.com/peru/wp-content/uploads/sites/22/2021/04/01_4962_MUESTRA_70x70_181_TAUPE_1200x1200px_300Dpi_MODIF_Dic_21.jpg",
+      "asset": "/images/materials/vesto-taupe-68370d78.webp",
+      "sha256": "68370d787a69db7f845b2e1b2c84c31a6b47d30d83bc794cb63deef217c4abf3",
+      "width": 768,
+      "height": 768,
+      "bytes": 97764,
+      "renderTexture": true,
+      "texture": "super mate",
+      "evidence": {
+        "verified": true,
+        "sourceUrl": "https://arauco.com/peru/ayuda-para-tus-proyectos/optimizador-de-corte/",
+        "listedFormats": [
+          "Taupe 2440 x 2150 x 18 mm",
+          "Taupe 2500 x 1830 x 18mm"
+        ]
+      },
+      "note": "Muestra plana del propio diseño enlazada en su ficha oficial Arauco Perú. Inspección visual: sin ambiente, perspectiva, rótulos ni marcas sobre la superficie. La referencia digital no garantiza coincidencia con la muestra física.",
+      "sourceSha256": "1cc5fdbc6a6198bfbb8c5dd22db7b0bf624eed735e878c2ba90c309d42257ee6",
+      "sourceBytes": 827775,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design.",
+      "manufacturerCode": "181",
+      "codeSourceUrl": "https://arauco.com/peru/wp-content/uploads/sites/22/2023/08/20x15_FOLLETO_BALANCE_PERU_2023_V2-2.pdf"
+    },
+    {
+      "id": "vesto-humo",
+      "brand": "Vesto",
+      "name": "Humo",
+      "sourceUrl": "https://arauco.com/peru/marcas/vesto/humo/",
+      "imageUrl": "https://arauco.com/peru/wp-content/uploads/sites/22/2021/04/01_4962_MUESTRA_70x70_108_HUMO__VELVET_1200x1200px_300Dpi_16Nov_21.jpg",
+      "asset": "/images/materials/vesto-humo-34587061.webp",
+      "sha256": "345870612c914b1dac714d563c5d0aa3c402cb8ed65a0f9fb7ea317e960a2ffc",
+      "width": 768,
+      "height": 768,
+      "bytes": 51924,
+      "renderTexture": true,
+      "texture": "super mate",
+      "evidence": {
+        "verified": true,
+        "sourceUrl": "https://arauco.com/peru/ayuda-para-tus-proyectos/optimizador-de-corte/",
+        "listedFormats": [
+          "Humo 2500 x 1830 x 18mm",
+          "Humo 2440 x 2150 x 18 mm"
+        ]
+      },
+      "note": "Muestra plana del propio diseño enlazada en su ficha oficial Arauco Perú. Inspección visual: sin ambiente, perspectiva, rótulos ni marcas sobre la superficie. La referencia digital no garantiza coincidencia con la muestra física.",
+      "sourceSha256": "edcf6191742ecdafee6873ebc1a4d42b65e0cfa3474fe5dd291515793e763d36",
+      "sourceBytes": 614556,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design.",
+      "manufacturerCode": "108",
+      "codeSourceUrl": "https://arauco.com/peru/wp-content/uploads/sites/22/2023/08/20x15_FOLLETO_BALANCE_PERU_2023_V2-2.pdf"
+    },
+    {
+      "id": "vesto-carbon",
+      "brand": "Vesto",
+      "name": "Carbón",
+      "sourceUrl": "https://arauco.com/peru/marcas/vesto/carbon-2/",
+      "imageUrl": "https://arauco.com/peru/wp-content/uploads/sites/22/2021/04/01_4962_MUESTRA_70x70_107_CARBON_1200x1200px_300Dpi_MODIF_06Dic_21-1.jpg",
+      "asset": "/images/materials/vesto-carbon-a8f294b1.webp",
+      "sha256": "a8f294b12323866cf06ff0266b1243e7ef97964a34f8f2f00c4094db8b454e1a",
+      "width": 768,
+      "height": 768,
+      "bytes": 4140,
+      "renderTexture": true,
+      "texture": "super mate",
+      "evidence": {
+        "verified": true,
+        "sourceUrl": "https://arauco.com/peru/ayuda-para-tus-proyectos/optimizador-de-corte/",
+        "listedFormats": [
+          "Carbón 2500 x 1830 x 18mm",
+          "Carbón 2440 x 2150 x 18 mm"
+        ]
+      },
+      "note": "Muestra plana del propio diseño enlazada en su ficha oficial Arauco Perú. Inspección visual: sin ambiente, perspectiva, rótulos ni marcas sobre la superficie. La referencia digital no garantiza coincidencia con la muestra física.",
+      "sourceSha256": "c6f8a8bf7774b638c02c4951b173b39c5202e0691a70ac97ea7513f9e680639f",
+      "sourceBytes": 347873,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design.",
+      "manufacturerCode": "107",
+      "codeSourceUrl": "https://arauco.com/peru/wp-content/uploads/sites/22/2023/08/20x15_FOLLETO_BALANCE_PERU_2023_V2-2.pdf"
+    },
+    {
+      "id": "pelikano-blanco",
+      "brand": "Pelikano",
+      "name": "Blanco",
+      "sourceUrl": "https://www.pelikano.com/catalogo/p/agave-72whj",
+      "imageUrl": "https://images.squarespace-cdn.com/content/v1/64f9d1c3aa8b24009ae9aea9/1698686871467-A2UJF7YUYQHAIKHXSYVP/blanco-textura-pelikano.jpg",
+      "asset": "/images/materials/pelikano-blanco-45261234.webp",
+      "sha256": "45261234531b3484589a7bbf0754dc5976e768be11c7d98d638465d339c96213",
+      "width": 768,
+      "height": 615,
+      "bytes": 3782,
+      "renderTexture": false,
+      "texture": "Fantasía",
+      "evidence": {
+        "substrates": "MDP | MDP-RH | MDF",
+        "thicknessesMm": "6, 9, 12 ,15 ,18, 25, 30, 36",
+        "markets": "Ecuador, Perú."
+      },
+      "note": "Official catalog sample includes product labels or graphic overlays. Preserved unchanged in UI; 3D uses an approximate color, not the labelled image.",
+      "sourceSha256": "4afc4851ef7578637ed721af5fdf379a31886815d340d41be53a1dc6df7bcd74",
+      "sourceBytes": 5230,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "pelikano-negro",
+      "brand": "Pelikano",
+      "name": "Negro",
+      "sourceUrl": "https://www.pelikano.com/catalogo/p/negro",
+      "imageUrl": "https://images.squarespace-cdn.com/content/v1/64f9d1c3aa8b24009ae9aea9/1698706100788-KTZAYL6HZ94SK893CUPJ/negro-textura-pelikano.jpg",
+      "asset": "/images/materials/pelikano-negro-68a13897.webp",
+      "sha256": "68a138978ff91c141cbc2f7967038a0fe863651a7c75c30ac650d07c181fb32e",
+      "width": 768,
+      "height": 615,
+      "bytes": 4002,
+      "renderTexture": false,
+      "texture": "Fantasía",
+      "evidence": {
+        "substrates": "MDP | MDP-RH | MDF",
+        "thicknessesMm": "6, 9, 12 ,15 ,18, 25, 30, 36",
+        "markets": "Ecuador, Perú."
+      },
+      "note": "Official catalog sample includes product labels or graphic overlays. Preserved unchanged in UI; 3D uses an approximate color, not the labelled image.",
+      "sourceSha256": "0fc4321d6c09d6263584d74033d87e674bff7fd152dbf4b2672ba65e46c3d5ac",
+      "sourceBytes": 5610,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "pelikano-gris",
+      "brand": "Pelikano",
+      "name": "Gris",
+      "sourceUrl": "https://www.pelikano.com/catalogo/p/gris",
+      "imageUrl": "https://images.squarespace-cdn.com/content/v1/64f9d1c3aa8b24009ae9aea9/1706636350143-P3R6NGJTXW1QWRIJD0OL/Gris.jpg",
+      "asset": "/images/materials/pelikano-gris-a2c6d0ec.webp",
+      "sha256": "a2c6d0ecec449237a5cea0fad062514ac09e1db01a16843c2c53c4c2e4396fd6",
+      "width": 768,
+      "height": 614,
+      "bytes": 2948,
+      "renderTexture": false,
+      "texture": "Fantasía",
+      "evidence": {
+        "substrates": "MDP | MDP-RH | MDF",
+        "thicknessesMm": "6, 9, 12 ,15 ,18, 25, 30, 36",
+        "markets": "Ecuador, Perú."
+      },
+      "note": "Official catalog sample includes product labels or graphic overlays. Preserved unchanged in UI; 3D uses an approximate color, not the labelled image.",
+      "sourceSha256": "fef6379d20b83cc2a2fc6efd24189036b8d1b508e7730f830082d613ddfa881a",
+      "sourceBytes": 4382,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "pelikano-nevado",
+      "brand": "Pelikano",
+      "name": "Nevado",
+      "sourceUrl": "https://www.pelikano.com/catalogo/p/nevado",
+      "imageUrl": "https://images.squarespace-cdn.com/content/v1/64f9d1c3aa8b24009ae9aea9/1698694738373-WIR1QY33JD9ML2OW5K9D/nevado-textura-pelikano.jpg",
+      "asset": "/images/materials/pelikano-nevado-b9e5df46.webp",
+      "sha256": "b9e5df46d4bf80ac3ece5d22e8f6732727f685926eb60eba65b871c57090b6df",
+      "width": 768,
+      "height": 615,
+      "bytes": 3902,
+      "renderTexture": false,
+      "texture": "Fantasía",
+      "evidence": {
+        "substrates": "MDP | MDP-RH | MDF",
+        "thicknessesMm": "6, 9, 12 ,15 ,18, 25, 30, 36",
+        "markets": "Ecuador, Colombia, Perú."
+      },
+      "note": "Official catalog sample includes product labels or graphic overlays. Preserved unchanged in UI; 3D uses an approximate color, not the labelled image.",
+      "sourceSha256": "0b510030dbefcfe7faa740d6e6dca6f897523c512080b7830b43629082f22b50",
+      "sourceBytes": 5378,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "pelikano-capri",
+      "brand": "Pelikano",
+      "name": "Capri",
+      "sourceUrl": "https://www.pelikano.com/catalogo/p/capri",
+      "imageUrl": "https://images.squarespace-cdn.com/content/v1/64f9d1c3aa8b24009ae9aea9/1698686975562-3CK9QIJFB29PJJNTHEGO/capri-textura-pelikano.jpg",
+      "asset": "/images/materials/pelikano-capri-68a733e3.webp",
+      "sha256": "68a733e3e3965f901f6e17388acae8141cb0101b48537ed1ac8d0c26569c345a",
+      "width": 768,
+      "height": 614,
+      "bytes": 5716,
+      "renderTexture": false,
+      "texture": "Mate",
+      "evidence": {
+        "substrates": "MDP | MDP-RH | MDF",
+        "thicknessesMm": "6, 9, 12 ,15 ,18, 25, 30, 36",
+        "markets": "Ecuador, Colombia, Perú."
+      },
+      "note": "Official catalog sample includes product labels or graphic overlays. Preserved unchanged in UI; 3D uses an approximate color, not the labelled image.",
+      "sourceSha256": "cbe5dee48578770910108bb30f8e6f0b3713a9a5decfff88c1b51c5b770ebf77",
+      "sourceBytes": 9124,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "pelikano-rovere",
+      "brand": "Pelikano",
+      "name": "Rovere",
+      "sourceUrl": "https://www.pelikano.com/catalogo/p/rovere",
+      "imageUrl": "https://images.squarespace-cdn.com/content/v1/64f9d1c3aa8b24009ae9aea9/1698703254946-3ESB1FNMLIDNFDNX1922/rovere-textura-pelikano.jpg",
+      "asset": "/images/materials/pelikano-rovere-544fa449.webp",
+      "sha256": "544fa449846c82e7254bec310a866b55306ff181ccd1fb32bc5f89b578ac4c43",
+      "width": 768,
+      "height": 614,
+      "bytes": 149622,
+      "renderTexture": false,
+      "texture": "Mate",
+      "evidence": {
+        "substrates": "MDP | MDP-RH | MDF",
+        "thicknessesMm": "6, 9, 12 ,15 ,18, 25, 30, 36",
+        "markets": "Ecuador, Colombia, Perú."
+      },
+      "note": "Official catalog sample includes product labels or graphic overlays. Preserved unchanged in UI; 3D uses an approximate color, not the labelled image.",
+      "sourceSha256": "e901beb31b7fadb81b6fc921a5da5836a82ccc67a9851cb10fabb45b422e59e2",
+      "sourceBytes": 179646,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "pelikano-burdeos",
+      "brand": "Pelikano",
+      "name": "Burdeos",
+      "sourceUrl": "https://www.pelikano.com/catalogo/p/burdeos",
+      "imageUrl": "https://images.squarespace-cdn.com/content/v1/64f9d1c3aa8b24009ae9aea9/e5f24b81-eca7-4163-8a8b-ef268eb5bb6a/Burdeos+-+Material+Peli%CC%81kano.jpeg",
+      "asset": "/images/materials/pelikano-burdeos-c34fed73.webp",
+      "sha256": "c34fed73f1421094ff72b30c5e7de3030ec35695aa84d4881ac3b8dd78ad4bc7",
+      "width": 768,
+      "height": 614,
+      "bytes": 5630,
+      "renderTexture": false,
+      "texture": "Mate",
+      "evidence": {
+        "substrates": "MDP | MDP-RH",
+        "thicknessesMm": "6, 9, 12 ,15 ,18, 25, 30, 36",
+        "markets": "Ecuador, Colombia, Perú."
+      },
+      "note": "Official catalog sample includes product labels or graphic overlays. Preserved unchanged in UI; 3D uses an approximate color, not the labelled image.",
+      "sourceSha256": "0103cf929b81804fe0430cd78eb8fdd31fd0a5d85b5fb59a833318f223b39a79",
+      "sourceBytes": 6322,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "pelikano-avellana",
+      "brand": "Pelikano",
+      "name": "Avellana",
+      "sourceUrl": "https://www.pelikano.com/catalogo/p/avellana",
+      "imageUrl": "https://images.squarespace-cdn.com/content/v1/64f9d1c3aa8b24009ae9aea9/5d9d5cb1-2a6a-48f4-8a7d-be8dca9f1081/Avellana+-+Material+Peli%CC%81kano.jpeg",
+      "asset": "/images/materials/pelikano-avellana-7e47b4ea.webp",
+      "sha256": "7e47b4ea9e54334984cf0409103769e7a6e747e4e6d0fd2cfc6c8d2b27429016",
+      "width": 768,
+      "height": 614,
+      "bytes": 84626,
+      "renderTexture": false,
+      "texture": "Mate",
+      "evidence": {
+        "substrates": "MDP | MDP-RH",
+        "thicknessesMm": "6, 9, 12 ,15 ,18, 25, 30, 36",
+        "markets": "Ecuador, Colombia, Perú."
+      },
+      "note": "Official catalog sample includes product labels or graphic overlays. Preserved unchanged in UI; 3D uses an approximate color, not the labelled image.",
+      "sourceSha256": "ac99a5e710526b5777a90145ac755167ac4c76931c2d556da3abd52e376a8ecd",
+      "sourceBytes": 101878,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "pelikano-positano",
+      "brand": "Pelikano",
+      "name": "Positano",
+      "sourceUrl": "https://www.pelikano.com/catalogo/p/positano",
+      "imageUrl": "https://images.squarespace-cdn.com/content/v1/64f9d1c3aa8b24009ae9aea9/43e1ebc8-7b9c-4df5-98fa-cd0c22636917/Positano+-+Material+Peli%CC%81kano.jpeg",
+      "asset": "/images/materials/pelikano-positano-7fce03c4.webp",
+      "sha256": "7fce03c4c778dc963e7918b6c4aede574451e4856f55b9e3a2c58166eb88d152",
+      "width": 768,
+      "height": 614,
+      "bytes": 76830,
+      "renderTexture": false,
+      "texture": "Synchro",
+      "evidence": {
+        "substrates": "MDP | MDP-RH",
+        "thicknessesMm": "6, 9, 12 ,15 ,18, 25, 30, 36",
+        "markets": "Ecuador, Colombia, Perú."
+      },
+      "note": "Official catalog sample includes product labels or graphic overlays. Preserved unchanged in UI; 3D uses an approximate color, not the labelled image.",
+      "sourceSha256": "bd0499d3f40a1c3db1174fee9c4e39c70142989c91a0c29e89ed18bda931d608",
+      "sourceBytes": 88260,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "pelikano-cartagena",
+      "brand": "Pelikano",
+      "name": "Cartagena",
+      "sourceUrl": "https://www.pelikano.com/catalogo/p/cartagena",
+      "imageUrl": "https://images.squarespace-cdn.com/content/v1/64f9d1c3aa8b24009ae9aea9/473b077a-1281-4076-bebd-20c930e7eae6/Cartagena+-+Material+Peli%CC%81kano.jpeg",
+      "asset": "/images/materials/pelikano-cartagena-f6e192a4.webp",
+      "sha256": "f6e192a4efaed0b24cd01322eb72436b75a2f2adc4a733c7023bce5abf40f909",
+      "width": 768,
+      "height": 614,
+      "bytes": 69034,
+      "renderTexture": false,
+      "texture": "Synchro",
+      "evidence": {
+        "substrates": "MDP | MDP-RH",
+        "thicknessesMm": "6, 9, 12 ,15 ,18, 25, 30, 36",
+        "markets": "Ecuador, Colombia, Perú."
+      },
+      "note": "Official catalog sample includes product labels or graphic overlays. Preserved unchanged in UI; 3D uses an approximate color, not the labelled image.",
+      "sourceSha256": "00a5edc1470dac64e45a60f8f6eca9e6cbcfc92c44b88ad0474b31ff514343ae",
+      "sourceBytes": 86006,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "pelikano-agave",
+      "brand": "Pelikano",
+      "name": "Agave",
+      "sourceUrl": "https://www.pelikano.com/catalogo/p/agave",
+      "imageUrl": "https://images.squarespace-cdn.com/content/v1/64f9d1c3aa8b24009ae9aea9/1698685473420-214GMPXBRX69V71U6WQX/agave-textura-pelikano.jpg",
+      "asset": "/images/materials/pelikano-agave-69953f36.webp",
+      "sha256": "69953f36bd3afa3617131d2d87a3ca0b94eddd8e7dbee86c65104aad46a938e0",
+      "width": 768,
+      "height": 614,
+      "bytes": 2714,
+      "renderTexture": false,
+      "texture": "Mate",
+      "evidence": {
+        "substrates": "MDP | MDP-RH | MDF",
+        "thicknessesMm": "6, 9, 12 ,15 ,18, 25, 30, 36",
+        "markets": "Ecuador, Perú, Colombia."
+      },
+      "note": "Official catalog sample includes product labels or graphic overlays. Preserved unchanged in UI; 3D uses an approximate color, not the labelled image.",
+      "sourceSha256": "48b170a002a90f46ccf0e681feeb455ced6e2b6cf1637fd54e96fe4046e50a8c",
+      "sourceBytes": 3644,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "pelikano-nazca",
+      "brand": "Pelikano",
+      "name": "Nazca",
+      "sourceUrl": "https://www.pelikano.com/catalogo/p/nazca",
+      "imageUrl": "https://images.squarespace-cdn.com/content/v1/64f9d1c3aa8b24009ae9aea9/1698686387089-5OGQP0P0MLERFBHUOZ06/nazca-textura-pelikano.jpg",
+      "asset": "/images/materials/pelikano-nazca-6b249682.webp",
+      "sha256": "6b249682daa41b21f6fe2631b560f4e9fc39d43c42602cbed24bd417e05ea484",
+      "width": 768,
+      "height": 614,
+      "bytes": 83698,
+      "renderTexture": false,
+      "texture": "Mate",
+      "evidence": {
+        "substrates": "MDP | MDP-RH | MDF",
+        "thicknessesMm": "6, 9, 12 ,15 ,18, 25, 30, 36",
+        "markets": "Ecuador, Perú, Colombia."
+      },
+      "note": "Official catalog sample includes product labels or graphic overlays. Preserved unchanged in UI; 3D uses an approximate color, not the labelled image.",
+      "sourceSha256": "6e4af6c619e6d1c8a6065232e8d0ce620ceacc37eeb1068a625d1e38e3fb3966",
+      "sourceBytes": 107862,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "pelikano-panela",
+      "brand": "Pelikano",
+      "name": "Panela",
+      "sourceUrl": "https://www.pelikano.com/catalogo/p/panela",
+      "imageUrl": "https://images.squarespace-cdn.com/content/v1/64f9d1c3aa8b24009ae9aea9/1698686414605-CYIKTSCYZL13JX0MEBJ7/panela-textura-pelikano.jpg",
+      "asset": "/images/materials/pelikano-panela-b1625352.webp",
+      "sha256": "b162535296a3c0c77e74edcdb82bc7543248bf55ad7482235d26764cc2e5bf7f",
+      "width": 768,
+      "height": 614,
+      "bytes": 163240,
+      "renderTexture": false,
+      "texture": "Synchro",
+      "evidence": {
+        "substrates": "MDP | MDP-RH",
+        "thicknessesMm": "6, 9, 12 ,15 ,18, 25, 30, 36",
+        "markets": "Ecuador, Perú, Colombia."
+      },
+      "note": "Official catalog sample includes product labels or graphic overlays. Preserved unchanged in UI; 3D uses an approximate color, not the labelled image.",
+      "sourceSha256": "6d916ccc85ea59832846de6ffda2508fdad9cf573de008e0bc7f66b32f22014d",
+      "sourceBytes": 218554,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "pelikano-milan",
+      "brand": "Pelikano",
+      "name": "Milán",
+      "sourceUrl": "https://www.pelikano.com/catalogo/p/milan",
+      "imageUrl": "https://images.squarespace-cdn.com/content/v1/64f9d1c3aa8b24009ae9aea9/1698686436019-9YX7PW02S1HPCAMV6UBQ/mila%CC%81n-textura-pelikano.jpg",
+      "asset": "/images/materials/pelikano-milan-995a3128.webp",
+      "sha256": "995a312852fc4df12b883d6a1c0a7fb463a775ecc98ecb687839fd74454ce18c",
+      "width": 768,
+      "height": 614,
+      "bytes": 127514,
+      "renderTexture": false,
+      "texture": "Synchro",
+      "evidence": {
+        "substrates": "MDP | MDP-RH",
+        "thicknessesMm": "6, 9, 12 ,15 ,18, 25, 30, 36",
+        "markets": "Ecuador, Perú, Colombia."
+      },
+      "note": "Official catalog sample includes product labels or graphic overlays. Preserved unchanged in UI; 3D uses an approximate color, not the labelled image.",
+      "sourceSha256": "6d9423ee12ab750e043e6a3d93abd4e23ccdf8401848d3099138d6b16deb9120",
+      "sourceBytes": 196626,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "pelikano-bardolino",
+      "brand": "Pelikano",
+      "name": "Bardolino",
+      "sourceUrl": "https://www.pelikano.com/catalogo/p/bardolino",
+      "imageUrl": "https://images.squarespace-cdn.com/content/v1/64f9d1c3aa8b24009ae9aea9/1698686456325-UN237XRCA1IR6MQVVSP1/bardolino-textura-pelikano.jpg",
+      "asset": "/images/materials/pelikano-bardolino-532bf55f.webp",
+      "sha256": "532bf55f1acd5191bdb15f1a466862092f4eb7c17236487e77c68a1f01693f5c",
+      "width": 768,
+      "height": 614,
+      "bytes": 95254,
+      "renderTexture": false,
+      "texture": "Synchro",
+      "evidence": {
+        "substrates": "MDP | MDP-RH",
+        "thicknessesMm": "6, 9, 12 ,15 ,18, 25, 30, 36",
+        "markets": "Ecuador, Perú, Colombia."
+      },
+      "note": "Official catalog sample includes product labels or graphic overlays. Preserved unchanged in UI; 3D uses an approximate color, not the labelled image.",
+      "sourceSha256": "7626794bc33227881aa42ce020f777151f96d5f9a89c443ce2788e179ca2c3f0",
+      "sourceBytes": 133310,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "pelikano-toquilla",
+      "brand": "Pelikano",
+      "name": "Toquilla",
+      "sourceUrl": "https://www.pelikano.com/catalogo/p/toquilla",
+      "imageUrl": "https://images.squarespace-cdn.com/content/v1/64f9d1c3aa8b24009ae9aea9/1698686475031-W7PWIWFULACTOUCITUSP/toquilla-textura-pelikano.jpg",
+      "asset": "/images/materials/pelikano-toquilla-566bfa77.webp",
+      "sha256": "566bfa77ee240aa1305efe67b96855df6d20779a1150ec1b422d3ff112332a41",
+      "width": 768,
+      "height": 614,
+      "bytes": 174872,
+      "renderTexture": false,
+      "texture": "Cuero",
+      "evidence": {
+        "substrates": "MDP | MDP-RH | MDF",
+        "thicknessesMm": "6, 9, 12 ,15 ,18, 25, 30, 36",
+        "markets": "Ecuador, Perú, Colombia."
+      },
+      "note": "Official catalog sample includes product labels or graphic overlays. Preserved unchanged in UI; 3D uses an approximate color, not the labelled image.",
+      "sourceSha256": "81862a451becfffd34d5265a825251bbc3b1447c39b9cbf76797f8b60f3ce074",
+      "sourceBytes": 262298,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "pelikano-tivoli",
+      "brand": "Pelikano",
+      "name": "Tívoli",
+      "sourceUrl": "https://www.pelikano.com/catalogo/p/tivoli",
+      "imageUrl": "https://images.squarespace-cdn.com/content/v1/64f9d1c3aa8b24009ae9aea9/1698686511790-DXBO4I0PW42JKF19VSWX/tivoli-textura-pelikano.jpg",
+      "asset": "/images/materials/pelikano-tivoli-36641908.webp",
+      "sha256": "36641908b6e1579ab039bfe3e19991cbff0a8e0491d8377820a33aea7ebe9521",
+      "width": 768,
+      "height": 614,
+      "bytes": 84814,
+      "renderTexture": false,
+      "texture": "Cuero",
+      "evidence": {
+        "substrates": "MDP | MDP-RH | MDF",
+        "thicknessesMm": "6, 9, 12 ,15 ,18, 25, 30, 36",
+        "markets": "Ecuador, Perú, Colombia."
+      },
+      "note": "Official catalog sample includes product labels or graphic overlays. Preserved unchanged in UI; 3D uses an approximate color, not the labelled image.",
+      "sourceSha256": "dc5eecadd72a5cbfd9e6ab6b65ab0cecf5ec36b9f00bef15208cad1591edb03a",
+      "sourceBytes": 114428,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "pelikano-fume",
+      "brand": "Pelikano",
+      "name": "Fumé",
+      "sourceUrl": "https://www.pelikano.com/catalogo/p/fume",
+      "imageUrl": "https://images.squarespace-cdn.com/content/v1/64f9d1c3aa8b24009ae9aea9/1698686545853-ASOP3H79KDGYQ8KDEGC9/fume-textura-pelikano.jpg",
+      "asset": "/images/materials/pelikano-fume-2caaaee8.webp",
+      "sha256": "2caaaee8ea877dbfae52f53b0978ad68741ed15de3e12acbd25c6a4b522b2a07",
+      "width": 768,
+      "height": 614,
+      "bytes": 154642,
+      "renderTexture": false,
+      "texture": "Synchro",
+      "evidence": {
+        "substrates": "MDP | MDP-RH",
+        "thicknessesMm": "6, 9, 12 ,15 ,18, 25, 30, 36",
+        "markets": "Ecuador, Perú, Colombia."
+      },
+      "note": "Official catalog sample includes product labels or graphic overlays. Preserved unchanged in UI; 3D uses an approximate color, not the labelled image.",
+      "sourceSha256": "395cb4f57f1688fe8970c1c9674d6f7d5e83eee997578fc8a0dce7fad08599cc",
+      "sourceBytes": 212882,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "pelikano-arupo",
+      "brand": "Pelikano",
+      "name": "Arupo",
+      "sourceUrl": "https://www.pelikano.com/catalogo/p/arupo",
+      "imageUrl": "https://images.squarespace-cdn.com/content/v1/64f9d1c3aa8b24009ae9aea9/1698686590671-GKBO9YID3TXLUCT4QCP7/arupo-textura-pelikano.jpg",
+      "asset": "/images/materials/pelikano-arupo-7d2674c6.webp",
+      "sha256": "7d2674c64b53f1badcbed9b93c2be9a07cf689251154e99ee6bd3f256dea9c0f",
+      "width": 768,
+      "height": 614,
+      "bytes": 3604,
+      "renderTexture": false,
+      "texture": "Mate",
+      "evidence": {
+        "substrates": "MDP | MDP-RH | MDF",
+        "thicknessesMm": "6, 9, 12 ,15 ,18, 25, 30, 36",
+        "markets": "Ecuador, Perú, Colombia."
+      },
+      "note": "Official catalog sample includes product labels or graphic overlays. Preserved unchanged in UI; 3D uses an approximate color, not the labelled image.",
+      "sourceSha256": "e06f1a9d3d25dc71d047772bf4bf5dcb3b2e5a09615fda96fda6d0f478e9ed5c",
+      "sourceBytes": 4480,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "pelikano-nacar",
+      "brand": "Pelikano",
+      "name": "Nácar",
+      "sourceUrl": "https://www.pelikano.com/catalogo/p/nacar",
+      "imageUrl": "https://images.squarespace-cdn.com/content/v1/64f9d1c3aa8b24009ae9aea9/1698687020326-6M77USDB86OHY19MKDF9/nacar-textura-pelikano.jpg",
+      "asset": "/images/materials/pelikano-nacar-a227d152.webp",
+      "sha256": "a227d152661bbd999d73075334ee737fbcd70aa4379b206506c57b75e07afe13",
+      "width": 768,
+      "height": 614,
+      "bytes": 64026,
+      "renderTexture": false,
+      "texture": "Synchro",
+      "evidence": {
+        "substrates": "MDP | MDP-RH",
+        "thicknessesMm": "6, 9, 12 ,15 ,18, 25, 30, 36",
+        "markets": "Ecuador, Colombia, Perú."
+      },
+      "note": "Official catalog sample includes product labels or graphic overlays. Preserved unchanged in UI; 3D uses an approximate color, not the labelled image.",
+      "sourceSha256": "6e2b17e4877fb66edf14e5c87f5e563e0cefe8bf5e9dfc38f28f2f74c66de7df",
+      "sourceBytes": 90384,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "pelikano-ibiza",
+      "brand": "Pelikano",
+      "name": "Ibiza",
+      "sourceUrl": "https://www.pelikano.com/catalogo/p/ibiza",
+      "imageUrl": "https://images.squarespace-cdn.com/content/v1/64f9d1c3aa8b24009ae9aea9/1698687043129-5MAF62GKQHKX7YL794GR/ibiza-textura-pelikano.jpg",
+      "asset": "/images/materials/pelikano-ibiza-69678f5b.webp",
+      "sha256": "69678f5b99e43524023a73d2966f1e56f8e86fd0fa42185eb8f2e41484f66aff",
+      "width": 768,
+      "height": 614,
+      "bytes": 44868,
+      "renderTexture": false,
+      "texture": "Mate",
+      "evidence": {
+        "substrates": "MDP | MDP-RH | MDF",
+        "thicknessesMm": "6, 9, 12 ,15 ,18, 25, 30, 36",
+        "markets": "Ecuador, Perú."
+      },
+      "note": "Official catalog sample includes product labels or graphic overlays. Preserved unchanged in UI; 3D uses an approximate color, not the labelled image.",
+      "sourceSha256": "f0fc2a9c4d6ed7bcdc2601ebab0985c0f72b5c840d402028248bb4ccf8928307",
+      "sourceBytes": 65218,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "pelikano-bellota",
+      "brand": "Pelikano",
+      "name": "Bellota",
+      "sourceUrl": "https://www.pelikano.com/catalogo/p/bellota",
+      "imageUrl": "https://images.squarespace-cdn.com/content/v1/64f9d1c3aa8b24009ae9aea9/1698687088710-Q1E6OTIHJXXW3XIU0H91/bellota-textura-pelikano.jpg",
+      "asset": "/images/materials/pelikano-bellota-fe7544c0.webp",
+      "sha256": "fe7544c0f8487c6805b295946edf8a4508a66b2af7cc87887d499dff5c01e7a1",
+      "width": 768,
+      "height": 614,
+      "bytes": 147720,
+      "renderTexture": false,
+      "texture": "Synchro",
+      "evidence": {
+        "substrates": "MDP | MDP-RH",
+        "thicknessesMm": "6, 9, 12 ,15 ,18, 25, 30, 36",
+        "markets": "Ecuador, Colombia, Perú."
+      },
+      "note": "Official catalog sample includes product labels or graphic overlays. Preserved unchanged in UI; 3D uses an approximate color, not the labelled image.",
+      "sourceSha256": "f1f15f499f5da70c4523186872445753208341946bfc5d8dce4e67cde823b781",
+      "sourceBytes": 224270,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "pelikano-taupe",
+      "brand": "Pelikano",
+      "name": "Taupe",
+      "sourceUrl": "https://www.pelikano.com/catalogo/p/taupe",
+      "imageUrl": "https://images.squarespace-cdn.com/content/v1/64f9d1c3aa8b24009ae9aea9/1698687342016-B5B9J9ZV85UY7PGI0MUS/taupe%CC%81-textura-pelikano.jpg",
+      "asset": "/images/materials/pelikano-taupe-184c1696.webp",
+      "sha256": "184c1696f7a5392c52e6319e51b10bb566cdc2c76a1e6bce9cfe3526b518f57d",
+      "width": 768,
+      "height": 614,
+      "bytes": 2906,
+      "renderTexture": false,
+      "texture": "Mate",
+      "evidence": {
+        "substrates": "MDP | MDP-RH | MDF",
+        "thicknessesMm": "6, 9, 12 ,15 ,18, 25, 30, 36",
+        "markets": "Ecuador, Colombia, Perú."
+      },
+      "note": "Official catalog sample includes product labels or graphic overlays. Preserved unchanged in UI; 3D uses an approximate color, not the labelled image.",
+      "sourceSha256": "309afac13e4c7b766d2b40d845c58a8de5800276580fa487cad7cda6c8b08269",
+      "sourceBytes": 3976,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "pelikano-plomo",
+      "brand": "Pelikano",
+      "name": "Plomo",
+      "sourceUrl": "https://www.pelikano.com/catalogo/p/plomo",
+      "imageUrl": "https://images.squarespace-cdn.com/content/v1/64f9d1c3aa8b24009ae9aea9/1698686819982-HKM7YI8YB5G1M5FIARKZ/plomo-textura-pelikano.jpg",
+      "asset": "/images/materials/pelikano-plomo-009942a6.webp",
+      "sha256": "009942a61125e34e95a8eed1c5ce8196b489db87677fa1a1ca110d5579b5ce0e",
+      "width": 768,
+      "height": 615,
+      "bytes": 6172,
+      "renderTexture": false,
+      "texture": "Mate",
+      "evidence": {
+        "substrates": "MDP | MDP-RH | MDF",
+        "thicknessesMm": "6, 9, 12 ,15 ,18, 25, 30, 36",
+        "markets": "Ecuador, Colombia, Perú."
+      },
+      "note": "Official catalog sample includes product labels or graphic overlays. Preserved unchanged in UI; 3D uses an approximate color, not the labelled image.",
+      "sourceSha256": "95f2fd48782959f85c42e9e94e3e3de9580e8e91228bd77ecefef345dc9df58e",
+      "sourceBytes": 7536,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    },
+    {
+      "id": "pelikano-cemento",
+      "brand": "Pelikano",
+      "name": "Cemento",
+      "sourceUrl": "https://www.pelikano.com/catalogo/p/cemento",
+      "imageUrl": "https://images.squarespace-cdn.com/content/v1/64f9d1c3aa8b24009ae9aea9/1698703225701-B79IC54BOCE0VQPM0J1F/cemento-textura-pelikano.jpg",
+      "asset": "/images/materials/pelikano-cemento-02658472.webp",
+      "sha256": "02658472da9239cc1f72b304da899cee28b497feaf78b9524aaff52d2cbd20c7",
+      "width": 768,
+      "height": 615,
+      "bytes": 94338,
+      "renderTexture": false,
+      "texture": "Mate",
+      "evidence": {
+        "substrates": "MDP | MDP-RH | MDF",
+        "thicknessesMm": "6, 9, 12 ,15 ,18, 25, 30, 36",
+        "markets": "Ecuador, Colombia, Perú."
+      },
+      "note": "Official catalog sample includes product labels or graphic overlays. Preserved unchanged in UI; 3D uses an approximate color, not the labelled image.",
+      "sourceSha256": "2624c3c02e52978d53dc905126b3e066ff17329216c467668067023ce442ca7c",
+      "sourceBytes": 121974,
+      "processing": "Proportional downsample to at most768px, WebP quality92; no crop, recolouring or generated design."
+    }
+  ]
+}

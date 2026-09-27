@@ -42,6 +42,38 @@ export const materialSchema = z
     brand: z.string().trim().max(60).default(""),
     code: z.string().trim().max(60).default(""),
     board: z.enum(["standard", "rh"]).default("standard"),
+    // Optional so historical designs keep their original material projection.
+    swatch: z
+      .string()
+      .regex(/^$|^\/images\/materials\/[a-z0-9-]+\.(?:jpg|jpeg|png|webp)$/)
+      .optional(),
+    sourceUrl: z
+      .string()
+      .max(600)
+      .refine((value) => {
+        if (!value) return true;
+        try {
+          const url = new URL(value);
+          return (
+            url.protocol === "https:" &&
+            !url.username &&
+            !url.password &&
+            [
+              "tableroshispanos.es",
+              "www.tableroshispanos.es",
+              "arauco.com",
+              "www.arauco.com",
+              "pelikano.com",
+              "www.pelikano.com",
+            ].includes(url.hostname)
+          );
+        } catch {
+          return false;
+        }
+      }, "Usa una ficha HTTPS oficial de Hispano, Arauco o Pelíkano")
+      .optional(),
+    texture: z.string().trim().max(80).optional(),
+    renderTexture: z.boolean().optional(),
   })
   .strict();
 export type Material = z.infer<typeof materialSchema>;
@@ -165,22 +197,50 @@ export const defaultSettings: Settings = {
 };
 export type PublicMaterial = Pick<
   Material,
-  "id" | "name" | "color" | "active" | "brand" | "code" | "board"
+  | "id"
+  | "name"
+  | "color"
+  | "active"
+  | "brand"
+  | "code"
+  | "board"
+  | "swatch"
+  | "sourceUrl"
+  | "texture"
+  | "renderTexture"
 >;
 /** Explicit whitelist: supplier cost indices never leave the server. */
 export function publicMaterials(settings: Settings): PublicMaterial[] {
   return settingsSchema
     .parse(settings)
     .materials.filter((material) => material.active)
-    .map(({ id, name, color, active, brand, code, board }) => ({
-      id,
-      name,
-      color,
-      active,
-      brand,
-      code,
-      board,
-    }));
+    .map(
+      ({
+        id,
+        name,
+        color,
+        active,
+        brand,
+        code,
+        board,
+        swatch,
+        sourceUrl,
+        texture,
+        renderTexture,
+      }) => ({
+        id,
+        name,
+        color,
+        active,
+        brand,
+        code,
+        board,
+        ...(swatch !== undefined ? { swatch } : {}),
+        ...(sourceUrl !== undefined ? { sourceUrl } : {}),
+        ...(texture !== undefined ? { texture } : {}),
+        ...(renderTexture !== undefined ? { renderTexture } : {}),
+      }),
+    );
 }
 export function materialDisplayName(
   material: Pick<Material, "name" | "brand" | "code" | "board">,

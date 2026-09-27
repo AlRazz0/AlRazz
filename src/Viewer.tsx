@@ -8,6 +8,8 @@ import {
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { createCameraMotion } from "./camera-motion";
+import { createSwatchTextures } from "./swatch-textures";
+import { createDimensionOverlay } from "./viewer-dimensions";
 import type { VisualPanel } from "../lib/public-geometry";
 import type { PublicMaterial } from "./types";
 import {
@@ -32,6 +34,7 @@ type Props = {
   small?: boolean;
   reference?: boolean;
   environment?: boolean;
+  dimensions?: boolean;
   handle?: string;
 };
 const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
@@ -46,6 +49,7 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
     small = false,
     reference = !small,
     environment = !small,
+    dimensions = false,
     handle = "push",
   },
   ref,
@@ -60,6 +64,7 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
     reference: THREE.Group;
     environment: THREE.Group;
     decoration: THREE.Object3D | null;
+    dimensions: ReturnType<typeof createDimensionOverlay>;
     width: number;
     depth: number;
     doors: THREE.Group[];
@@ -84,7 +89,10 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
         if (!r) return null;
         r.settle();
         r.render();
-        return r.renderer.domElement.toDataURL("image/png");
+        return (
+          r.dimensions?.capture(r.renderer.domElement) ??
+          r.renderer.domElement.toDataURL("image/png")
+        );
       },
     }),
     [],
@@ -118,6 +126,7 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
     );
     renderer.domElement.setAttribute("role", "img");
     el.appendChild(renderer.domElement);
+    const dimensionOverlay = small ? null : createDimensionOverlay(el);
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(34, 1, 0.01, 200);
     camera.position.set(4, 3, 6);
@@ -180,6 +189,12 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
         placeReference(r.reference, direction, r.width, r.depth);
       }
       renderer.render(scene, camera);
+      dimensionOverlay?.draw(
+        camera,
+        renderer.domElement,
+        el.clientWidth,
+        el.clientHeight,
+      );
     };
     const tick = (now: number) => {
       animationFrame = 0;
@@ -304,6 +319,7 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
       reference: person,
       environment: studio,
       decoration: null,
+      dimensions: dimensionOverlay,
       width: 1,
       depth: 0.4,
       doors: [],
@@ -331,6 +347,7 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
       renderer.dispose();
       renderer.forceContextLoss();
       renderer.domElement.remove();
+      dimensionOverlay?.dispose();
       runtime.current = null;
     };
   }, [small]);
@@ -340,9 +357,13 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
     const needsInitialFrame = r.group.children.length === 0;
     clearGroup(r.group);
     r.doors = [];
+    const swatches = createSwatchTextures(
+      r.render,
+      r.renderer.capabilities.getMaxAnisotropy(),
+    );
     panels.forEach((panel) => {
-      const color =
-        materials.find((f) => f.id === panel.material)?.color || "#b99469";
+      const finish = materials.find((f) => f.id === panel.material);
+      const color = finish?.color || "#b99469";
       const geo = new THREE.BoxGeometry(
         ...(panel.size.map((n) => n / 1000) as [number, number, number]),
       );
@@ -351,6 +372,10 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
         roughness: 0.77,
         metalness: 0,
       });
+      swatches.attach(
+        mat,
+        finish?.renderTexture === false ? undefined : finish?.swatch,
+      );
       const mesh = new THREE.Mesh(geo, mat);
       mesh.position.set(
         ...(panel.position.map((n) => n / 1000) as [number, number, number]),
@@ -394,6 +419,7 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
     });
     if (needsInitialFrame) r.frame();
     r.render();
+    return () => swatches.dispose();
   }, [panels, materials, handle, small]);
   useEffect(() => {
     const r = runtime.current;
@@ -434,6 +460,12 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
         (!small ? " Arrastra para girar y usa la rueda para acercarte." : ""),
     );
   }, [width, depth, reference, environment, small]);
+  useEffect(() => {
+    const r = runtime.current;
+    if (!r) return;
+    r.dimensions?.update(width, height, depth, dimensions && !small);
+    r.render();
+  }, [width, height, depth, dimensions, small]);
   useEffect(() => {
     const r = runtime.current;
     if (!r) return;

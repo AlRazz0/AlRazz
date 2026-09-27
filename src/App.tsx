@@ -11,6 +11,7 @@ import { money } from "../lib/furniture";
 import type { PublicProduct, PublicSettings } from "./types";
 import Viewer from "./Viewer";
 import { materialLabel, materialBrands } from "./materials";
+import { MaterialSwatch } from "./MaterialSwatch";
 import { ContactLinks } from "./ContactLinks";
 import { useRevealMotion } from "./useRevealMotion";
 const Configurator = lazy(() => import("./Configurator"));
@@ -245,9 +246,9 @@ function Home() {
                     .filter((m) => m.active)
                     .slice(0, 8)
                     .map((f) => (
-                      <span
+                      <MaterialSwatch
                         key={f.id}
-                        style={{ background: f.color }}
+                        material={f}
                         title={materialLabel(f)}
                       />
                     ))}
@@ -313,7 +314,7 @@ function Home() {
               .slice(0, 8)
               .map((f) => (
                 <a href="/configurar" key={f.id}>
-                  <span style={{ background: f.color }} />
+                  <MaterialSwatch material={f} />
                   {f.name}
                   <small>
                     {f.brand}
@@ -323,8 +324,9 @@ function Home() {
               ))}
           </div>
           <p className="small-note">
-            Colores referenciales. Confirmamos acabado, disponibilidad y muestra
-            física contigo.
+            Selección de los catálogos de las marcas. Imágenes y tonos de
+            pantalla referenciales; confirmamos acabado, disponibilidad local y
+            muestra física contigo.
           </p>
           <a className="button dark" href="/configurar">
             Explorar acabados <ArrowUpRight size={20} />

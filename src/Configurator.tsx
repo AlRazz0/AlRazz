@@ -23,6 +23,12 @@ import { Header, Footer } from "./App";
 import { Choice } from "./UI";
 import Viewer, { type View, type ViewerHandle } from "./Viewer";
 import { materialLabel, materialBrands } from "./materials";
+import { MaterialSource, MaterialSwatch } from "./MaterialSwatch";
+const searchText = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("es");
 const dimensionLabels = { width: "Ancho", height: "Alto", depth: "Fondo" };
 const doorOptions = [
   { value: "none", label: "Todo abierto" },
@@ -53,6 +59,7 @@ export default function Configurator() {
   const [showEnvironment, setShowEnvironment] = useState(true);
   const [brandFilter, setBrandFilter] = useState("all");
   const [boardFilter, setBoardFilter] = useState("all");
+  const [finishSearch, setFinishSearch] = useState("");
   const viewer = useRef<ViewerHandle>(null);
   function load() {
     setLoading(true);
@@ -209,7 +216,22 @@ export default function Configurator() {
         </div>
       </>
     );
+  const displayedConfig = renderConfig || config;
   const finish = settings.materials.find((m) => m.id === config.finish);
+  const interiorFinish =
+    config.interior === "same"
+      ? finish
+      : settings.materials.find((material) => material.id === config.interior);
+  const filteredFinishes = settings.materials.filter(
+    (material) =>
+      material.active &&
+      (brandFilter === "all" || material.brand === brandFilter) &&
+      (boardFilter === "all" ||
+        (material.board || "standard") === boardFilter) &&
+      searchText(
+        `${material.name} ${material.brand || ""} ${material.code || ""}`,
+      ).includes(searchText(finishSearch.trim())),
+  );
   return (
     <>
       <Header compact />
@@ -233,11 +255,12 @@ export default function Configurator() {
               ref={viewer}
               panels={quote.geometry}
               materials={settings.materials}
-              {...(renderConfig || config)}
+              {...displayedConfig}
               view={view}
               open={open}
               reference={showReference}
               environment={showEnvironment}
+              dimensions={showDimensions}
             />
           ) : (
             <div className="loading-page">Preparando vista 3D…</div>
@@ -275,8 +298,9 @@ export default function Configurator() {
           {showDimensions && (
             <div className="dimension-caption">
               <Ruler size={16} />
-              <b>{config.width / 10}</b> ancho × <b>{config.height / 10}</b>{" "}
-              alto × <b>{config.depth / 10}</b> fondo <span>cm</span>
+              <b>{displayedConfig.width / 10}</b> ancho ×{" "}
+              <b>{displayedConfig.height / 10}</b> alto ×{" "}
+              <b>{displayedConfig.depth / 10}</b> fondo <span>cm</span>
             </div>
           )}
           <p className="stage-hint">
@@ -473,45 +497,47 @@ export default function Configurator() {
                   onChange={setBoardFilter}
                 />
               </div>
+              <label className="material-search">
+                Buscar acabado comercial
+                <input
+                  type="search"
+                  value={finishSearch}
+                  placeholder="Nombre, marca o código"
+                  maxLength={100}
+                  onChange={(event) => setFinishSearch(event.target.value)}
+                />
+              </label>
               <p className="finish-name">
                 Exterior ·{" "}
                 <b>{finish ? materialLabel(finish) : config.finish}</b>
+                {finish?.texture && <small> · {finish.texture}</small>}
+              </p>
+              <MaterialSource material={finish} />
+              <p className="material-result-count" role="status">
+                {filteredFinishes.length} acabados de nuestra selección de
+                catálogo
               </p>
               <div className="finish-grid">
-                {settings.materials
-                  .filter(
-                    (m) =>
-                      m.active &&
-                      (brandFilter === "all" || m.brand === brandFilter) &&
-                      (boardFilter === "all" ||
-                        (m.board || "standard") === boardFilter),
-                  )
-                  .map((f) => (
-                    <button
-                      key={f.id}
-                      onClick={() => change({ ...config, finish: f.id })}
-                      className={config.finish === f.id ? "selected" : ""}
-                      aria-pressed={config.finish === f.id}
-                      aria-label={materialLabel(f)}
-                    >
-                      <span style={{ background: f.color }}>
-                        {config.finish === f.id && <Check size={18} />}
-                      </span>
-                      <small>{f.name}</small>
-                      <small className="finish-meta">
-                        {f.brand || "Colección inicial"}
-                        {f.board === "rh" ? " · RH" : ""}
-                      </small>
-                    </button>
-                  ))}
+                {filteredFinishes.map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => change({ ...config, finish: f.id })}
+                    className={config.finish === f.id ? "selected" : ""}
+                    aria-pressed={config.finish === f.id}
+                    aria-label={materialLabel(f)}
+                  >
+                    <MaterialSwatch material={f}>
+                      {config.finish === f.id && <Check size={18} />}
+                    </MaterialSwatch>
+                    <small>{f.name}</small>
+                    <small className="finish-meta">
+                      {f.brand || "Colección inicial"}
+                      {f.board === "rh" ? " · RH" : ""}
+                    </small>
+                  </button>
+                ))}
               </div>
-              {!settings.materials.some(
-                (m) =>
-                  m.active &&
-                  (brandFilter === "all" || m.brand === brandFilter) &&
-                  (boardFilter === "all" ||
-                    (m.board || "standard") === boardFilter),
-              ) && (
+              {!filteredFinishes.length && (
                 <p className="small-note finish-empty">
                   No hay acabados publicados con estos filtros. Prueba otra
                   marca o tipo de tablero.
@@ -528,13 +554,20 @@ export default function Configurator() {
                 ]}
                 onChange={(v) => change({ ...config, interior: v })}
               />
+              {interiorFinish && config.interior !== "same" && (
+                <div className="material-interior-preview">
+                  <MaterialSwatch material={interiorFinish} />
+                  <MaterialSource material={interiorFinish} />
+                </div>
+              )}
               <p className="small-note">
                 RH significa resistente a la humedad (moisture-resistant); no es
                 impermeable. Cada variante conserva su propia tarifa.
               </p>
               <p className="small-note finish-disclaimer">
-                Tonos de pantalla aproximados. Confirmamos muestra física,
-                disponibilidad y precio antes de fabricar.
+                Selección de los catálogos de las marcas. Las imágenes y los
+                tonos en pantalla son referenciales. Confirmamos muestra física,
+                disponibilidad local y precio antes de fabricar.
               </p>
             </TabsContent>
           </Tabs>
