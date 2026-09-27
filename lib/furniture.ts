@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { commercialMaterials } from "./material-presets.ts";
 
 /** Manufacturing invariant: catalog/configuration cannot override this. */
 export const THICKNESS = 18 as const;
@@ -37,6 +38,10 @@ export const materialSchema = z
       .regex(/^#[0-9a-fA-F]{6}$/, "Usa un color hexadecimal de seis dígitos"),
     price: amount(5000),
     active: z.boolean(),
+    // Default metadata keeps existing catalogs and historical snapshots readable.
+    brand: z.string().trim().max(60).default(""),
+    code: z.string().trim().max(60).default(""),
+    board: z.enum(["standard", "rh"]).default("standard"),
   })
   .strict();
 export type Material = z.infer<typeof materialSchema>;
@@ -85,7 +90,13 @@ export const productSchema = z
   .strict();
 export type Product = z.infer<typeof productSchema>;
 const seededMaterials = (): Material[] =>
-  finishes.map((finish) => ({ ...finish, active: true }));
+  finishes.map((finish) => ({
+    ...finish,
+    active: true,
+    brand: "",
+    code: "",
+    board: "standard",
+  }));
 const materialsSchema = z
   .array(materialSchema)
   .min(1)
@@ -127,7 +138,7 @@ export const settingsSchema = z
     installation: amount(5000),
     delivery: amount(5000),
     margin: z.number().finite().min(0).max(0.8),
-    // Parsing old settings adds seeded materials without requiring a database reset.
+    // Older catalogs without materials must retain their original finish IDs.
     materials: materialsSchema.default(seededMaterials),
   })
   .strict();
@@ -142,8 +153,32 @@ export const defaultSettings: Settings = {
   installation: 120,
   delivery: 80,
   margin: 0.25,
-  materials: seededMaterials(),
+  materials: commercialMaterials.map((material) => ({ ...material })),
 };
+export type PublicMaterial = Pick<
+  Material,
+  "id" | "name" | "color" | "active" | "brand" | "code" | "board"
+>;
+/** Explicit whitelist: supplier cost indices never leave the server. */
+export function publicMaterials(settings: Settings): PublicMaterial[] {
+  return settingsSchema
+    .parse(settings)
+    .materials.filter((material) => material.active)
+    .map(({ id, name, color, active, brand, code, board }) => ({
+      id,
+      name,
+      color,
+      active,
+      brand,
+      code,
+      board,
+    }));
+}
+export function materialDisplayName(
+  material: Pick<Material, "name" | "brand" | "code" | "board">,
+): string {
+  return `${material.brand ? `${material.brand} · ` : ""}${material.name}${material.code ? ` [${material.code}]` : ""}${material.board === "rh" ? " · RH" : ""}`;
+}
 const base: Config = {
   width: 1800,
   height: 1900,
@@ -151,7 +186,7 @@ const base: Config = {
   modules: 3,
   shelves: 3,
   doors: "lower",
-  finish: "arcilla",
+  finish: "hispano-chiavenna",
   interior: "same",
   handle: "push",
   install: false,
@@ -198,7 +233,7 @@ export const seedProducts: Product[] = [
       modules: 2,
       shelves: 5,
       doors: "none",
-      finish: "roble",
+      finish: "hispano-roble-catania",
     },
   },
   {
@@ -224,7 +259,7 @@ export const seedProducts: Product[] = [
       modules: 3,
       shelves: 1,
       doors: "full",
-      finish: "oliva",
+      finish: "hispano-gris-grafito-02",
     },
   },
   {
@@ -249,7 +284,7 @@ export const seedProducts: Product[] = [
       modules: 3,
       shelves: 1,
       doors: "lower",
-      finish: "blanco",
+      finish: "hispano-blanco-100",
     },
   },
 ];
@@ -441,7 +476,7 @@ export function buildFurniture(
       lengthAxis,
       widthAxis,
       material: material.id,
-      materialName: material.name,
+      materialName: materialDisplayName(material),
       grain: lengthAxis === "y" ? "Vertical" : "Horizontal",
       edges: { ...edges },
       ...(door ? { door: true } : {}),

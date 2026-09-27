@@ -1,4 +1,6 @@
-import type { Product, Config, Panel, Material } from "../lib/furniture";
+import type { Product, Config, Panel } from "../lib/furniture";
+import type { PublicMaterial } from "../lib/furniture";
+export type { PublicMaterial } from "../lib/furniture";
 export type Quote = {
   panels: Panel[];
   area: number;
@@ -7,7 +9,6 @@ export type Quote = {
   price: number;
   accessories: { name: string; quantity: number }[];
 };
-export type PublicMaterial = Pick<Material, "id" | "name" | "color" | "active">;
 export type PublicProduct = Omit<Product, "basePrice"> & {
   publicPrice: number;
   preview: Quote;

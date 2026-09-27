@@ -4,6 +4,7 @@ import {
   configSchema,
   defaultSettings,
   productSchema,
+  publicMaterials,
   seedProducts,
   settingsSchema,
   validateProduct,
@@ -278,12 +279,6 @@ async function readProduct(db: Database, id: string) {
       "PRODUCT_UNAVAILABLE",
     );
   return productSchema.parse(JSON.parse(row.data));
-}
-
-function publicMaterials(settings: Settings) {
-  return settings.materials
-    .filter((m) => m.active)
-    .map(({ id, name, color, active }) => ({ id, name, color, active }));
 }
 
 function publicSettings(settings: Settings) {

@@ -11,6 +11,7 @@ import { api } from "../lib/api";
 import { money } from "../lib/furniture";
 import type { PublicProduct, PublicSettings } from "./types";
 import Viewer from "./Viewer";
+import { materialLabel, materialBrands } from "./materials";
 const Configurator = lazy(() => import("./Configurator"));
 const Cart = lazy(() => import("./Cart"));
 const Admin = lazy(() => import("./Admin"));
@@ -227,11 +228,12 @@ function Home() {
                 >
                   {settings?.materials
                     .filter((m) => m.active)
+                    .slice(0, 8)
                     .map((f) => (
                       <span
                         key={f.id}
                         style={{ background: f.color }}
-                        title={f.name}
+                        title={materialLabel(f)}
                       />
                     ))}
                 </div>
@@ -275,19 +277,36 @@ function Home() {
           <p className="eyebrow">LO ESENCIAL, BIEN HECHO</p>
           <h2>18 mm de posibilidades.</h2>
           <p>
-            Una colección dedicada a la melamina. Colores que conviven con tu
-            espacio y medidas que se adaptan a ti.
+            Trabajamos principalmente con Hispano, junto a Vesto y Pelikano.
+            Melamina de 18 mm y opciones RH para proyectos que requieren mayor
+            resistencia a la humedad.
           </p>
+          <div className="material-brands">
+            {materialBrands(
+              settings?.materials.filter((m) => m.active) || [],
+            ).map((brand) => (
+              <span key={brand}>{brand}</span>
+            ))}
+          </div>
           <div className="material-samples">
             {settings?.materials
               .filter((m) => m.active)
+              .slice(0, 8)
               .map((f) => (
                 <a href="/configurar" key={f.id}>
                   <span style={{ background: f.color }} />
                   {f.name}
+                  <small>
+                    {f.brand}
+                    {f.board === "rh" ? " · RH" : ""}
+                  </small>
                 </a>
               ))}
           </div>
+          <p className="small-note">
+            Colores referenciales. Confirmamos acabado, disponibilidad y muestra
+            física contigo.
+          </p>
           <a className="button dark" href="/configurar">
             Explorar acabados <ArrowUpRight size={20} />
           </a>
@@ -295,6 +314,10 @@ function Home() {
         <section className="section faq">
           <h2>Antes de empezar.</h2>
           {[
+            [
+              "¿Qué es la melamina RH?",
+              "RH significa resistente a la humedad (moisture-resistant). Ofrece mayor resistencia que un tablero estándar, pero no es impermeable. Te ayudamos a elegir la variante adecuada y sus cuidados.",
+            ],
             [
               "¿Qué puedo personalizar?",
               "Ancho, alto, fondo, número de módulos, repisas, puertas y acabados. Las opciones respetan los límites de cada modelo.",

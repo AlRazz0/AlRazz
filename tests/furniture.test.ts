@@ -5,6 +5,9 @@ import {
   configSchema,
   cutCSV,
   defaultSettings,
+  materialDisplayName,
+  materialSchema,
+  publicMaterials,
   quoteCSVCell,
   seedProducts,
   settingsSchema,
@@ -12,7 +15,8 @@ import {
   validateConfig,
   validateProduct,
 } from "../lib/furniture.ts";
-import type { Config, Panel, Product } from "../lib/furniture.ts";
+import type { Config, Panel, Product, Settings } from "../lib/furniture.ts";
+import { commercialMaterials } from "../lib/material-presets.ts";
 import {
   catalogCSVTemplate,
   exportCatalogCSV,
@@ -273,20 +277,22 @@ test("materials are administrable, separately costed, labelled in CSV and requir
   const config = {
     ...product.defaults,
     finish: "roble-claro-2026",
-    interior: "blanco",
+    interior: defaultSettings.materials[0].id,
   };
   const result = buildFurniture(product, config, settings);
   const costs = result.panels.reduce(
     (sum, panel) =>
       sum +
       ((panel.length * panel.width) / 1e6) *
-        (panel.material === config.finish ? 155 : 78),
+        (panel.material === config.finish
+          ? 155
+          : defaultSettings.materials[0].price),
     0,
   );
   approximate(result.breakdown.materials, costs);
   assert.equal(
     result.panels.find((panel) => panel.id === "FONDO")!.material,
-    "blanco",
+    config.interior,
   );
   assert.ok(cutCSV(result).includes("Roble, selección especial"));
   assert.throws(
@@ -328,9 +334,169 @@ test("legacy settings gain independent material arrays without sharing mutable d
   const first = settingsSchema.parse(legacy),
     second = settingsSchema.parse(legacy);
   assert.equal(first.materials.length, 6);
+  assert.deepEqual(
+    first.materials.map((material) => material.id),
+    ["roble", "arcilla", "blanco", "oliva", "azul", "grafito"],
+  );
+  assert.ok(
+    first.materials.every(
+      (material) =>
+        material.brand === "" &&
+        material.code === "" &&
+        material.board === "standard",
+    ),
+  );
   first.materials[0].name = "Changed locally";
   assert.notEqual(second.materials[0].name, first.materials[0].name);
   assert.notEqual(defaultSettings.materials[0].name, first.materials[0].name);
+});
+
+test("legacy material metadata migrates without changing snapshots, costs or material IDs", () => {
+  const material = {
+    id: "custom-legacy",
+    name: "Acabado anterior",
+    color: "#aabbcc",
+    price: 142,
+    active: true,
+  };
+  const legacy = { ...defaultSettings, materials: [material] };
+  const stored = JSON.stringify(legacy);
+  const migrated = settingsSchema.parse(JSON.parse(stored));
+  assert.deepEqual(migrated.materials[0], {
+    ...material,
+    brand: "",
+    code: "",
+    board: "standard",
+  });
+  const publicSnapshot = publicMaterials(JSON.parse(stored) as Settings);
+  assert.deepEqual(publicSnapshot, [
+    {
+      id: material.id,
+      name: material.name,
+      color: material.color,
+      active: true,
+      brand: "",
+      code: "",
+      board: "standard",
+    },
+  ]);
+  assert.ok(!("price" in publicSnapshot[0]));
+  assert.equal(
+    JSON.stringify(legacy),
+    stored,
+    "Projection must not rewrite stored snapshot data.",
+  );
+  assert.equal(materialDisplayName(migrated.materials[0]), material.name);
+});
+
+test("standard and RH variants retain distinct costs, identities and cut-list labels", () => {
+  const settings = settingsSchema.parse(defaultSettings);
+  const standard = settings.materials.find(
+    (material) => material.id === "vesto-blanco",
+  )!;
+  const rh = settings.materials.find(
+    (material) => material.id === "vesto-blanco-rh",
+  )!;
+  standard.price = 90;
+  rh.price = 145;
+  rh.code = "RH-18-B";
+  const product = seedProducts[0];
+  const standardResult = buildFurniture(
+    product,
+    { ...product.defaults, finish: standard.id },
+    settings,
+  );
+  const rhResult = buildFurniture(
+    product,
+    { ...product.defaults, finish: rh.id },
+    settings,
+  );
+  approximate(standardResult.breakdown.materials, standardResult.area * 90);
+  approximate(rhResult.breakdown.materials, rhResult.area * 145);
+  assert.ok(rhResult.price > standardResult.price);
+  assert.ok(
+    rhResult.panels.every(
+      (panel) =>
+        panel.thickness === 18 &&
+        panel.material === rh.id &&
+        panel.materialName === "Vesto · Blanco [RH-18-B] · RH",
+    ),
+  );
+  assert.ok(cutCSV(rhResult).includes("Vesto · Blanco [RH-18-B] · RH"));
+  assert.ok(
+    standardResult.panels.every((panel) => !panel.materialName.includes("RH")),
+  );
+  assert.equal(standardResult.area, rhResult.area);
+  const safe = publicMaterials(settings);
+  assert.ok(safe.every((material) => !Object.hasOwn(material, "price")));
+  assert.deepEqual(
+    safe.find((material) => material.id === rh.id),
+    {
+      id: rh.id,
+      brand: "Vesto",
+      name: "Blanco",
+      color: rh.color,
+      code: "RH-18-B",
+      board: "rh",
+      active: true,
+    },
+  );
+  rh.active = false;
+  assert.ok(
+    !publicMaterials(settings).some((material) => material.id === rh.id),
+  );
+  assert.throws(
+    () =>
+      buildFurniture(product, { ...product.defaults, finish: rh.id }, settings),
+    /no está disponible/,
+  );
+  assert.doesNotThrow(() =>
+    buildFurniture(
+      product,
+      { ...product.defaults, finish: standard.id },
+      settings,
+    ),
+  );
+});
+
+test("commercial presets are independent editable materials with strictly validated metadata", () => {
+  assert.equal(commercialMaterials.length, 23);
+  assert.equal(
+    defaultSettings.materials.filter((material) => material.brand === "Hispano")
+      .length,
+    8,
+  );
+  assert.ok(
+    defaultSettings.materials
+      .slice(0, 8)
+      .every((material) => material.brand === "Hispano"),
+  );
+  assert.equal(
+    new Set(commercialMaterials.map((material) => material.id)).size,
+    commercialMaterials.length,
+  );
+  assert.notEqual(defaultSettings.materials[0], commercialMaterials[0]);
+  assert.ok(
+    !commercialMaterials.some(
+      (material) => material.brand === "Hispano" && material.board === "rh",
+    ),
+    "No verified Hispano finish/RH pairing is seeded.",
+  );
+  for (const material of commercialMaterials)
+    assert.doesNotThrow(() => materialSchema.parse(material));
+  for (const board of ["hydro", "waterproof", "RH", "other"])
+    assert.throws(() =>
+      materialSchema.parse({ ...commercialMaterials[0], board }),
+    );
+  assert.throws(() =>
+    materialSchema.parse({ ...commercialMaterials[0], brand: "x".repeat(61) }),
+  );
+  assert.throws(() =>
+    materialSchema.parse({ ...commercialMaterials[0], code: "x".repeat(61) }),
+  );
+  assert.throws(() =>
+    materialSchema.parse({ ...commercialMaterials[0], thickness: 16 }),
+  );
 });
 
 test("price recomputes from panels and selected services; hinges follow door height, not cabinet height", () => {
@@ -448,6 +614,77 @@ test("CSV numbers accept quoted decimal comma and references can validate custom
       defaultSettings,
     ).errors[0].message.includes("no está disponible"),
   );
+});
+
+test("CSV omitted finishes and downloadable templates adapt to legacy-only catalogs", () => {
+  const { materials: _materials, ...beforeMaterialCatalog } = defaultSettings;
+  const legacy = settingsSchema.parse(beforeMaterialCatalog);
+  legacy.materials[0].active = false;
+  const original = JSON.stringify(legacy);
+  const minimal = importCatalogCSV(
+    "Código;Nombre;Categoría\nuno;Modelo uno;Estanterías\ndos;Modelo dos;Libreros\ntres;Modelo tres;Aparadores\ncuatro;Modelo cuatro;Muebles de TV",
+    legacy,
+  );
+  assert.deepEqual(minimal.errors, []);
+  assert.equal(minimal.products.length, 4);
+  assert.ok(
+    minimal.products.every((product) => product.defaults.finish === "arcilla"),
+  );
+  const blank = importCatalogCSV(
+    "Código;Nombre;Color exterior\nuno;Modelo uno;",
+    legacy,
+  );
+  assert.deepEqual(blank.errors, []);
+  assert.equal(blank.products[0].defaults.finish, "arcilla");
+  const template = importCatalogCSV(catalogCSVTemplate(legacy), legacy);
+  assert.deepEqual(template.errors, []);
+  assert.equal(template.products[0].defaults.finish, "arcilla");
+  assert.equal(
+    JSON.stringify(legacy),
+    original,
+    "Generating templates must not change the saved catalog.",
+  );
+  const currentTemplate = importCatalogCSV(
+    catalogCSVTemplate(defaultSettings),
+    defaultSettings,
+  );
+  assert.deepEqual(currentTemplate.errors, []);
+  assert.equal(
+    currentTemplate.products[0].defaults.finish,
+    seedProducts[0].defaults.finish,
+  );
+});
+
+test("CSV explicit unavailable finishes stay errors instead of silently substituting a color", () => {
+  const settings = settingsSchema.parse({
+    ...defaultSettings,
+    materials: [
+      { ...defaultSettings.materials[0], id: "custom-active", active: true },
+      { ...defaultSettings.materials[1], id: "custom-hidden", active: false },
+    ],
+  });
+  for (const finish of [
+    "custom-hidden",
+    "missing",
+    seedProducts[0].defaults.finish,
+  ]) {
+    const imported = importCatalogCSV(
+      `Código;Nombre;Color exterior\nuno;Modelo uno;${finish}`,
+      settings,
+    );
+    assert.equal(imported.products.length, 0);
+    assert.equal(imported.errors.length, 1);
+    assert.match(imported.errors[0].message, /no está disponible/);
+  }
+  const explicit = importCatalogCSV(
+    "Código;Nombre;Color exterior\nuno;Modelo uno;custom-active",
+    settings,
+  );
+  assert.deepEqual(explicit.errors, []);
+  assert.equal(explicit.products[0].defaults.finish, "custom-active");
+  const template = importCatalogCSV(catalogCSVTemplate(settings), settings);
+  assert.deepEqual(template.errors, []);
+  assert.equal(template.products[0].defaults.finish, "custom-active");
 });
 
 test("catalog and cut exports neutralize spreadsheet formulas including leading whitespace", () => {

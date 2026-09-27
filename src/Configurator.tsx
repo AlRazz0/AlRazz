@@ -37,6 +37,7 @@ import type { PublicProduct, PublicSettings, Quote, Design } from "./types";
 import { Header, Footer } from "./App";
 import { Choice } from "./UI";
 import Viewer, { type View, type ViewerHandle } from "./Viewer";
+import { materialLabel, materialBrands } from "./materials";
 const dimensionLabels = { width: "Ancho", height: "Alto", depth: "Fondo" };
 const doorOptions = [
   { value: "none", label: "Todo abierto" },
@@ -44,7 +45,11 @@ const doorOptions = [
   { value: "full", label: "Puertas completas" },
 ];
 export function exportCuts(q: Quote, id = "AlRazz") {
-  const cell = (v: unknown) => '"' + String(v).replaceAll('"', '""') + '"';
+  const cell = (v: unknown) => {
+    const text = String(v);
+    const safe = /^[\s]*[=+@-]/.test(text) ? "'" + text : text;
+    return '"' + safe.replaceAll('"', '""') + '"';
+  };
   const csv =
     "\ufeff" +
     [
@@ -58,7 +63,7 @@ export function exportCuts(q: Quote, id = "AlRazz") {
           p.length,
           p.width,
           18,
-          p.material,
+          p.materialName,
           p.grain,
           p.edges.top,
           p.edges.bottom,
@@ -91,6 +96,10 @@ export default function Configurator() {
   const [view, setView] = useState<View>("iso");
   const [open, setOpen] = useState(false);
   const [showDimensions, setShowDimensions] = useState(true);
+  const [showReference, setShowReference] = useState(true);
+  const [showEnvironment, setShowEnvironment] = useState(true);
+  const [brandFilter, setBrandFilter] = useState("all");
+  const [boardFilter, setBoardFilter] = useState("all");
   const [cuts, setCuts] = useState(false);
   const viewer = useRef<ViewerHandle>(null);
   function load() {
@@ -275,6 +284,8 @@ export default function Configurator() {
               {...(renderConfig || config)}
               view={view}
               open={open}
+              reference={showReference}
+              environment={showEnvironment}
             />
           ) : (
             <div className="loading-page">Preparando vista 3D…</div>
@@ -317,7 +328,9 @@ export default function Configurator() {
             </div>
           )}
           <p className="stage-hint">
-            Arrastra para girar · Desliza o usa la rueda para acercarte
+            {showReference
+              ? "Persona de referencia · 1,70 m"
+              : "Arrastra para girar · Rueda para acercarte"}
           </p>
           <div className="stage-options">
             <label>
@@ -336,6 +349,22 @@ export default function Configurator() {
                 aria-label="Mostrar medidas"
               />{" "}
               Medidas
+            </label>
+            <label>
+              <Switch
+                checked={showReference}
+                onCheckedChange={setShowReference}
+                aria-label="Mostrar persona de referencia de 1,70 metros"
+              />
+              Persona · 1,70 m
+            </label>
+            <label>
+              <Switch
+                checked={showEnvironment}
+                onCheckedChange={setShowEnvironment}
+                aria-label="Mostrar ambiente"
+              />
+              Ambiente
             </label>
           </div>
         </section>
@@ -468,28 +497,74 @@ export default function Configurator() {
               </p>
             </TabsContent>
             <TabsContent value="acabados">
-              <p className="tab-intro">Encuentra tu color.</p>
+              <p className="tab-intro">El acabado que hace tuyo el espacio.</p>
+              <div className="finish-filters">
+                <Choice
+                  label="Marca"
+                  value={brandFilter}
+                  options={[
+                    { value: "all", label: "Todas las marcas" },
+                    ...materialBrands(
+                      settings.materials.filter((m) => m.active),
+                    ).map((brand) => ({ value: brand, label: brand })),
+                  ]}
+                  onChange={setBrandFilter}
+                />
+                <Choice
+                  label="Tablero · 18 mm"
+                  value={boardFilter}
+                  options={[
+                    { value: "all", label: "Todos" },
+                    { value: "standard", label: "Estándar" },
+                    { value: "rh", label: "RH · Antihumedad" },
+                  ]}
+                  onChange={setBoardFilter}
+                />
+              </div>
               <p className="finish-name">
-                Exterior · <b>{finish?.name || config.finish}</b>
+                Exterior ·{" "}
+                <b>{finish ? materialLabel(finish) : config.finish}</b>
               </p>
               <div className="finish-grid">
                 {settings.materials
-                  .filter((m) => m.active)
+                  .filter(
+                    (m) =>
+                      m.active &&
+                      (brandFilter === "all" || m.brand === brandFilter) &&
+                      (boardFilter === "all" ||
+                        (m.board || "standard") === boardFilter),
+                  )
                   .map((f) => (
                     <button
                       key={f.id}
                       onClick={() => change({ ...config, finish: f.id })}
                       className={config.finish === f.id ? "selected" : ""}
                       aria-pressed={config.finish === f.id}
-                      aria-label={f.name}
+                      aria-label={materialLabel(f)}
                     >
                       <span style={{ background: f.color }}>
                         {config.finish === f.id && <Check size={18} />}
                       </span>
                       <small>{f.name}</small>
+                      <small className="finish-meta">
+                        {f.brand || "Colección inicial"}
+                        {f.board === "rh" ? " · RH" : ""}
+                      </small>
                     </button>
                   ))}
               </div>
+              {!settings.materials.some(
+                (m) =>
+                  m.active &&
+                  (brandFilter === "all" || m.brand === brandFilter) &&
+                  (boardFilter === "all" ||
+                    (m.board || "standard") === boardFilter),
+              ) && (
+                <p className="small-note finish-empty">
+                  No hay acabados publicados con estos filtros. Prueba otra
+                  marca o tipo de tablero.
+                </p>
+              )}
               <Choice
                 label="Color interior"
                 value={config.interior}
@@ -497,13 +572,17 @@ export default function Configurator() {
                   { value: "same", label: "Igual al exterior" },
                   ...settings.materials
                     .filter((m) => m.active)
-                    .map((m) => ({ value: m.id, label: m.name })),
+                    .map((m) => ({ value: m.id, label: materialLabel(m) })),
                 ]}
                 onChange={(v) => change({ ...config, interior: v })}
               />
               <p className="small-note">
-                Los colores de pantalla son referenciales. Confirma la muestra
-                física antes de fabricar.
+                RH significa resistente a la humedad (moisture-resistant); no es
+                impermeable. Cada variante conserva su propia tarifa.
+              </p>
+              <p className="small-note finish-disclaimer">
+                Tonos de pantalla aproximados. Confirmamos muestra física,
+                disponibilidad y precio antes de fabricar.
               </p>
             </TabsContent>
           </Tabs>

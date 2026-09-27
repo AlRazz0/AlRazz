@@ -72,6 +72,8 @@ import {
   importCatalogCSV,
 } from "../lib/catalog-csv";
 import "./admin.css";
+import { commercialMaterials } from "../lib/material-presets";
+import { materialLabel, materialBrands } from "./materials";
 
 type AdminSnapshot = {
   admin: boolean;
@@ -186,6 +188,7 @@ export default function Admin() {
   const [notice, setNotice] = useState("");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
+  const [materialFilter, setMaterialFilter] = useState("all");
   const [editor, setEditor] = useState<Product | null>(null);
   const [original, setOriginal] = useState<Product | null>(null);
   const [editorError, setEditorError] = useState("");
@@ -311,7 +314,7 @@ export default function Admin() {
       setOriginal(clone(product));
       return;
     }
-    const template = clone(product ?? seedProducts[0]);
+    const template = compatibleTemplate(product ?? seedProducts[0]);
     setEditor({
       ...template,
       id: product ? freshId(product.id) : "",
@@ -324,6 +327,18 @@ export default function Admin() {
       ),
     });
     setOriginal(null);
+  }
+  function compatibleTemplate(product: Product): Product {
+    const template = clone(product);
+    const active = settings.materials.filter((m) => m.active);
+    if (!active.some((m) => m.id === template.defaults.finish) && active[0])
+      template.defaults.finish = active[0].id;
+    if (
+      template.defaults.interior !== "same" &&
+      !active.some((m) => m.id === template.defaults.interior)
+    )
+      template.defaults.interior = "same";
+    return template;
   }
   function closeEditor() {
     if (busy === "product") return;
@@ -696,7 +711,7 @@ export default function Admin() {
             </strong>
           </div>
           <div>
-            <span>Acabados disponibles</span>
+            <span>Acabados publicados</span>
             <strong>
               {settings.materials
                 .filter((material) => material.active)
@@ -906,7 +921,7 @@ export default function Admin() {
                   onClick={() =>
                     download(
                       "alrazz-plantilla.csv",
-                      catalogCSVTemplate(),
+                      catalogCSVTemplate(settings),
                       "text/csv;charset=utf-8",
                     )
                   }
@@ -975,29 +990,106 @@ export default function Admin() {
                 <div className="admin-panel-heading">
                   <div>
                     <h2>Materiales y acabados</h2>
-                    <p>Melamina de 18 mm. Elige los acabados que ofreces.</p>
+                    <p>
+                      Marcas, acabados y variantes RH de 18 mm. Todo editable
+                      aquí.
+                    </p>
                   </div>
-                  <button
-                    type="button"
-                    className="button outline"
-                    onClick={() =>
-                      setSetting("materials", [
-                        ...settings.materials,
-                        {
-                          id: `acabado-${settings.materials.length + 1}`,
-                          name: "Nuevo acabado",
-                          color: "#c2a17c",
-                          price: 100,
-                          active: false,
-                        },
-                      ])
-                    }
-                  >
-                    <Plus size={16} /> Añadir acabado
-                  </button>
+                  <div className="admin-material-actions">
+                    <button
+                      type="button"
+                      className="button outline"
+                      onClick={() => {
+                        const additions = commercialMaterials
+                          .filter(
+                            (m) =>
+                              !settings.materials.some(
+                                (current) => current.id === m.id,
+                              ),
+                          )
+                          .map((m) => ({ ...m, active: false }));
+                        if (
+                          settings.materials.length + additions.length >
+                          100
+                        ) {
+                          setNotice(
+                            "El catálogo admite 100 acabados. Añade las referencias que necesitas de forma individual.",
+                          );
+                          return;
+                        }
+                        setSetting("materials", [
+                          ...settings.materials,
+                          ...additions,
+                        ]);
+                        setNotice(
+                          additions.length
+                            ? `${additions.length} acabados añadidos como ocultos. Revisa precios y activa los que ofreces; guarda para publicar.`
+                            : "El catálogo de marcas ya está añadido. Se conservaron tus precios y cambios.",
+                        );
+                      }}
+                    >
+                      <Plus size={16} /> Añadir catálogo de marcas
+                    </button>
+                    <button
+                      type="button"
+                      className="button outline"
+                      onClick={() =>
+                        setSetting("materials", [
+                          ...settings.materials,
+                          {
+                            id: `acabado-${settings.materials.length + 1}`,
+                            name: "Nuevo acabado",
+                            color: "#c2a17c",
+                            price: 100,
+                            active: false,
+                            brand:
+                              materialFilter === "all"
+                                ? "Hispano"
+                                : materialFilter,
+                            code: "",
+                            board: "standard",
+                          },
+                        ])
+                      }
+                    >
+                      <Plus size={16} /> Añadir acabado
+                    </button>
+                  </div>
                 </div>
                 <div className="admin-material-list">
+                  <div className="admin-material-filter">
+                    <Field title="Filtrar por marca">
+                      <select
+                        value={materialFilter}
+                        onChange={(event) =>
+                          setMaterialFilter(event.target.value)
+                        }
+                      >
+                        <option value="all">Todas las marcas</option>
+                        {materialBrands(settings.materials).map((brand) => (
+                          <option key={brand}>{brand}</option>
+                        ))}
+                      </select>
+                    </Field>
+                    <p className="admin-help">
+                      {
+                        settings.materials.filter(
+                          (m) =>
+                            materialFilter === "all" ||
+                            m.brand === materialFilter,
+                        ).length
+                      }{" "}
+                      acabados · El catálogo inicial contiene tonos y costos
+                      referenciales; verifica la muestra y la tarifa del
+                      proveedor.
+                    </p>
+                  </div>
                   {settings.materials.map((material, index) => {
+                    if (
+                      materialFilter !== "all" &&
+                      material.brand !== materialFilter
+                    )
+                      return null;
                     const editMaterial = (
                       patch: Partial<Settings["materials"][number]>,
                     ) =>
@@ -1013,7 +1105,10 @@ export default function Admin() {
                         product.defaults.interior === material.id,
                     );
                     return (
-                      <div className="admin-material-row" key={index}>
+                      <div
+                        className="admin-material-row commercial-material-row"
+                        key={index}
+                      >
                         <Field title="Color">
                           <input
                             type="color"
@@ -1024,13 +1119,53 @@ export default function Admin() {
                             }
                           />
                         </Field>
-                        <Field title="Nombre">
+                        <Field title="Nombre comercial">
                           <input
                             value={material.name}
                             required
                             maxLength={70}
                             onChange={(event) =>
                               editMaterial({ name: event.target.value })
+                            }
+                          />
+                        </Field>
+                        <Field title="Marca">
+                          <input
+                            value={material.brand || ""}
+                            list="material-brand-options"
+                            maxLength={60}
+                            placeholder="Hispano, Vesto, Pelikano…"
+                            onChange={(event) => {
+                              setMaterialFilter("all");
+                              editMaterial({ brand: event.target.value });
+                            }}
+                          />
+                        </Field>
+                        <Field title="Tablero · 18 mm">
+                          <select
+                            value={material.board || "standard"}
+                            onChange={(event) =>
+                              editMaterial({
+                                board: event.target.value as "standard" | "rh",
+                              })
+                            }
+                          >
+                            <option value="standard">Estándar</option>
+                            <option value="rh">
+                              RH · Resistente a la humedad
+                            </option>
+                          </select>
+                        </Field>
+                        <Field
+                          title="Código del fabricante"
+                          note="Opcional; no es el identificador interno."
+                        >
+                          <input
+                            value={material.code || ""}
+                            maxLength={60}
+                            placeholder="Código de catálogo"
+                            onChange={(event) =>
+                              editMaterial({ code: event.target.value })
                             }
                           />
                         </Field>
@@ -1066,18 +1201,23 @@ export default function Admin() {
                             }
                             aria-label={`${material.active ? "Desactivar" : "Activar"} acabado ${material.name}`}
                           />
-                          <span>
-                            {material.active ? "Disponible" : "Oculto"}
-                          </span>
+                          <span>{material.active ? "Visible" : "Oculto"}</span>
                         </label>
                       </div>
                     );
                   })}
+                  <datalist id="material-brand-options">
+                    <option value="Hispano" />
+                    <option value="Vesto" />
+                    <option value="Pelikano" />
+                  </datalist>
                   <p className="admin-help">
                     El índice 100 equivale a la tarifa base por m². Un índice
                     110 aumenta un 10 % el costo de ese acabado. Ocultar un
-                    acabado retira su disponibilidad; los identificadores en uso
-                    se conservan.
+                    acabado lo retira del configurador; los identificadores en
+                    uso se conservan. Crea un acabado separado para cada
+                    variante RH y su costo. RH no significa impermeable. La
+                    visibilidad no confirma stock del proveedor.
                   </p>
                 </div>
               </section>
@@ -1218,7 +1358,7 @@ export default function Admin() {
                           setEditor((current) =>
                             current
                               ? {
-                                  ...clone(template),
+                                  ...compatibleTemplate(template),
                                   id: current.id,
                                   name: current.name,
                                   active: false,
@@ -1448,7 +1588,7 @@ export default function Admin() {
                     >
                       {settings.materials.map((material) => (
                         <option value={material.id} key={material.id}>
-                          {material.name}
+                          {materialLabel(material)}
                           {material.active ? "" : " · oculto"}
                         </option>
                       ))}
@@ -1464,7 +1604,7 @@ export default function Admin() {
                       <option value="same">Igual al exterior</option>
                       {settings.materials.map((material) => (
                         <option value={material.id} key={material.id}>
-                          {material.name}
+                          {materialLabel(material)}
                           {material.active ? "" : " · oculto"}
                         </option>
                       ))}

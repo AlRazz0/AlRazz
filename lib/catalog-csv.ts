@@ -1,4 +1,9 @@
-import { quoteCSVCell, seedProducts, validateProduct } from "./furniture.ts";
+import {
+  quoteCSVCell,
+  seedProducts,
+  settingsSchema,
+  validateProduct,
+} from "./furniture.ts";
 import type { Config, Product, Settings } from "./furniture.ts";
 
 export type CatalogCSVError = { row: number; message: string };
@@ -274,6 +279,20 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "La fila no es válida.";
 }
 
+/** Empty cells/templates must work with existing catalogs, including legacy-only materials. */
+function compatibleDefaultFinish(
+  preferred: string,
+  settings?: Settings,
+): string {
+  if (!settings) return preferred;
+  const { materials } = settingsSchema.parse(settings);
+  return (
+    materials.find(
+      (material) => material.id === preferred && material.active,
+    ) ?? materials.find((material) => material.active)!
+  ).id;
+}
+
 /** Import is only a preview: callers must review errors and persist deliberately. All rows become drafts. */
 export function importCatalogCSV(
   text: string,
@@ -407,7 +426,9 @@ export function importCatalogCSV(
           modules: numeric("modules", fallback.defaults.modules),
           shelves: numeric("shelves", fallback.defaults.shelves),
           doors: doorsCell(cells.doors, fallback.defaults.doors),
-          finish: cells.finish || fallback.defaults.finish,
+          finish:
+            cells.finish ||
+            compatibleDefaultFinish(fallback.defaults.finish, settings),
           interior: cells.interior || "same",
           handle: (cells.handle
             ? normalized(cells.handle)
@@ -477,7 +498,7 @@ export function exportCatalogCSV(
   return "\ufeff" + lines.join("\r\n");
 }
 
-export function catalogCSVTemplate(): string {
+export function catalogCSVTemplate(settings?: Settings): string {
   return exportCatalogCSV([
     {
       ...seedProducts[0],
@@ -485,6 +506,13 @@ export function catalogCSVTemplate(): string {
       name: "Nuevo modular",
       active: false,
       version: 1,
+      defaults: {
+        ...seedProducts[0].defaults,
+        finish: compatibleDefaultFinish(
+          seedProducts[0].defaults.finish,
+          settings,
+        ),
+      },
     },
   ]);
 }

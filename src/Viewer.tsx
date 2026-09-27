@@ -9,6 +9,15 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import type { Panel } from "../lib/furniture";
 import type { PublicMaterial } from "./types";
+import {
+  STUDIO_COLOR,
+  clearGroup,
+  createScaleReference,
+  createStudio,
+  disposeObjects,
+  fitCamera,
+  placeReference,
+} from "./viewer-scene";
 export type View = "iso" | "front" | "side" | "top";
 export type ViewerHandle = { capture: () => string | null };
 type Props = {
@@ -20,6 +29,8 @@ type Props = {
   view?: View;
   open?: boolean;
   small?: boolean;
+  reference?: boolean;
+  environment?: boolean;
   handle?: string;
 };
 const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
@@ -32,6 +43,8 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
     view = "iso",
     open = false,
     small = false,
+    reference = !small,
+    environment = !small,
     handle = "push",
   },
   ref,
@@ -43,6 +56,12 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
     camera: THREE.PerspectiveCamera;
     controls: OrbitControls;
     group: THREE.Group;
+    reference: THREE.Group;
+    environment: THREE.Group;
+    decoration: THREE.Object3D | null;
+    width: number;
+    depth: number;
+    frame: (direction?: THREE.Vector3) => void;
     render: () => void;
   } | null>(null);
   const [error, setError] = useState("");
@@ -77,8 +96,10 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
     renderer.setPixelRatio(Math.min(devicePixelRatio, small ? 1.25 : 2));
     renderer.shadowMap.enabled = !small;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.setClearColor(0xeee9df, 1);
+    renderer.setClearColor(STUDIO_COLOR, 1);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1;
     renderer.domElement.setAttribute(
       "aria-label",
       "Modelo tridimensional del mueble. Arrastra para girar y usa la rueda para acercarte.",
@@ -86,32 +107,35 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
     renderer.domElement.setAttribute("role", "img");
     el.appendChild(renderer.domElement);
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(34, 1, 0.01, 100);
+    const camera = new THREE.PerspectiveCamera(34, 1, 0.01, 200);
+    camera.position.set(4, 3, 6);
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = false;
     controls.enablePan = !small;
     controls.enableZoom = !small;
     controls.enabled = !small;
     controls.minDistance = 0.5;
-    controls.maxDistance = 12;
+    controls.maxDistance = 30;
     controls.maxPolarAngle = Math.PI * 0.49;
-    scene.add(new THREE.HemisphereLight(0xfff9ed, 0x8d8271, 2.3));
-    const light = new THREE.DirectionalLight(0xfff3dd, 3.3);
-    light.position.set(3, 5, 4);
+    scene.add(new THREE.HemisphereLight(0xfffaf2, 0x9b9180, 2.1));
+    const light = new THREE.DirectionalLight(0xfff7ed, 2.8);
+    light.position.set(-3, 6, 5);
     light.castShadow = !small;
-    light.shadow.mapSize.set(1024, 1024);
-    light.shadow.camera.left = -4;
-    light.shadow.camera.right = 4;
-    light.shadow.camera.top = 4;
-    light.shadow.camera.bottom = -4;
-    light.shadow.normalBias = 0.025;
+    light.shadow.mapSize.set(2048, 2048);
+    light.shadow.camera.left = -5;
+    light.shadow.camera.right = 5;
+    light.shadow.camera.top = 5;
+    light.shadow.camera.bottom = -5;
+    light.shadow.normalBias = 0.012;
+    light.shadow.bias = -0.0002;
+    light.shadow.radius = 4;
     scene.add(light);
     const fill = new THREE.DirectionalLight(0xffffff, 0.75);
     fill.position.set(-3, 2, -3);
     scene.add(fill);
     const ground = new THREE.Mesh(
       new THREE.PlaneGeometry(200, 200),
-      new THREE.MeshStandardMaterial({ color: 0xeee9df, roughness: 1 }),
+      new THREE.MeshStandardMaterial({ color: STUDIO_COLOR, roughness: 1 }),
     );
     ground.rotation.x = -Math.PI / 2;
     ground.position.y = -0.003;
@@ -119,7 +143,39 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
     scene.add(ground);
     const group = new THREE.Group();
     scene.add(group);
-    const render = () => renderer.render(scene, camera);
+    const person = small ? new THREE.Group() : createScaleReference();
+    person.visible = false;
+    const studio = new THREE.Group();
+    scene.add(person, studio);
+    const render = () => {
+      const r = runtime.current;
+      if (r?.reference.visible) {
+        const direction = camera.position
+          .clone()
+          .sub(controls.target)
+          .normalize();
+        placeReference(r.reference, direction, r.width, r.depth);
+      }
+      renderer.render(scene, camera);
+    };
+    const frame = (direction?: THREE.Vector3) => {
+      const r = runtime.current;
+      if (!r) return;
+      const lookingFrom =
+        direction || camera.position.clone().sub(controls.target).normalize();
+      if (r.reference.visible)
+        placeReference(r.reference, lookingFrom, r.width, r.depth);
+      const bounds = new THREE.Box3().setFromObject(group);
+      if (bounds.isEmpty()) return;
+      if (r.reference.visible) bounds.expandByObject(r.reference);
+      if (r.decoration && r.environment.visible)
+        bounds.expandByObject(r.decoration);
+      const fit = fitCamera(camera, bounds, lookingFrom);
+      controls.target.copy(fit.center);
+      controls.maxDistance = Math.max(12, fit.distance * 3);
+      controls.update();
+      render();
+    };
     const resize = () => {
       const w = el.clientWidth,
         h = el.clientHeight;
@@ -127,23 +183,32 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
       renderer.setSize(w, h);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
+      frame();
       render();
     };
     const ro = new ResizeObserver(resize);
     ro.observe(el);
     controls.addEventListener("change", render);
-    runtime.current = { renderer, scene, camera, controls, group, render };
+    runtime.current = {
+      renderer,
+      scene,
+      camera,
+      controls,
+      group,
+      reference: person,
+      environment: studio,
+      decoration: null,
+      width: 1,
+      depth: 0.4,
+      frame,
+      render,
+    };
     resize();
     return () => {
       ro.disconnect();
       controls.dispose();
-      scene.traverse((o) => {
-        if (o instanceof THREE.Mesh || o instanceof THREE.LineSegments) {
-          o.geometry.dispose();
-          const ms = Array.isArray(o.material) ? o.material : [o.material];
-          ms.forEach((m) => m.dispose());
-        }
-      });
+      disposeObjects(scene);
+      light.shadow.dispose();
       renderer.dispose();
       renderer.forceContextLoss();
       renderer.domElement.remove();
@@ -153,18 +218,8 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
   useEffect(() => {
     const r = runtime.current;
     if (!r) return;
-    while (r.group.children.length) {
-      const child = r.group.children[0];
-      child.traverse((o) => {
-        if (o instanceof THREE.Mesh || o instanceof THREE.LineSegments) {
-          o.geometry.dispose();
-          (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) =>
-            m.dispose(),
-          );
-        }
-      });
-      r.group.remove(child);
-    }
+    const needsInitialFrame = r.group.children.length === 0;
+    clearGroup(r.group);
     panels.forEach((panel) => {
       const color =
         materials.find((f) => f.id === panel.material)?.color || "#b99469";
@@ -216,21 +271,42 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
         r.group.add(hinge);
       } else r.group.add(mesh);
     });
+    if (needsInitialFrame) r.frame();
     r.render();
-  }, [panels, materials, open, handle]);
+  }, [panels, materials, open, handle, small]);
   useEffect(() => {
     const r = runtime.current;
     if (!r) return;
-    const h = height / 1000;
-    const fit = Math.max(width / 1000, height / 1000) * 1.9 + 0.5;
-    r.controls.target.set(0, h / 2, 0);
-    if (view === "front") r.camera.position.set(0, h / 2, fit);
-    else if (view === "side") r.camera.position.set(fit, h / 2, 0.001);
-    else if (view === "top") r.camera.position.set(0, h / 2 + fit, 0.001);
-    else r.camera.position.set(fit * 0.69, h / 2 + fit * 0.37, fit * 0.88);
-    r.controls.update();
-    r.render();
-  }, [width, height, depth, view, small]);
+    r.width = width / 1000;
+    r.depth = depth / 1000;
+    r.reference.visible = reference && !small;
+    r.environment.visible = environment && !small;
+    clearGroup(r.environment);
+    r.decoration = null;
+    if (r.environment.visible) {
+      const studio = createStudio(r.width, r.depth);
+      r.environment.add(studio.group);
+      r.decoration = studio.decoration;
+    }
+    r.renderer.domElement.setAttribute(
+      "aria-label",
+      "Modelo tridimensional del mueble." +
+        (r.reference.visible
+          ? " Figura humana de referencia de 1,70 metros de altura."
+          : "") +
+        (!small ? " Arrastra para girar y usa la rueda para acercarte." : ""),
+    );
+  }, [width, depth, reference, environment, small]);
+  useEffect(() => {
+    const r = runtime.current;
+    if (!r) return;
+    const direction = new THREE.Vector3();
+    if (view === "front") direction.set(0, 0.001, 1);
+    else if (view === "side") direction.set(1, 0.001, 0.001);
+    else if (view === "top") direction.set(0, 1, 0.001);
+    else direction.set(0.52, 0.27, 1);
+    r.frame(direction.normalize());
+  }, [width, height, depth, view, small, open, reference, environment]);
   return (
     <div className={"viewer " + (small ? "viewer-small" : "")} ref={mount}>
       {error && <p className="viewer-error">{error}</p>}

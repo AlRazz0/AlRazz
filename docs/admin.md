@@ -17,9 +17,19 @@ El identificador de un modelo existente es permanente. Todas las medidas están 
 En **Ajustes del taller** se puede cambiar WhatsApp, disponibilidad, plazo general, acabados y reglas de cotización. Los cambios se aplican al pulsar **Guardar ajustes**. Los costos internos se muestran únicamente en administración.
 
 - **WhatsApp:** código de país y teléfono, sin signos ni espacios. Dejarlo vacío desactiva el contacto comercial.
-- **Acabados:** añadir un nombre, identificador, color e índice de costo. Un índice de 100 equivale a la tarifa base por m²; 110 representa un costo 10 % mayor. Activa los que el taller ofrece.
+- **Acabados:** añadir marca, nombre comercial, código del fabricante (opcional), tablero estándar o RH, identificador, color e índice de costo. Un índice de 100 equivale a la tarifa base por m²; 110 representa un costo 10 % mayor. Activa los que el taller ofrece. El código interno no es un SKU del fabricante.
 - **Identificadores de acabado:** conservarlos si ya se utilizan en modelos o configuraciones. La interfaz bloquea el cambio de los identificadores usados por el catálogo.
 - **Costos:** material, tapacanto, herrajes, instalación, transporte y margen. El precio se calcula en servidor. La mano de obra se configura para cada mueble.
+
+**Añadir catálogo de marcas** incorpora las referencias faltantes de Hispano, Vesto y Pelikano como ocultas. Conserva precios, nombres y cambios de los IDs existentes. Revisa las referencias, establece tus costos, activa los acabados que ofreces y guarda. El filtro de marca facilita administrar la lista. Las fuentes están en [material-sources.md](material-sources.md); la selección no representa un ranking de ventas ni inventario confirmado en Cusco.
+
+Cada variante RH tiene un identificador y costo propios. Para añadir una combinación que compras a tu proveedor, crea un acabado nuevo, elige **RH**, escribe su marca y nombre comercial y configura su índice. No conviertas un acabado estándar en RH si necesitas ofrecer ambos. RH significa resistente a la humedad, no impermeable. Ocultar una variante no elimina su historial ni modifica diseños ya guardados.
+
+En el configurador, el cliente puede filtrar marca y tipo de tablero, elegir exterior e interior y ver la identificación comercial en el despiece. Los colores en pantalla son aproximados; confirma muestra física y disponibilidad antes de fabricar.
+
+## Ambiente y escala
+
+La vista 3D incluye un ambiente de estudio y una persona de referencia de **1,70 m**, activables por separado. La figura mantiene su altura al cambiar las dimensiones del mueble y comparte el mismo plano de suelo. Es una referencia espacial, no parte del producto, y no interviene en el precio ni el despiece. En pantallas estrechas, el encuadre se adapta para mostrar ambos. Los objetos de ambientación tampoco forman parte del mueble.
 
 ## Importar y exportar
 
