@@ -78,6 +78,9 @@ import { materialLabel, materialBrands } from "./materials";
 type AdminSnapshot = {
   admin: boolean;
   configured: boolean;
+  challenge?: boolean;
+  challengeExpiresAt?: number;
+  emailAvailable?: boolean;
   products?: Product[];
   settings?: Settings;
   settingsVersion?: number;
@@ -176,7 +179,15 @@ function Status({ active }: { active: boolean }) {
 export default function Admin() {
   const [session, setSession] = useState<AdminSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
+  const [verificationMethod, setVerificationMethod] = useState<
+    "totp" | "email" | "recovery"
+  >("totp");
+  const [emailCodeSent, setEmailCodeSent] = useState(false);
+  const [emailRetryAt, setEmailRetryAt] = useState(0);
+  const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
   const [products, setProducts] = useState<Product[]>([]);
   const [settings, setSettings] = useState<Settings>(clone(defaultSettings));
   const [savedSettings, setSavedSettings] = useState(
@@ -199,6 +210,16 @@ export default function Admin() {
   );
   const [importError, setImportError] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
+  const emailInput = useRef<HTMLInputElement>(null);
+  const codeInput = useRef<HTMLInputElement>(null);
+  const restartLoginButton = useRef<HTMLButtonElement>(null);
+  const challenge = !!session?.challenge && !session.admin;
+  const secondsRemaining = challenge
+    ? Math.max(0, (session?.challengeExpiresAt ?? 0) - now)
+    : 0;
+  const challengeExpired = challenge && secondsRemaining === 0;
+  const emailRetrySeconds = Math.max(0, emailRetryAt - now);
+  const numericCode = verificationMethod !== "recovery";
   const settingsDirty = JSON.stringify(settings) !== savedSettings;
   const editorDirty =
     !!editor &&
@@ -209,6 +230,7 @@ export default function Admin() {
     setError("");
     try {
       const data: AdminSnapshot = await api("action=admin");
+      setNow(Math.floor(Date.now() / 1000));
       setSession(data);
       if (data.admin && data.products && data.settings) {
         setProducts(data.products);
@@ -225,6 +247,31 @@ export default function Admin() {
   useEffect(() => {
     void load();
   }, []);
+  useEffect(() => {
+    if (!challenge) return;
+    const timer = window.setInterval(
+      () => setNow(Math.floor(Date.now() / 1000)),
+      1000,
+    );
+    return () => window.clearInterval(timer);
+  }, [challenge]);
+  useEffect(() => {
+    if (loading || busy || session?.admin || !session?.configured) return;
+    if (challengeExpired) restartLoginButton.current?.focus();
+    else if (challenge) codeInput.current?.focus();
+    else emailInput.current?.focus();
+  }, [
+    loading,
+    busy,
+    challenge,
+    challengeExpired,
+    verificationMethod,
+    session?.admin,
+    session?.configured,
+  ]);
+  useEffect(() => {
+    if (challengeExpired) setCode("");
+  }, [challengeExpired]);
   useEffect(() => {
     const prevent = (event: BeforeUnloadEvent) => {
       if (settingsDirty || editorDirty) {
@@ -274,12 +321,101 @@ export default function Admin() {
 
   async function login(event: FormEvent) {
     event.preventDefault();
+    if (busy) return;
     setBusy("login");
     setError("");
     try {
-      await api("", { op: "login", password });
+      const result = await api<AdminSnapshot>("", {
+        op: "login",
+        email: email.trim(),
+        password,
+      });
+      if (!result.challenge || !result.challengeExpiresAt)
+        throw Error("No se pudo iniciar la verificación. Vuelve a intentarlo.");
+      setNow(Math.floor(Date.now() / 1000));
+      setVerificationMethod("totp");
+      setEmailCodeSent(false);
+      setEmailRetryAt(0);
+      setCode("");
+      setSession({ ...result, admin: false, configured: true });
+    } catch (cause) {
+      setError(errorMessage(cause));
+    } finally {
       setPassword("");
+      setBusy(null);
+    }
+  }
+  async function verifyLogin(event: FormEvent) {
+    event.preventDefault();
+    if (busy || challengeExpired) return;
+    setBusy("verify-login");
+    setError("");
+    try {
+      const result = await api<{ admin: boolean }>("", {
+        op: "verify-login",
+        code: code.trim(),
+        method: verificationMethod,
+      });
+      if (!result.admin)
+        throw Error(
+          "No se pudo completar la verificación. Vuelve a intentarlo.",
+        );
+      setCode("");
+      setEmail("");
       await load();
+    } catch (cause) {
+      setError(errorMessage(cause));
+    } finally {
+      setCode("");
+      setBusy(null);
+    }
+  }
+  async function cancelLogin() {
+    if (busy) return;
+    setBusy("cancel-login");
+    setError("");
+    setCode("");
+    setPassword("");
+    try {
+      await api("", { op: "cancel-login" });
+      setVerificationMethod("totp");
+      setEmailCodeSent(false);
+      setEmailRetryAt(0);
+      setSession({ admin: false, configured: true });
+    } catch (cause) {
+      setError(errorMessage(cause));
+    } finally {
+      setBusy(null);
+    }
+  }
+  function changeVerificationMethod(method: "totp" | "email" | "recovery") {
+    setCode("");
+    setError("");
+    setVerificationMethod(method);
+  }
+  async function sendEmailCode() {
+    if (
+      busy ||
+      challengeExpired ||
+      emailRetrySeconds > 0 ||
+      !session?.emailAvailable
+    )
+      return;
+    setBusy("request-email-code");
+    setError("");
+    setCode("");
+    setEmailCodeSent(false);
+    try {
+      const result = await api<{ sent: boolean; retryAfter: number }>("", {
+        op: "request-email-code",
+      });
+      if (!result.sent)
+        throw Error("No se pudo enviar el código. Vuelve a intentarlo.");
+      setCode("");
+      setEmailCodeSent(true);
+      const sentAt = Math.floor(Date.now() / 1000);
+      setNow(sentAt);
+      setEmailRetryAt(sentAt + (result.retryAfter || 60));
     } catch (cause) {
       setError(errorMessage(cause));
     } finally {
@@ -292,6 +428,12 @@ export default function Admin() {
     try {
       await api("", { op: "logout" });
       setSession({ admin: false, configured: true });
+      setEmail("");
+      setPassword("");
+      setCode("");
+      setVerificationMethod("totp");
+      setEmailCodeSent(false);
+      setEmailRetryAt(0);
       setProducts([]);
     } catch (cause) {
       setError(errorMessage(cause));
@@ -612,13 +754,39 @@ export default function Admin() {
           </section>
           <section className="admin-login-card">
             <LockKeyhole size={24} strokeWidth={1.5} />
-            <h2>Bienvenido al taller</h2>
-            <p>Ingresa con la clave de administración de AlRazz.</p>
+            <h2>{challenge ? "Verifica tu acceso" : "Bienvenido al taller"}</h2>
+            <p>
+              {challenge
+                ? "Completa el segundo paso para acceder a la administración."
+                : "Ingresa con tu correo y contraseña. Después verificaremos tu acceso con un segundo código."}
+            </p>
+            {session?.configured && (
+              <ol
+                className="admin-login-steps"
+                aria-label="Pasos para ingresar"
+              >
+                <li aria-current={!challenge ? "step" : undefined}>
+                  <span>{challenge ? <Check size={12} /> : "1"}</span>
+                  Correo y contraseña
+                </li>
+                <li aria-current={challenge ? "step" : undefined}>
+                  <span>2</span> Verificación
+                </li>
+              </ol>
+            )}
             {error && (
-              <div className="admin-message is-error" role="alert">
+              <div
+                className="admin-message is-error"
+                role="alert"
+                id="admin-login-error"
+              >
                 {error}
-                {!session && (
-                  <button className="admin-text-button" onClick={load}>
+                {(!session || challenge) && (
+                  <button
+                    className="admin-text-button"
+                    onClick={load}
+                    disabled={!!busy}
+                  >
                     Volver a conectar
                   </button>
                 )}
@@ -628,33 +796,219 @@ export default function Admin() {
               <div className="admin-setup">
                 <strong>Falta configurar el acceso</strong>
                 <p>
-                  El servidor necesita una clave de administración y una clave
-                  de sesión. En desarrollo local, consulta las credenciales
-                  disponibles en la terminal que inició el proyecto. Para el
-                  servidor definitivo, sigue la guía de instalación del
-                  repositorio.
+                  La cuenta de administración todavía no está lista. Pide al
+                  responsable del sitio que configure tu correo, contraseña y
+                  aplicación de autenticación siguiendo la guía del proyecto.
                 </p>
                 <button className="button outline" onClick={load}>
                   Comprobar conexión
                 </button>
               </div>
+            ) : challenge ? (
+              <form onSubmit={verifyLogin} aria-busy={!!busy}>
+                {challengeExpired ? (
+                  <div className="admin-message is-error" role="alert">
+                    La verificación venció. Vuelve a ingresar tu correo y
+                    contraseña para iniciar otra.
+                  </div>
+                ) : (
+                  <>
+                    {verificationMethod === "email" && (
+                      <div className="admin-email-code">
+                        <button
+                          type="button"
+                          className="button outline"
+                          onClick={sendEmailCode}
+                          disabled={
+                            !!busy ||
+                            emailRetrySeconds > 0 ||
+                            !session?.emailAvailable
+                          }
+                        >
+                          {busy === "request-email-code"
+                            ? "Enviando…"
+                            : emailRetrySeconds > 0
+                              ? `Reenviar en ${emailRetrySeconds} s`
+                              : emailCodeSent
+                                ? "Reenviar código por correo"
+                                : "Enviar código al correo autorizado"}
+                        </button>
+                        {emailCodeSent && (
+                          <p className="admin-verification-help" role="status">
+                            Código enviado. Revisa tu bandeja de entrada o
+                            correo no deseado. Si lo solicitas otra vez, usa el
+                            más reciente.
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    <Field
+                      title={
+                        verificationMethod === "totp"
+                          ? "Código de autenticación"
+                          : verificationMethod === "email"
+                            ? "Código recibido por correo"
+                            : "Código de recuperación"
+                      }
+                    >
+                      <input
+                        key={verificationMethod}
+                        ref={codeInput}
+                        id="admin-verification-code"
+                        name="verification-code"
+                        className="admin-verification-input"
+                        type="text"
+                        inputMode={numericCode ? "numeric" : "text"}
+                        autoComplete={numericCode ? "one-time-code" : "off"}
+                        autoCapitalize="none"
+                        spellCheck={false}
+                        maxLength={numericCode ? 6 : 64}
+                        minLength={numericCode ? 6 : undefined}
+                        pattern={numericCode ? "[0-9]{6}" : undefined}
+                        placeholder={numericCode ? "000000" : undefined}
+                        value={code}
+                        onChange={(event) =>
+                          setCode(
+                            numericCode
+                              ? event.target.value
+                                  .replace(/\D/g, "")
+                                  .slice(0, 6)
+                              : event.target.value,
+                          )
+                        }
+                        aria-describedby={`admin-verification-help${error ? " admin-login-error" : ""}`}
+                        aria-invalid={!!error}
+                        disabled={!!busy}
+                        required
+                      />
+                    </Field>
+                    <p
+                      className="admin-verification-help"
+                      id="admin-verification-help"
+                    >
+                      {verificationMethod === "totp"
+                        ? "Abre tu aplicación de autenticación e ingresa el código de 6 dígitos de AlRazz."
+                        : verificationMethod === "email"
+                          ? "Ingresa los 6 dígitos del último código que recibiste en el correo de administración."
+                          : "Usa uno de los códigos que guardaste al configurar tu acceso. Cada código sirve una sola vez."}
+                    </p>
+                    <p
+                      className="admin-verification-timer"
+                      role="timer"
+                      aria-live="off"
+                    >
+                      Tiempo para completar este paso:{" "}
+                      {Math.floor(secondsRemaining / 60)}:
+                      {(secondsRemaining % 60).toString().padStart(2, "0")}
+                    </p>
+                    <button
+                      className="button rust admin-full"
+                      disabled={
+                        !!busy ||
+                        challengeExpired ||
+                        (numericCode ? code.length !== 6 : !code.trim())
+                      }
+                    >
+                      {busy === "verify-login"
+                        ? "Verificando…"
+                        : "Verificar y entrar"}
+                      <ArrowUpRight size={18} />
+                    </button>
+                    {verificationMethod !== "totp" && (
+                      <button
+                        className="admin-login-link"
+                        type="button"
+                        disabled={!!busy}
+                        onClick={() => changeVerificationMethod("totp")}
+                      >
+                        Usar mi aplicación de autenticación
+                      </button>
+                    )}
+                    {verificationMethod !== "email" && (
+                      <button
+                        className="admin-login-link"
+                        type="button"
+                        disabled={!!busy || !session?.emailAvailable}
+                        onClick={() => changeVerificationMethod("email")}
+                      >
+                        {session?.emailAvailable
+                          ? "Recibir un código por correo"
+                          : "Envío por correo pendiente de activar"}
+                      </button>
+                    )}
+                    {verificationMethod !== "recovery" && (
+                      <button
+                        className="admin-login-link"
+                        type="button"
+                        disabled={!!busy}
+                        onClick={() => changeVerificationMethod("recovery")}
+                      >
+                        Usar un código de recuperación
+                      </button>
+                    )}
+                  </>
+                )}
+                <button
+                  ref={restartLoginButton}
+                  className={
+                    challengeExpired
+                      ? "button outline admin-full"
+                      : "admin-login-link"
+                  }
+                  type="button"
+                  disabled={!!busy}
+                  onClick={cancelLogin}
+                >
+                  <ArrowLeft size={14} />
+                  {busy === "cancel-login"
+                    ? "Volviendo…"
+                    : challengeExpired
+                      ? "Volver a iniciar sesión"
+                      : "Volver al correo y contraseña"}
+                </button>
+              </form>
             ) : (
-              <form onSubmit={login}>
-                <Field title="Clave de administración">
+              <form
+                onSubmit={login}
+                className="admin-login-form"
+                aria-busy={!!busy}
+              >
+                <Field title="Correo electrónico">
                   <input
+                    ref={emailInput}
+                    id="admin-email"
+                    name="email"
+                    type="email"
+                    autoComplete="username"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    maxLength={254}
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    disabled={!!busy || !session}
+                    aria-describedby={error ? "admin-login-error" : undefined}
+                    required
+                  />
+                </Field>
+                <Field title="Contraseña">
+                  <input
+                    id="admin-password"
+                    name="password"
                     type="password"
                     autoComplete="current-password"
+                    maxLength={512}
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
+                    disabled={!!busy || !session}
+                    aria-describedby={error ? "admin-login-error" : undefined}
                     required
-                    autoFocus
                   />
                 </Field>
                 <button
                   className="button rust admin-full"
                   disabled={!!busy || !session}
                 >
-                  {busy ? "Ingresando…" : "Entrar al taller"}
+                  {busy === "login" ? "Comprobando…" : "Continuar"}
                   <ArrowUpRight size={18} />
                 </button>
                 <small className="admin-muted">

@@ -1,4 +1,10 @@
 # Copiar solo si se desea configuración manual; npm run setup:local genera valores seguros.
 # No utilizar este archivo vacío como configuración de producción.
-ADMIN_PASSWORD=""
+ADMIN_EMAIL=""
+ADMIN_PASSWORD_HASH=""
+ADMIN_TOTP_SECRET=""
+ADMIN_RECOVERY_HASHES="[]"
 SESSION_SECRET=""
+# Opcional: habilitar códigos por correo después de verificar el remitente.
+RESEND_API_KEY=""
+ADMIN_EMAIL_FROM=""

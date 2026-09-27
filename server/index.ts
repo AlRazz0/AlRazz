@@ -1,3 +1,16 @@
+import {
+  admin,
+  adminState,
+  AuthError,
+  cancelLogin,
+  login,
+  logout,
+  requestEmailCode,
+  requireAdmin,
+  verifyLogin,
+  type AdminAuthEnv,
+  type Database,
+} from "./admin-auth.ts";
 import { z } from "zod";
 import {
   buildFurniture,
@@ -13,32 +26,11 @@ import {
   type Settings,
 } from "../lib/furniture";
 
-// Structural binding types keep the domain independent of any platform SDK.
-type D1Result<T = unknown> = {
-  results: T[];
-  success: boolean;
-  meta: { changes: number };
-};
-interface Statement {
-  bind(...values: unknown[]): Statement;
-  first<T = Record<string, unknown>>(): Promise<T | null>;
-  all<T = Record<string, unknown>>(): Promise<D1Result<T>>;
-  run(): Promise<D1Result>;
-}
-interface Database {
-  prepare(sql: string): Statement;
-  batch<T = unknown>(statements: Statement[]): Promise<D1Result<T>[]>;
-}
-export interface Env {
-  DB: Database;
+export interface Env extends AdminAuthEnv {
   ASSETS?: { fetch(request: Request): Promise<Response> };
-  ADMIN_PASSWORD?: string;
-  SESSION_SECRET?: string;
 }
 
-const ADMIN_COOKIE = "alrazz_admin";
 const OWNER_COOKIE = "alrazz_design_owner";
-const SESSION_SECONDS = 8 * 60 * 60;
 const BODY_LIMIT = 1024 * 1024;
 const UUID =
   /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
@@ -82,15 +74,6 @@ function cookie(request: Request, key: string, value: string, maxAge: number) {
   return `${key}=${value}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure}`;
 }
 
-function configured(env: Env) {
-  return !!(
-    env.ADMIN_PASSWORD &&
-    env.ADMIN_PASSWORD.length >= 16 &&
-    env.SESSION_SECRET &&
-    env.SESSION_SECRET.length >= 32
-  );
-}
-
 const bytes = (value: string) => new TextEncoder().encode(value);
 const hex = (value: ArrayBuffer) =>
   [...new Uint8Array(value)]
@@ -99,53 +82,6 @@ const hex = (value: ArrayBuffer) =>
 async function digest(value: string) {
   return hex(await crypto.subtle.digest("SHA-256", bytes(value)));
 }
-async function signature(value: string, secret: string) {
-  const key = await crypto.subtle.importKey(
-    "raw",
-    bytes(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-  return hex(await crypto.subtle.sign("HMAC", key, bytes(value)));
-}
-function same(a: string, b: string) {
-  if (a.length !== b.length) return false;
-  let mismatch = 0;
-  for (let i = 0; i < a.length; i++)
-    mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return mismatch === 0;
-}
-
-async function admin(request: Request, env: Env) {
-  if (!configured(env)) return false;
-  const token = cookieValue(request, ADMIN_COOKIE);
-  const match = /^(\d{10})\.([a-f0-9-]{36})\.([a-f0-9]{64})$/.exec(token);
-  if (!match || !UUID.test(match[2])) return false;
-  const expiry = Number(match[1]);
-  const now = Math.floor(Date.now() / 1000);
-  if (expiry <= now || expiry > now + SESSION_SECONDS + 60) return false;
-  // Rotating either secret or administrator password invalidates older sessions.
-  const secret =
-    env.SESSION_SECRET! + ":" + (await digest(env.ADMIN_PASSWORD!));
-  return same(match[3], await signature(`${match[1]}.${match[2]}`, secret));
-}
-
-async function requireAdmin(request: Request, env: Env) {
-  if (!configured(env))
-    throw new HttpError(
-      503,
-      "El acceso administrativo requiere configurar ADMIN_PASSWORD y SESSION_SECRET en el servidor.",
-      "ADMIN_NOT_CONFIGURED",
-    );
-  if (!(await admin(request, env)))
-    throw new HttpError(
-      401,
-      "Inicia sesión para administrar el catálogo.",
-      "UNAUTHORIZED",
-    );
-}
-
 async function owner(request: Request, create = false) {
   const existing = cookieValue(request, OWNER_COOKIE);
   const id = UUID.test(existing)
@@ -360,61 +296,6 @@ function publicDesign(row: DesignRow) {
     result: publicResult(snapshot.result),
     materials: publicMaterials(snapshot.settings),
   };
-}
-
-async function login(
-  request: Request,
-  env: Env,
-  data: Record<string, unknown>,
-) {
-  if (!configured(env))
-    throw new HttpError(
-      503,
-      "El acceso administrativo todavía no está configurado.",
-      "ADMIN_NOT_CONFIGURED",
-    );
-  const password = z.string().min(1).max(512).parse(data.password);
-  // Cloudflare supplies this header. Never trust client-provided x-forwarded-for.
-  const ip = request.headers.get("cf-connecting-ip") || "local-development";
-  const bucket = await digest("admin:" + ip + ":" + env.SESSION_SECRET!);
-  const now = Math.floor(Date.now() / 1000);
-  await env.DB.prepare("DELETE FROM login_limits WHERE reset_at < ?")
-    .bind(now - 24 * 3600)
-    .run();
-  const row = await env.DB.prepare(
-    `INSERT INTO login_limits(bucket,attempts,reset_at) VALUES(?,1,?)
-    ON CONFLICT(bucket) DO UPDATE SET
-      attempts=CASE WHEN reset_at <= ? THEN 1 ELSE attempts+1 END,
-      reset_at=CASE WHEN reset_at <= ? THEN excluded.reset_at ELSE reset_at END
-    RETURNING attempts,reset_at`,
-  )
-    .bind(bucket, now + 15 * 60, now, now)
-    .first<{ attempts: number; reset_at: number }>();
-  if (!row || row.attempts > 5)
-    return json(
-      {
-        error: "Demasiados intentos. Inténtalo de nuevo en unos minutos.",
-        code: "RATE_LIMITED",
-      },
-      429,
-      {
-        "Retry-After": String(Math.max(1, (row?.reset_at || now + 900) - now)),
-      },
-    );
-  if (!same(await digest(password), await digest(env.ADMIN_PASSWORD!)))
-    throw new HttpError(
-      401,
-      "La contraseña no es correcta.",
-      "INVALID_CREDENTIALS",
-    );
-  await env.DB.prepare("DELETE FROM login_limits WHERE bucket=?")
-    .bind(bucket)
-    .run();
-  const payload = `${now + SESSION_SECONDS}.${crypto.randomUUID()}`;
-  const token = `${payload}.${await signature(payload, env.SESSION_SECRET! + ":" + (await digest(env.ADMIN_PASSWORD!)))}`;
-  return json({ admin: true }, 200, {
-    "Set-Cookie": cookie(request, ADMIN_COOKIE, token, SESSION_SECONDS),
-  });
 }
 
 async function saveProduct(db: Database, data: Record<string, unknown>) {
@@ -674,8 +555,7 @@ async function get(request: Request, env: Env) {
   switch (action) {
     case "admin": {
       const authenticated = await admin(request, env);
-      if (!authenticated)
-        return json({ admin: false, configured: configured(env) });
+      if (!authenticated) return json(await adminState(request, env));
       const [products, { settings, version }] = await Promise.all([
         readProducts(env.DB, true),
         readSettings(env.DB),
@@ -740,10 +620,10 @@ async function post(request: Request, env: Env, quote = false) {
   const data = await bodyOf(request);
   const op = quote ? "quote" : z.string().parse(data.op);
   if (op === "login") return login(request, env, data);
-  if (op === "logout")
-    return json({ admin: false }, 200, {
-      "Set-Cookie": cookie(request, ADMIN_COOKIE, "", 0),
-    });
+  if (op === "verify-login") return verifyLogin(request, env, data);
+  if (op === "request-email-code") return requestEmailCode(request, env);
+  if (op === "cancel-login") return cancelLogin(request, env);
+  if (op === "logout") return logout(request, env);
   if (op === "quote")
     return json(publicResult((await calculate(env.DB, data)).result));
   if (op === "save-design") return saveDesign(request, env.DB, data);
@@ -783,6 +663,12 @@ export default {
         return await post(request, env, pathname === "/api/quote");
       throw new HttpError(405, "La cotización requiere POST.");
     } catch (error) {
+      if (error instanceof AuthError)
+        return json(
+          { error: error.message, code: error.code },
+          error.status,
+          error.retryAfter ? { "Retry-After": String(error.retryAfter) } : {},
+        );
       if (error instanceof HttpError)
         return json({ error: error.message, code: error.code }, error.status);
       if (error instanceof z.ZodError)

@@ -1,6 +1,8 @@
 # Administrar AlRazz
 
-El panel se abre en `/admin`. Usa la clave privada configurada en el servidor. En desarrollo local, consulta la terminal que inicia el proyecto; no se incluyen contraseñas fijas en el navegador ni en este documento. Una sesión se mantiene mediante una cookie del servidor. El catálogo se carga desde la API: no depende de `localStorage`.
+El panel se abre en `/admin`. Introduce el correo autorizado y la contraseña; después completa el segundo paso con tu aplicación autenticadora, un código enviado al correo (si el servicio está activado) o un código de recuperación de un solo uso. Sin ese segundo paso no se abre el catálogo privado. No hay registro público. En desarrollo local, las credenciales y la vinculación están en archivos privados generados por `npm run setup:local`, nunca en la terminal ni en Git. Consulta la [guía de seguridad](admin-security.md).
+
+El desafío caduca a los cinco minutos y admite intentos limitados. El código de correo se solicita expresamente y el panel indica cuándo se puede reenviar. Recargar permite continuar un desafío vigente. Cerrar sesión revoca el acceso también en el servidor. El catálogo se carga desde la API: no depende de `localStorage`.
 
 ## Añadir, editar o retirar un mueble
 
