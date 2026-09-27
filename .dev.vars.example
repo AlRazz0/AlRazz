@@ -1,0 +1,4 @@
+# Copiar solo si se desea configuración manual; npm run setup:local genera valores seguros.
+# No utilizar este archivo vacío como configuración de producción.
+ADMIN_PASSWORD=""
+SESSION_SECRET=""
