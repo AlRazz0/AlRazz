@@ -4,6 +4,16 @@ El panel se abre en `/admin`. Introduce el correo autorizado y la contraseña; d
 
 El desafío caduca a los cinco minutos y admite intentos limitados. El código de correo se solicita expresamente y el panel indica cuándo se puede reenviar. Recargar permite continuar un desafío vigente. Cerrar sesión revoca el acceso también en el servidor. El catálogo se carga desde la API: no depende de `localStorage`.
 
+## Acceso rápido
+
+1. Abre [el panel de la web publicada](https://alrazz.pages.dev/admin), o pulsa **Administración** al final de la página.
+2. Introduce el correo autorizado y la contraseña de producción. Pulsa **Continuar**.
+3. Abre la aplicación autenticadora vinculada, introduce su código vigente de seis dígitos y pulsa **Verificar y entrar**. El envío por correo solo funciona cuando está configurado; la interfaz indica si está disponible.
+4. En **Catálogo**, pulsa el lápiz **Editar** del modelo. Revisa **Medidas y límites** y **Configuración inicial**, y pulsa **Guardar cambios**.
+5. Usa **Ajustes del taller** para acabados, costos y contactos, y termina con **Guardar ajustes**. Pulsa **Cerrar sesión** al terminar en un equipo compartido.
+
+La contraseña de desarrollo local no abre el panel de producción. Las credenciales, el QR de vinculación y los códigos de recuperación se entregan por separado y nunca forman parte de esta guía pública.
+
 ## Añadir, editar o retirar un mueble
 
 1. En **Catálogo**, selecciona **Nuevo mueble** o duplica uno existente.
@@ -14,9 +24,11 @@ El desafío caduca a los cinco minutos y admite intentos limitados. El código d
 
 El identificador de un modelo existente es permanente. Todas las medidas están en milímetros, en pasos de 10 mm; el configurador valida luces, puertas y separaciones. El espesor de melamina de 18 mm y las reglas de fabricación permanecen en el motor compartido.
 
-**Tipo constructivo** separa la estructura de la categoría comercial: almacenaje con trasera, estante sin trasera, escritorio abierto o escritorio con módulo lateral. Al cambiar de tipo se propone una configuración compatible para revisar. En el escritorio con almacenaje puedes elegir lado y ancho exterior del módulo lateral; las repisas y puerta pertenecen a ese módulo. La categoría organiza la búsqueda, pero no cambia por sí sola la construcción. El cliente solo recibe controles aplicables al tipo elegido.
+**Tipo de construcción** separa la estructura de la categoría comercial: almacenaje con trasera, estante sin trasera, escritorio abierto o escritorio con módulo lateral. Al cambiar de tipo se propone una configuración compatible para revisar. En el escritorio con almacenaje puedes elegir lado y ancho exterior del módulo lateral; las repisas y puerta pertenecen a ese módulo. La categoría organiza la búsqueda, pero no cambia por sí sola la construcción. El cliente solo recibe controles aplicables al tipo elegido.
 
 La [colección de taller](coleccion-taller.md) añade 16 propuestas adaptadas de planos locales. El archivo JSON es una importación opcional; no reemplaza productos anteriores ni se carga de nuevo al iniciar. Las propuestas y su despiece requieren revisión de fabricación.
+
+La [ampliación de almacenaje con puertas](coleccion-taller-ampliada.md) aporta otras 12 propuestas con el mismo editor. La animación de la miniatura sigue las puertas de la configuración inicial: también se aplica a un mueble que crees o edites después. No cambia medidas, precios ni despieces. En dispositivos táctiles, tocar la tarjeta abre directamente su configurador.
 
 ## Materiales, capacidad y costos
 
