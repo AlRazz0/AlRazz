@@ -29,6 +29,7 @@ import Viewer, { type View, type ViewerHandle } from "./Viewer";
 import { materialLabel, materialBrands } from "./materials";
 import { MaterialSource, MaterialSwatch } from "./MaterialSwatch";
 import { constructionDescriptions } from "./construction-labels";
+import ModelShowcase from "./ModelShowcase";
 const searchText = (value: string) =>
   value
     .normalize("NFD")
@@ -152,6 +153,9 @@ export default function Configurator() {
     setProduct(p);
     if (liveSettings.current) setSettings(liveSettings.current);
     setConfig({ ...p.defaults });
+    setRenderConfig({ ...p.defaults });
+    setQuote(p.preview);
+    setQuoteError("");
     setPast([]);
     setFuture([]);
     setSnapshot(false);
@@ -223,7 +227,7 @@ export default function Configurator() {
     );
   const displayedConfig = renderConfig || config;
   const construction = getConstruction(product);
-  const distributionOptions = getConstructionOptions(product);
+  const distributionOptions = getConstructionOptions(product, config);
   const finish = settings.materials.find((m) => m.id === config.finish);
   const interiorFinish =
     config.interior === "same"
@@ -452,7 +456,13 @@ export default function Configurator() {
                     value: String(n),
                     label: n + (n === 1 ? " módulo" : " módulos"),
                   }))}
-                  onChange={(v) => change({ ...config, modules: Number(v) })}
+                  onChange={(v) => {
+                    const next = { ...config, modules: Number(v) };
+                    const options = getConstructionOptions(product, next);
+                    if (!options.shelves.includes(next.shelves))
+                      next.shelves = options.shelves[0];
+                    change(next);
+                  }}
                 />
               )}
               {distributionOptions.shelves.length > 1 && (
@@ -460,7 +470,9 @@ export default function Configurator() {
                   label={
                     construction.kind === "desk-storage"
                       ? "Repisas en el módulo lateral"
-                      : "Repisas por módulo"
+                      : construction.kind === "wardrobe"
+                        ? "Repisas en las columnas sin barra"
+                        : "Repisas por módulo"
                   }
                   value={String(config.shelves)}
                   options={distributionOptions.shelves.map((n) => ({
@@ -469,6 +481,25 @@ export default function Configurator() {
                   }))}
                   onChange={(v) => change({ ...config, shelves: Number(v) })}
                 />
+              )}
+              {construction.kind === "wardrobe" && (
+                <p className="small-note">
+                  Maletero superior de {construction.loftHeight / 10} cm y barra
+                  para colgar en{" "}
+                  {construction.hangingModules === 1
+                    ? "la primera columna de la izquierda"
+                    : `las primeras ${construction.hangingModules} columnas de la izquierda`}
+                  .
+                  {config.modules === construction.hangingModules &&
+                    " Todas las columnas están destinadas a colgar ropa."}
+                </p>
+              )}
+              {construction.kind === "kitchen-base" && (
+                <p className="small-note">
+                  Zócalo retranqueado de {construction.plinthHeight / 10} cm y
+                  tapa completa. Módulo individual sin lavatorio ni
+                  electrodomésticos.
+                </p>
               )}
               {distributionOptions.doors.length > 1 && (
                 <Choice
@@ -682,7 +713,14 @@ export default function Configurator() {
           </div>
         </aside>
       </main>
-      <Footer />
+      <ModelShowcase
+        product={product}
+        geometry={quote?.geometry ?? []}
+        materials={settings.materials}
+        config={displayedConfig}
+        pending={pending || !!quoteError}
+      />
+      <Footer settings={settings} />
     </>
   );
 }

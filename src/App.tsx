@@ -16,6 +16,7 @@ import { MaterialSwatch } from "./MaterialSwatch";
 import { ContactLinks } from "./ContactLinks";
 import { Brand } from "./Brand";
 import { useRevealMotion } from "./useRevealMotion";
+import { nextLogoTap } from "./footer-access";
 const Configurator = lazy(() => import("./Configurator"));
 const Cart = lazy(() => import("./Cart"));
 const Admin = lazy(() => import("./Admin"));
@@ -73,14 +74,32 @@ export function Header({ compact = false }: { compact?: boolean }) {
     </>
   );
 }
-export function Footer() {
+export function Footer({
+  settings,
+}: {
+  settings?: Pick<PublicSettings, "facebook">;
+}) {
+  const taps = useRef({ count: 0, at: -Infinity });
   return (
     <footer>
-      <a className="brand-link" href="/" aria-label="El capo, ir al inicio">
+      <button
+        className="brand-link footer-brand-access"
+        type="button"
+        aria-label="El capo, acceso al taller"
+        onClick={() => {
+          const next = nextLogoTap(taps.current, performance.now());
+          taps.current = next;
+          if (next.enter) window.location.assign("/admin");
+        }}
+      >
         <Brand variant="footer" />
-      </a>
+      </button>
       <p>Muebles en melamina Marlon</p>
-      <a href="/admin">Administración</a>
+      {settings?.facebook && (
+        <a href={settings.facebook} target="_blank" rel="noopener noreferrer">
+          Facebook ↗
+        </a>
+      )}
       <span>Diseñado y fabricado en Perú · 2026</span>
     </footer>
   );
@@ -432,11 +451,22 @@ function Home() {
               data-reveal-delay="100"
             >
               <ContactLinks settings={settings} />
+              {settings.facebook && (
+                <a
+                  className="contact-facebook"
+                  href={settings.facebook}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Conoce nuestros trabajos en Facebook{" "}
+                  <ArrowUpRight size={17} />
+                </a>
+              )}
             </div>
           </section>
         )}
       </main>
-      <Footer />
+      <Footer settings={settings} />
       {settings && <ContactLinks settings={settings} variant="floating" />}
     </>
   );

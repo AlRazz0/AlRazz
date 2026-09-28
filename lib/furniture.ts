@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { commercialMaterials } from "./material-presets.ts";
+import { gallerySchema } from "./model-gallery.ts";
 
 /** Manufacturing invariant: catalog/configuration cannot override this. */
 export const THICKNESS = 18 as const;
@@ -110,17 +111,40 @@ export const productCategories = [
   "Zapateras",
   "Auxiliares",
   "Cocina",
+  "Roperos",
 ] as const;
 export const constructionKinds = [
   "cabinet",
   "open-shelf",
   "desk",
   "desk-storage",
+  "wardrobe",
+  "kitchen-base",
 ] as const;
 export const constructionSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("cabinet") }).strict(),
   z.object({ kind: z.literal("open-shelf") }).strict(),
   z.object({ kind: z.literal("desk") }).strict(),
+  z
+    .object({
+      kind: z.literal("wardrobe"),
+      loftHeight: z.number().int().min(200).max(600).multipleOf(10).optional(),
+      hangingModules: z.number().int().min(1).max(6).optional(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("kitchen-base"),
+      plinthHeight: z.number().int().min(60).max(180).multipleOf(10).optional(),
+      plinthSetback: z
+        .number()
+        .int()
+        .min(30)
+        .max(150)
+        .multipleOf(10)
+        .optional(),
+    })
+    .strict(),
   z
     .object({
       kind: z.literal("desk-storage"),
@@ -139,18 +163,24 @@ export const constructionSchema = z.discriminatedUnion("kind", [
 ]);
 export type Construction = z.infer<typeof constructionSchema>;
 export type ResolvedConstruction =
-  | Exclude<Construction, { kind: "desk-storage" }>
+  | Exclude<
+      Construction,
+      { kind: "desk-storage" | "wardrobe" | "kitchen-base" }
+    >
   | {
       kind: "desk-storage";
       storageSide: "left" | "right";
       storageWidth: number;
-    };
+    }
+  | { kind: "wardrobe"; loftHeight: number; hangingModules: number }
+  | { kind: "kitchen-base"; plinthHeight: number; plinthSetback: number };
 export const productSchema = z
   .object({
     id: z.string().regex(/^[a-z0-9-]{2,60}$/),
     name: z.string().trim().min(2).max(70),
     category: z.enum(productCategories),
     construction: constructionSchema.optional(),
+    gallery: gallerySchema.optional(),
     description: z.string().trim().min(5).max(350),
     active: z.boolean(),
     version: z.number().int().min(1),
@@ -169,6 +199,18 @@ export function getConstruction(
   const construction = constructionSchema.parse(
     product.construction ?? { kind: "cabinet" },
   );
+  if (construction.kind === "wardrobe")
+    return {
+      kind: "wardrobe",
+      loftHeight: construction.loftHeight ?? 350,
+      hangingModules: construction.hangingModules ?? 1,
+    };
+  if (construction.kind === "kitchen-base")
+    return {
+      kind: "kitchen-base",
+      plinthHeight: construction.plinthHeight ?? 100,
+      plinthSetback: construction.plinthSetback ?? 70,
+    };
   return construction.kind === "desk-storage"
     ? {
         kind: "desk-storage",
@@ -179,20 +221,35 @@ export function getConstruction(
 }
 export function getConstructionOptions(
   product: Pick<Product, "construction">,
+  config?: Pick<Config, "modules">,
 ): {
   modules: number[];
   shelves: number[];
   doors: Config["doors"][];
 } {
-  const { kind } = getConstruction(product);
+  const construction = getConstruction(product);
+  const { kind } = construction;
   if (kind === "desk") return { modules: [1], shelves: [0], doors: ["none"] };
   return {
-    modules: kind === "desk-storage" ? [1] : [1, 2, 3, 4, 5, 6],
-    shelves: [0, 1, 2, 3, 4, 5, 6, 7],
+    modules:
+      kind === "desk-storage"
+        ? [1]
+        : [1, 2, 3, 4, 5, 6].filter(
+            (value) =>
+              kind !== "wardrobe" || value >= construction.hangingModules,
+          ),
+    shelves:
+      kind === "wardrobe" &&
+      config &&
+      config.modules <= construction.hangingModules
+        ? [0]
+        : [0, 1, 2, 3, 4, 5, 6, 7],
     doors:
       kind === "open-shelf"
         ? ["none"]
-        : kind === "desk-storage"
+        : kind === "desk-storage" ||
+            kind === "wardrobe" ||
+            kind === "kitchen-base"
           ? ["none", "full"]
           : ["none", "lower", "full"],
   };
@@ -241,6 +298,28 @@ export const settingsSchema = z
         "Usa código de país y número, sin + ni espacios",
       )
       .default(""),
+    facebook: z
+      .string()
+      .trim()
+      .max(600)
+      .refine((value) => {
+        if (!value) return true;
+        try {
+          const url = new URL(value);
+          return (
+            url.protocol === "https:" &&
+            !url.username &&
+            !url.password &&
+            !url.port &&
+            ["facebook.com", "www.facebook.com", "m.facebook.com"].includes(
+              url.hostname,
+            )
+          );
+        } catch {
+          return false;
+        }
+      }, "Usa un enlace HTTPS de facebook.com, sin usuario ni contraseña en la dirección")
+      .optional(),
     availability: z.enum([
       "Disponible",
       "Disponibilidad media",
@@ -250,6 +329,8 @@ export const settingsSchema = z
     materialRate: z.number().finite().min(10).max(1000),
     edgeRate: amount(100),
     doorHardware: amount(1000),
+    clothesRailRate: amount(1000).optional(),
+    clothesRailSupport: amount(500).optional(),
     installation: amount(5000),
     delivery: amount(5000),
     margin: z.number().finite().min(0).max(0.8),
@@ -453,6 +534,7 @@ export type Panel = {
 };
 export type Result = {
   panels: Panel[];
+  fixtures?: ClothesRail[];
   area: number;
   edges: number;
   doors: number;
@@ -465,8 +547,31 @@ export type Result = {
     installation: number;
     delivery: number;
   };
-  accessories: { name: string; quantity: number }[];
+  accessories: {
+    name: string;
+    quantity: number;
+    unit?: "m" | "ud";
+    unitCost?: number;
+    cost?: number;
+  }[];
 };
+/** Metal fittings are never melamine panels and never enter board cutting totals. */
+export type ClothesRail = {
+  id: string;
+  name: string;
+  kind: "clothes-rail";
+  length: number;
+  diameter: 25;
+  position: [number, number, number];
+};
+export function clothesRailRates(
+  settings: Pick<Settings, "clothesRailRate" | "clothesRailSupport">,
+) {
+  return {
+    perMeter: settings.clothesRailRate ?? 35,
+    perSupport: settings.clothesRailSupport ?? 8,
+  };
+}
 const SIDE_CLEARANCE = 1,
   FRONT_GAP = 2,
   SHELF_FRONT_SETBACK = THICKNESS + FRONT_GAP,
@@ -494,6 +599,17 @@ function verticalLayout(config: Config) {
     shelfZone: config.height - THICKNESS - shelfStart,
   };
 }
+function wardrobeLayout(
+  config: Config,
+  construction: Extract<ResolvedConstruction, { kind: "wardrobe" }>,
+) {
+  const mainHeight = config.height - 3 * THICKNESS - construction.loftHeight;
+  return {
+    mainHeight,
+    loftY: THICKNESS + mainHeight + THICKNESS / 2,
+    railY: THICKNESS + mainHeight - 80,
+  };
+}
 function activeMaterial(settings: Settings, materialId: string): Material {
   const material = settings.materials.find(
     (item) => item.id === materialId && item.active,
@@ -515,7 +631,7 @@ export function validateConfig(product: Product, config: Config): true {
       );
   }
   const construction = getConstruction(product);
-  const options = getConstructionOptions(product);
+  const options = getConstructionOptions(product, config);
   if (
     !options.modules.includes(config.modules) ||
     !options.shelves.includes(config.shelves) ||
@@ -570,9 +686,48 @@ export function validateConfig(product: Product, config: Config): true {
     throw new Error(
       "Cada puerta admite un módulo de hasta 600 mm. Agrega un módulo o reduce el ancho.",
     );
-  const layout = verticalLayout(config);
+  if (construction.kind === "wardrobe") {
+    if (
+      config.height < 1600 ||
+      config.height > 2600 ||
+      config.depth < 500 ||
+      config.depth > 700
+    )
+      throw new Error(
+        "El ropero admite alto de 1600 a 2600 mm y fondo de 500 a 700 mm.",
+      );
+    if (
+      widths.slice(0, construction.hangingModules).some((width) => width < 350)
+    )
+      throw new Error(
+        "Cada columna para colgar requiere al menos 350 mm libres de ancho.",
+      );
+    if (wardrobeLayout(config, construction).mainHeight - 80 - 25 / 2 < 900)
+      throw new Error(
+        "Deja al menos 900 mm libres bajo la barra: aumenta el alto o reduce el maletero.",
+      );
+  }
   if (
-    (layout.shelfZone - config.shelves * THICKNESS) / (config.shelves + 1) <
+    construction.kind === "kitchen-base" &&
+    (config.height < 700 ||
+      config.height > 1000 ||
+      config.depth < 450 ||
+      config.depth > 750)
+  )
+    throw new Error(
+      "La base de cocina admite alto de 700 a 1000 mm y fondo de 450 a 750 mm.",
+    );
+  const layout = verticalLayout(
+    construction.kind === "kitchen-base"
+      ? { ...config, height: config.height - construction.plinthHeight }
+      : config,
+  );
+  const shelfZone =
+    construction.kind === "wardrobe"
+      ? wardrobeLayout(config, construction).mainHeight
+      : layout.shelfZone;
+  if (
+    (shelfZone - config.shelves * THICKNESS) / (config.shelves + 1) <
     MIN_SHELF_CLEARANCE
   )
     throw new Error(
@@ -649,6 +804,7 @@ function buildWithSettings(
     } = verticalLayout(config),
     widths = moduleWidths(config);
   const panels: Panel[] = [];
+  const fixtures: ClothesRail[] = [];
   const plainEdges: Panel["edges"] = {
     top: "Ninguno",
     bottom: "Ninguno",
@@ -822,6 +978,15 @@ function buildWithSettings(
       { ...plainEdges, left: "Grueso" },
     );
   } else {
+    const bodyBottom =
+      construction.kind === "kitchen-base" ? construction.plinthHeight : 0;
+    const bodyHeight = H - bodyBottom;
+    const innerHeight = bodyHeight - 2 * t;
+    const bodyLayout = verticalLayout({ ...config, height: bodyHeight });
+    const wardrobe =
+      construction.kind === "wardrobe"
+        ? wardrobeLayout(config, construction)
+        : null;
     const backThickness = construction.kind === "open-shelf" ? 0 : t;
     const carcassEdges: Panel["edges"] =
       construction.kind === "open-shelf"
@@ -830,10 +995,10 @@ function buildWithSettings(
     add(
       "LAT_IZQ",
       "Lateral izquierdo",
-      H,
+      bodyHeight,
       D,
-      [t, H, D],
-      [-W / 2 + t / 2, H / 2, 0],
+      [t, bodyHeight, D],
+      [-W / 2 + t / 2, bodyBottom + bodyHeight / 2, 0],
       "y",
       "z",
       outerMaterial,
@@ -842,10 +1007,10 @@ function buildWithSettings(
     add(
       "LAT_DER",
       "Lateral derecho",
-      H,
+      bodyHeight,
       D,
-      [t, H, D],
-      [W / 2 - t / 2, H / 2, 0],
+      [t, bodyHeight, D],
+      [W / 2 - t / 2, bodyBottom + bodyHeight / 2, 0],
       "y",
       "z",
       outerMaterial,
@@ -869,7 +1034,7 @@ function buildWithSettings(
       W - 2 * t,
       D,
       [W - 2 * t, t, D],
-      [0, t / 2, 0],
+      [0, bodyBottom + t / 2, 0],
       "x",
       "z",
       outerMaterial,
@@ -879,10 +1044,10 @@ function buildWithSettings(
       add(
         "FONDO",
         "Trasera interior",
-        I,
+        innerHeight,
         W - 2 * t,
-        [W - 2 * t, I, t],
-        [0, H / 2, -D / 2 + t / 2],
+        [W - 2 * t, innerHeight, t],
+        [0, bodyBottom + bodyHeight / 2, -D / 2 + t / 2],
         "y",
         "x",
         innerMaterial,
@@ -890,11 +1055,38 @@ function buildWithSettings(
       );
     const shelfDepth = D - backThickness - SHELF_REAR_GAP - SHELF_FRONT_SETBACK,
       shelfZ = (backThickness + SHELF_REAR_GAP - SHELF_FRONT_SETBACK) / 2;
-    const clearHeight = (shelfZone - config.shelves * t) / (config.shelves + 1);
+    const zone = wardrobe?.mainHeight ?? bodyLayout.shelfZone;
+    const clearHeight = (zone - config.shelves * t) / (config.shelves + 1);
     let left = -W / 2 + t;
     for (let module = 0; module < config.modules; module++) {
       const bay = widths[module],
         x = left + bay / 2;
+      if (wardrobe) {
+        add(
+          `MALETERO_${module}`,
+          `Base del maletero ${module + 1}`,
+          bay,
+          D - t - SHELF_FRONT_SETBACK,
+          [bay, t, D - t - SHELF_FRONT_SETBACK],
+          [x, wardrobe.loftY, (t - SHELF_FRONT_SETBACK) / 2],
+          "x",
+          "z",
+          innerMaterial,
+          frontEdge,
+        );
+        if (
+          construction.kind === "wardrobe" &&
+          module < construction.hangingModules
+        )
+          fixtures.push({
+            id: `BARRA_${module}`,
+            name: `Barra de colgado ${module + 1}`,
+            kind: "clothes-rail",
+            length: bay - 4,
+            diameter: 25,
+            position: [x, wardrobe.railY, t / 2],
+          });
+      }
       if (lowerHeight)
         add(
           `SEP_${module}`,
@@ -908,7 +1100,11 @@ function buildWithSettings(
           innerMaterial,
           carcassEdges,
         );
-      for (let shelf = 0; shelf < config.shelves; shelf++)
+      const shelfCount =
+        construction.kind === "wardrobe" && module < construction.hangingModules
+          ? 0
+          : config.shelves;
+      for (let shelf = 0; shelf < shelfCount; shelf++)
         add(
           `REPISA_${module}_${shelf}`,
           `Repisa ${module + 1}.${shelf + 1}`,
@@ -917,7 +1113,11 @@ function buildWithSettings(
           [bay - 2 * SIDE_CLEARANCE, t, shelfDepth],
           [
             x,
-            shelfStart + (shelf + 1) * clearHeight + shelf * t + t / 2,
+            bodyBottom +
+              bodyLayout.shelfStart +
+              (shelf + 1) * clearHeight +
+              shelf * t +
+              t / 2,
             shelfZ,
           ],
           "x",
@@ -926,7 +1126,7 @@ function buildWithSettings(
           carcassEdges,
         );
       if (config.doors !== "none") {
-        const doorHeight = (lowerHeight || I) - 2 * FRONT_GAP,
+        const doorHeight = (lowerHeight || innerHeight) - 2 * FRONT_GAP,
           doorWidth = bay - 2 * FRONT_GAP;
         add(
           `PUERTA_${module}`,
@@ -934,7 +1134,7 @@ function buildWithSettings(
           doorHeight,
           doorWidth,
           [doorWidth, doorHeight, t],
-          [x, t + FRONT_GAP + doorHeight / 2, D / 2 - t / 2],
+          [x, bodyBottom + t + FRONT_GAP + doorHeight / 2, D / 2 - t / 2],
           "y",
           "x",
           outerMaterial,
@@ -947,16 +1147,72 @@ function buildWithSettings(
         add(
           `DIV_${module + 1}`,
           `División ${module + 1}`,
-          I,
+          innerHeight,
           D - backThickness,
-          [t, I, D - backThickness],
-          [left + t / 2, H / 2, backThickness / 2],
+          [t, innerHeight, D - backThickness],
+          [left + t / 2, bodyBottom + bodyHeight / 2, backThickness / 2],
           "y",
           "z",
           innerMaterial,
           carcassEdges,
         );
         left += t;
+      }
+    }
+    if (construction.kind === "kitchen-base") {
+      const kickDepth = D - construction.plinthSetback;
+      const kickZ = -construction.plinthSetback / 2;
+      const supportEdges: Panel["edges"] = { ...plainEdges, right: "Grueso" };
+      for (const [label, x] of [
+        ["IZQ", -W / 2 + t / 2],
+        ["DER", W / 2 - t / 2],
+      ] as const)
+        add(
+          `ZOCALO_${label}`,
+          `Apoyo lateral de zócalo ${label}`,
+          bodyBottom,
+          kickDepth,
+          [t, bodyBottom, kickDepth],
+          [x, bodyBottom / 2, kickZ],
+          "y",
+          "z",
+          outerMaterial,
+          supportEdges,
+        );
+      for (const [label, z] of [
+        ["FRENTE", D / 2 - construction.plinthSetback - t / 2],
+        ["ATRAS", -D / 2 + t / 2],
+      ] as const)
+        add(
+          `ZOCALO_${label}`,
+          label === "FRENTE"
+            ? "Frente de zócalo"
+            : "Travesaño posterior de zócalo",
+          W - 2 * t,
+          bodyBottom,
+          [W - 2 * t, bodyBottom, t],
+          [0, bodyBottom / 2, z],
+          "x",
+          "y",
+          outerMaterial,
+          plainEdges,
+        );
+      let supportX = -W / 2 + t;
+      for (let module = 0; module < config.modules - 1; module++) {
+        supportX += widths[module];
+        add(
+          `ZOCALO_APOYO_${module + 1}`,
+          `Apoyo interior de zócalo ${module + 1}`,
+          bodyBottom,
+          kickDepth - 2 * t,
+          [t, bodyBottom, kickDepth - 2 * t],
+          [supportX + t / 2, bodyBottom / 2, kickZ],
+          "y",
+          "z",
+          innerMaterial,
+          plainEdges,
+        );
+        supportX += t;
       }
     }
   }
@@ -974,9 +1230,17 @@ function buildWithSettings(
         (panel.edges.right === "Ninguno" ? 0 : panel.length),
       0,
     ) / 1000;
+  const railMeters = fixtures.reduce(
+    (total, fixture) => total + fixture.length / 1000,
+    0,
+  );
+  const railRates = clothesRailRates(settings);
+  const railCost =
+    railMeters * railRates.perMeter +
+    fixtures.length * 2 * railRates.perSupport;
   const doorPanels = panels.filter((panel) => panel.door),
     doors = doorPanels.length,
-    hardware = doors * settings.doorHardware;
+    hardware = doors * settings.doorHardware + railCost;
   const materials = panels.reduce(
     (sum, panel) =>
       sum + ((panel.length * panel.width) / 1e6) * rates.get(panel.material)!,
@@ -991,6 +1255,7 @@ function buildWithSettings(
     10;
   return {
     panels,
+    ...(fixtures.length ? { fixtures } : {}),
     area,
     edges,
     doors,
@@ -1004,6 +1269,24 @@ function buildWithSettings(
       delivery,
     },
     accessories: [
+      ...(fixtures.length
+        ? [
+            {
+              name: "Barra de colgado metálica Ø25 mm",
+              quantity: railMeters,
+              unit: "m" as const,
+              unitCost: railRates.perMeter,
+              cost: railMeters * railRates.perMeter,
+            },
+            {
+              name: "Soportes de barra de colgado",
+              quantity: fixtures.length * 2,
+              unit: "ud" as const,
+              unitCost: railRates.perSupport,
+              cost: fixtures.length * 2 * railRates.perSupport,
+            },
+          ]
+        : []),
       {
         name: "Bisagras (referenciales)",
         quantity: doorPanels.reduce(

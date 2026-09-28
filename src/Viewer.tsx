@@ -391,6 +391,30 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
       r.renderer.capabilities.getMaxAnisotropy(),
     );
     panels.forEach((panel) => {
+      if (panel.shape === "cylinder") {
+        const radius = panel.size[1] / 2000;
+        const rod = new THREE.Mesh(
+          new THREE.CylinderGeometry(
+            radius,
+            radius,
+            panel.size[0] / 1000,
+            24,
+          ),
+          new THREE.MeshStandardMaterial({
+            color: "#a8aba8",
+            roughness: 0.28,
+            metalness: 0.8,
+          }),
+        );
+        rod.rotation.z = Math.PI / 2;
+        rod.position.set(
+          ...(panel.position.map((n) => n / 1000) as [number, number, number]),
+        );
+        rod.castShadow = true;
+        rod.receiveShadow = true;
+        r.group.add(rod);
+        return;
+      }
       const finish = materials.find((f) => f.id === panel.material);
       const color = finish?.color || "#b99469";
       const geo = new THREE.BoxGeometry(

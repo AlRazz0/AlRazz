@@ -1,0 +1,21 @@
+.model-showcase { padding: 90px max(5%, calc((100vw - 1380px) / 2)); background: #f6f3ed; border-top: 1px solid #ded8ce; }
+.showcase-heading { display: flex; justify-content: space-between; align-items: end; gap: 40px; margin-bottom: 38px; }
+.showcase-heading .eyebrow { color: #8e7863; font-size: 11px; letter-spacing: .16em; margin-bottom: 20px; }
+.showcase-heading h2 { font-size: clamp(32px, 4vw, 57px); font-weight: 400; letter-spacing: -.04em; line-height: 1.06; }
+.showcase-heading h2 em { color: #918576; font-style: normal; }
+.showcase-heading > p { max-width: 290px; color: #817667; font-size: 14px; line-height: 1.7; }
+.showcase-image { position: relative; background: #e6ded1; overflow: hidden; aspect-ratio: 3 / 2; }
+.showcase-image > img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.showcase-placeholder { height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 18px; color: #918271; font-size: 13px; padding: 30px; text-align: center; }
+.showcase-badge { position: absolute; bottom: 20px; left: 24px; font-size: 9px; letter-spacing: .16em; background: #fff9; padding: 10px 13px; color: #655746; }
+.showcase-progress { position: absolute; top: 20px; right: 24px; font-size: 12px; background: #fbf9f1e8; padding: 11px 15px; border-radius: 30px; }
+.showcase-controls { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin: 23px 0 18px; }
+.showcase-views { display: flex; flex-wrap: wrap; gap: 9px; }
+.showcase-views button { border: 1px solid #d5cec2; padding: 11px 19px; font-size: 12px; background: transparent; border-radius: 24px; cursor: pointer; }
+.showcase-views button[aria-pressed=true] { background: #282721; color: white; border-color: #282721; }
+.showcase-views button:disabled { opacity: .55; cursor: wait; }
+.showcase-controls > a { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; border-bottom: 1px solid; padding: 8px 0; }
+.showcase-caption { color: #8d8171; font-size: 12px; line-height: 1.6; max-width: 720px; }
+.showcase-error { padding: 15px; color: #913e2c; font-size: 13px; }
+.showcase-error button { text-decoration: underline; background: none; border: none; color: inherit; cursor: pointer; }
+@media(max-width: 650px) { .model-showcase { padding: 55px 20px; } .showcase-heading { align-items: start; flex-direction: column; gap: 20px; } .showcase-heading > p { max-width: 360px; } .showcase-controls { align-items: start; flex-direction: column; } .showcase-badge { bottom: 10px; left: 10px; font-size: 7px; padding: 7px; } .showcase-progress { top: 10px; right: 10px; font-size: 10px; } }

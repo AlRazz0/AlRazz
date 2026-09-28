@@ -259,7 +259,7 @@ export default function Cart() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <Footer />
+      <Footer settings={settings} />
     </>
   );
 }

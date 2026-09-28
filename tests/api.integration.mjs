@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
 import { totp } from "../lib/admin-crypto.ts";
 import { constructionTemplates } from "../lib/product-templates.ts";
+import { exportCatalogCSV, importCatalogCSV } from "../lib/catalog-csv.ts";
 
 // Deliberately restricted to local development: these tests write and restore data.
 const base = process.env.API_TEST_URL || "http://127.0.0.1:5173";
@@ -117,6 +118,8 @@ function publicOnly(value) {
     "materialRate",
     "edgeRate",
     "doorHardware",
+    "clothesRailRate",
+    "clothesRailSupport",
     "breakdown",
     "owner_hash",
     "snapshot",
@@ -136,6 +139,10 @@ function publicOnly(value) {
     "edges",
     "area",
     "accessories",
+    "fixtures",
+    "diameter",
+    "unitCost",
+    "cost",
   ];
   const visit = (object) => {
     if (!object || typeof object !== "object") return;
@@ -149,13 +156,20 @@ function publicOnly(value) {
         for (const panel of item) {
           assert.deepEqual(
             Object.keys(panel).sort(),
-            "door" in panel
+            panel.shape === "cylinder"
+              ? ["material", "position", "shape", "size"]
+              : "door" in panel
               ? ["door", "material", "position", "size"]
               : ["material", "position", "size"],
           );
           assert.equal(panel.size.length, 3);
           assert.equal(panel.position.length, 3);
           assert.ok([...panel.size, ...panel.position].every(Number.isFinite));
+          assert.ok(panel.size.every((measure) => measure > 0));
+          if (panel.shape === "cylinder") {
+            assert.equal(panel.material, "metal");
+            assert.deepEqual(panel.size.slice(1), [25, 25]);
+          }
         }
       }
       visit(item);
@@ -521,11 +535,26 @@ test("API persistente: autorización, catálogo, concurrencia, cotización y dis
     ...structuredClone(template),
     id: `${id}-type${index}`,
     defaults: { ...template.defaults, finish: model.defaults.finish },
+    ...(template.construction.kind === "wardrobe"
+      ? { gallery: { enabled: true, scene: "warm", caption: "Ropero de prueba." } }
+      : template.construction.kind === "kitchen-base"
+        ? { gallery: { enabled: false, scene: "light", caption: "Base de prueba." } }
+        : {}),
   }));
+  assert.deepEqual(typedModels.map((product) => product.construction.kind).sort(), [
+    "cabinet", "desk", "desk-storage", "kitchen-base", "open-shelf", "wardrobe",
+  ]);
+  // The panel parses CSV locally, then the API revalidates the resulting objects.
+  const parsedCSV = importCatalogCSV(exportCatalogCSV(typedModels), dashboard.settings);
+  assert.deepEqual(parsedCSV.errors, []);
+  for (const [index, product] of parsedCSV.products.entries()) {
+    assert.deepEqual(product.construction, typedModels[index].construction);
+    assert.deepEqual(product.gallery, typedModels[index].gallery);
+  }
   fixtureProducts.push(...typedModels.map((product) => product.id));
-  const typedImport = await staff.post({ op: "import", products: typedModels });
+  const typedImport = await staff.post({ op: "import", products: parsedCSV.products });
   assert.equal(typedImport.status, 201);
-  assert.equal(typedImport.data.count, 4);
+  assert.equal(typedImport.data.count, 6);
   for (const draft of typedImport.data.imported) {
     assert.equal(draft.active, false);
     const activated = await staff.post({
@@ -535,6 +564,7 @@ test("API persistente: autorización, catálogo, concurrencia, cotización y dis
     const typed = activated.data.product;
     const publicTyped = (await visitor.get("catalog")).data.products.find((p) => p.id === typed.id);
     assert.deepEqual(publicTyped.construction, typed.construction);
+    assert.deepEqual(publicTyped.gallery, typed.gallery);
     publicOnly(publicTyped);
     const typedInput = { productId: typed.id, config: typed.defaults };
     const typedQuote = await visitor.quote(typedInput);
@@ -544,27 +574,78 @@ test("API persistente: autorización, catálogo, concurrencia, cotización y dis
     const typedCuts = await staff.post({ op: "cut-list", ...typedInput });
     assert.equal(typedCuts.status, 200);
     assert.equal(typedCuts.data.result.price, typedQuote.data.price);
-    assert.equal(typedCuts.data.result.panels.length, typedQuote.data.geometry.length);
+    const fixtures = typedCuts.data.result.fixtures ?? [];
+    assert.equal(typedCuts.data.result.panels.length + fixtures.length, typedQuote.data.geometry.length);
     assert.ok(typedCuts.data.result.panels.every((p) => p.thickness === 18));
+    if (typed.construction.kind === "wardrobe") {
+      const rods = typedQuote.data.geometry.filter((item) => item.shape === "cylinder");
+      assert.equal(rods.length, typed.construction.hangingModules);
+      assert.equal(fixtures.length, rods.length);
+      for (const [index, rod] of rods.entries()) {
+        assert.deepEqual(rod.size, [fixtures[index].length, 25, 25]);
+        assert.deepEqual(rod.position, fixtures[index].position);
+        assert.equal(fixtures[index].kind, "clothes-rail");
+      }
+      const railAccessories = typedCuts.data.result.accessories.filter((item) => "unitCost" in item);
+      assert.equal(railAccessories.length, 2);
+      const railCost = railAccessories.reduce((total, item) => total + item.cost, 0);
+      assert.ok(Math.abs(typedCuts.data.result.breakdown.hardware - (typedCuts.data.result.doors * dashboard.settings.doorHardware + railCost)) < 0.000001);
+      assert.equal((await visitor.quote({ ...typedInput, config: { ...typed.defaults, doors: "lower" } })).status, 400);
+      const validHanging = await visitor.quote({ ...typedInput, config: { ...typed.defaults, shelves: 0 } });
+      assert.equal(validHanging.status, 200);
+      publicOnly(validHanging.data);
+    } else {
+      assert.equal(fixtures.length, 0);
+      assert.ok(typedQuote.data.geometry.every((item) => item.shape === undefined));
+    }
+    if (typed.construction.kind === "kitchen-base") {
+      const plinth = typedCuts.data.result.panels.filter((panel) => panel.id.startsWith("ZOCALO_"));
+      const body = typedCuts.data.result.panels.filter((panel) => !panel.id.startsWith("ZOCALO_"));
+      assert.ok(plinth.length >= 4);
+      for (const panel of plinth) {
+        assert.equal(panel.position[1] - panel.size[1] / 2, 0);
+        assert.equal(panel.size[1], typed.construction.plinthHeight);
+        assert.ok(panel.position[2] + panel.size[2] / 2 <= typed.defaults.depth / 2 - typed.construction.plinthSetback);
+      }
+      assert.ok(body.every((panel) => panel.position[1] - panel.size[1] / 2 >= typed.construction.plinthHeight));
+      assert.equal((await visitor.quote({ ...typedInput, config: { ...typed.defaults, doors: "lower" } })).status, 400);
+    }
     if (typed.construction.kind === "desk" || typed.construction.kind === "desk-storage") {
       assert.equal((await visitor.quote({ ...typedInput, config: { ...typed.defaults, modules: 2 } })).status, 400);
     }
-    if (typed.construction.kind === "desk-storage") {
+    if (["desk-storage", "wardrobe", "kitchen-base"].includes(typed.construction.kind)) {
       const typedSaved = await visitor.post({ op: "save-design", ...typedInput });
       assert.equal(typedSaved.status, 201);
       const historical = typedSaved.data.design;
       fixtureDesigns.push(historical.id);
+      publicOnly(historical);
+      const revised = typed.construction.kind === "desk-storage"
+        ? { construction: { kind: "cabinet" }, defaults: { ...typed.defaults, modules: 3 } }
+        : typed.construction.kind === "wardrobe"
+          ? { construction: { ...typed.construction, loftHeight: typed.construction.loftHeight + 10 } }
+          : { construction: { ...typed.construction, plinthHeight: typed.construction.plinthHeight + 10 } };
       const changedType = await staff.post({
         op: "product", expectedVersion: typed.version,
-        product: { ...typed, active: false, construction: { kind: "cabinet" }, defaults: { ...typed.defaults, modules: 3 } },
+        product: { ...typed, ...revised, active: false, gallery: { enabled: false, scene: "dark", caption: "Texto posterior al diseño." } },
       });
       assert.equal(changedType.status, 200);
       const preserved = (await stranger.get("design&id=" + historical.id)).data.design;
       assert.deepEqual(preserved.product.construction, typed.construction);
+      assert.deepEqual(preserved.product.gallery, typed.gallery);
       assert.deepEqual(preserved.result, historical.result);
+      publicOnly(preserved);
       assert.deepEqual((await staff.post({ op: "cut-list", designId: historical.id })).data.result, typedCuts.data.result);
       assert.equal((await stranger.post({ op: "cut-list", designId: historical.id })).status, 401);
     }
+  }
+  const finalTypedProducts = (await staff.get("admin")).data.products.filter((product) => typedModels.some((typed) => typed.id === product.id));
+  const persistedCSV = importCatalogCSV(exportCatalogCSV(finalTypedProducts), dashboard.settings);
+  assert.deepEqual(persistedCSV.errors, []);
+  assert.equal(persistedCSV.products.length, 6);
+  for (const product of persistedCSV.products) {
+    const persisted = finalTypedProducts.find((item) => item.id === product.id);
+    assert.deepEqual(product.construction, persisted.construction);
+    assert.deepEqual(product.gallery, persisted.gallery);
   }
   const copiedSession = new Client("203.0.113.89");
   copiedSession.cookies = new Map(staff.cookies);

@@ -8,6 +8,7 @@ import {
 } from "./furniture.ts";
 import type { Config, Product, Settings } from "./furniture.ts";
 import { productTemplate } from "./product-templates.ts";
+import { gallerySchema } from "./model-gallery.ts";
 
 export type CatalogCSVError = { row: number; message: string };
 export type CatalogCSVImport = {
@@ -21,6 +22,13 @@ type Column =
   | "construction"
   | "storageSide"
   | "storageWidth"
+  | "loftHeight"
+  | "hangingModules"
+  | "plinthHeight"
+  | "plinthSetback"
+  | "galleryEnabled"
+  | "galleryScene"
+  | "galleryCaption"
   | "description"
   | "basePrice"
   | "weeks"
@@ -51,6 +59,13 @@ export const CATALOG_COLUMNS: ReadonlyArray<{ key: Column; label: string }> = [
   { key: "construction", label: "Tipo constructivo" },
   { key: "storageSide", label: "Lado del módulo lateral" },
   { key: "storageWidth", label: "Ancho del módulo lateral mm" },
+  { key: "loftHeight", label: "Alto libre del maletero mm" },
+  { key: "hangingModules", label: "Columnas para colgar" },
+  { key: "plinthHeight", label: "Alto del zócalo mm" },
+  { key: "plinthSetback", label: "Retranqueo del zócalo mm" },
+  { key: "galleryEnabled", label: "Galería habilitada" },
+  { key: "galleryScene", label: "Ambiente de galería" },
+  { key: "galleryCaption", label: "Texto de galería" },
   { key: "description", label: "Descripción" },
   { key: "basePrice", label: "Precio base S/" },
   { key: "weeks", label: "Semanas" },
@@ -247,29 +262,116 @@ function categoryCell(value?: string): Product["category"] {
     (category) => normalized(category) === normalized(value),
   );
   if (!category)
-    throw new Error(
-      `Categoría: usa ${productCategories.join(", ")}.`,
-    );
+    throw new Error(`Categoría: usa ${productCategories.join(", ")}.`);
   return category;
 }
-function constructionCell(cells: Partial<Record<Column, string>>): Product["construction"] {
+function constructionCell(
+  cells: Partial<Record<Column, string>>,
+): Product["construction"] {
   if (!cells.construction?.trim()) {
-    if (cells.storageSide || cells.storageWidth)
-      throw new Error("Indica desk-storage en Tipo constructivo para configurar el módulo lateral.");
+    if (
+      cells.storageSide ||
+      cells.storageWidth ||
+      cells.loftHeight ||
+      cells.hangingModules ||
+      cells.plinthHeight ||
+      cells.plinthSetback
+    )
+      throw new Error(
+        "Indica el Tipo constructivo correspondiente para configurar sus parámetros.",
+      );
     return undefined;
   }
   const aliases: Record<string, string> = {
-    cabinet: "cabinet", almacenaje: "cabinet",
-    open_shelf: "open-shelf", estante_sin_trasera: "open-shelf",
-    desk: "desk", escritorio: "desk",
-    desk_storage: "desk-storage", escritorio_con_modulo_lateral: "desk-storage",
+    cabinet: "cabinet",
+    almacenaje: "cabinet",
+    open_shelf: "open-shelf",
+    estante_sin_trasera: "open-shelf",
+    desk: "desk",
+    escritorio: "desk",
+    desk_storage: "desk-storage",
+    escritorio_con_modulo_lateral: "desk-storage",
+    wardrobe: "wardrobe",
+    ropero: "wardrobe",
+    kitchen_base: "kitchen-base",
+    base_de_cocina: "kitchen-base",
   };
   const kind = aliases[normalized(cells.construction)] || cells.construction;
   const side = cells.storageSide ? normalized(cells.storageSide) : undefined;
   return constructionSchema.parse({
     kind,
-    ...(side ? { storageSide: ({ izquierda: "left", derecha: "right" } as Record<string, string>)[side] || side } : {}),
-    ...(cells.storageWidth ? { storageWidth: numberCell(cells.storageWidth, 450, "Ancho del módulo lateral mm") } : {}),
+    ...(side
+      ? {
+          storageSide:
+            ({ izquierda: "left", derecha: "right" } as Record<string, string>)[
+              side
+            ] || side,
+        }
+      : {}),
+    ...(cells.storageWidth
+      ? {
+          storageWidth: numberCell(
+            cells.storageWidth,
+            450,
+            "Ancho del módulo lateral mm",
+          ),
+        }
+      : {}),
+    ...(cells.loftHeight
+      ? {
+          loftHeight: numberCell(
+            cells.loftHeight,
+            350,
+            "Alto libre del maletero mm",
+          ),
+        }
+      : {}),
+    ...(cells.hangingModules
+      ? {
+          hangingModules: numberCell(
+            cells.hangingModules,
+            1,
+            "Columnas para colgar",
+          ),
+        }
+      : {}),
+    ...(cells.plinthHeight
+      ? {
+          plinthHeight: numberCell(
+            cells.plinthHeight,
+            100,
+            "Alto del zócalo mm",
+          ),
+        }
+      : {}),
+    ...(cells.plinthSetback
+      ? {
+          plinthSetback: numberCell(
+            cells.plinthSetback,
+            70,
+            "Retranqueo del zócalo mm",
+          ),
+        }
+      : {}),
+  });
+}
+function galleryCell(
+  cells: Partial<Record<Column, string>>,
+): Product["gallery"] {
+  if (!cells.galleryEnabled && !cells.galleryScene && !cells.galleryCaption)
+    return undefined;
+  return gallerySchema.parse({
+    ...(cells.galleryEnabled
+      ? {
+          enabled: booleanCell(
+            cells.galleryEnabled,
+            true,
+            "Galería habilitada",
+          ),
+        }
+      : {}),
+    ...(cells.galleryScene ? { scene: cells.galleryScene } : {}),
+    ...(cells.galleryCaption ? { caption: cells.galleryCaption } : {}),
   });
 }
 function doorsCell(
@@ -414,9 +516,11 @@ export function importCatalogCSV(
       });
       const category = categoryCell(cells.category);
       const construction = constructionCell(cells);
-      const fallback = construction ? productTemplate(construction.kind) : seedProducts.find(
-        (product) => product.category === category,
-      ) || seedProducts[0];
+      const gallery = galleryCell(cells);
+      const fallback = construction
+        ? productTemplate(construction.kind)
+        : seedProducts.find((product) => product.category === category) ||
+          seedProducts[0];
       const numeric = (key: Column, value: number) =>
         numberCell(
           cells[key],
@@ -428,6 +532,7 @@ export function importCatalogCSV(
         name: cells.name || "",
         category,
         ...(construction ? { construction } : {}),
+        ...(gallery ? { gallery } : {}),
         description:
           cells.description ||
           `Mueble de melamina de 18 mm personalizable: ${cells.name || "nuevo modelo"}.`,
@@ -495,8 +600,38 @@ export function exportCatalogCSV(
       name: product.name,
       category: product.category,
       construction: product.construction?.kind || "",
-      storageSide: product.construction?.kind === "desk-storage" ? product.construction.storageSide || "" : "",
-      storageWidth: product.construction?.kind === "desk-storage" ? product.construction.storageWidth ?? "" : "",
+      storageSide:
+        product.construction?.kind === "desk-storage"
+          ? product.construction.storageSide || ""
+          : "",
+      storageWidth:
+        product.construction?.kind === "desk-storage"
+          ? (product.construction.storageWidth ?? "")
+          : "",
+      loftHeight:
+        product.construction?.kind === "wardrobe"
+          ? (product.construction.loftHeight ?? "")
+          : "",
+      hangingModules:
+        product.construction?.kind === "wardrobe"
+          ? (product.construction.hangingModules ?? "")
+          : "",
+      plinthHeight:
+        product.construction?.kind === "kitchen-base"
+          ? (product.construction.plinthHeight ?? "")
+          : "",
+      plinthSetback:
+        product.construction?.kind === "kitchen-base"
+          ? (product.construction.plinthSetback ?? "")
+          : "",
+      galleryEnabled:
+        product.gallery?.enabled === undefined
+          ? ""
+          : product.gallery.enabled
+            ? "Sí"
+            : "No",
+      galleryScene: product.gallery?.scene ?? "",
+      galleryCaption: product.gallery?.caption ?? "",
       description: product.description,
       basePrice: product.basePrice,
       weeks: product.weeks,

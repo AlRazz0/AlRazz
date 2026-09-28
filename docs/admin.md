@@ -6,10 +6,10 @@ El desafío caduca a los cinco minutos y admite intentos limitados. El código d
 
 ## Acceso rápido
 
-1. Abre [el panel de la web publicada](https://alrazz.pages.dev/admin), o pulsa **Administración** al final de la página.
+1. Abre [el panel de la web publicada](https://alrazz.pages.dev/admin), o pulsa seis veces seguidas el logotipo **El capo** del pie de página. Deja menos de cuatro segundos entre pulsaciones. Este gesto solo abre el acceso: siguen siendo obligatorios la contraseña y el segundo factor.
 2. Introduce el correo autorizado y la contraseña de producción. Pulsa **Continuar**.
 3. Abre la aplicación autenticadora vinculada, introduce su código vigente de seis dígitos y pulsa **Verificar y entrar**. El envío por correo solo funciona cuando está configurado; la interfaz indica si está disponible.
-4. En **Catálogo**, pulsa el lápiz **Editar** del modelo. Revisa **Medidas y límites** y **Configuración inicial**, y pulsa **Guardar cambios**.
+4. En **Catálogo**, pulsa el lápiz **Editar** del modelo. El editor reúne **General**, **Medidas y distribución**, **Acabados**, **Imagen y galería** y **Publicación**, junto a una vista 3D que muestra los cambios. Revisa la configuración y pulsa **Guardar cambios**.
 5. Usa **Ajustes del taller** para acabados, costos y contactos, y termina con **Guardar ajustes**. Pulsa **Cerrar sesión** al terminar en un equipo compartido.
 
 La contraseña de desarrollo local no abre el panel de producción. Las credenciales, el QR de vinculación y los códigos de recuperación se entregan por separado y nunca forman parte de esta guía pública.
@@ -24,20 +24,29 @@ La contraseña de desarrollo local no abre el panel de producción. Las credenci
 
 El identificador de un modelo existente es permanente. Todas las medidas están en milímetros, en pasos de 10 mm; el configurador valida luces, puertas y separaciones. El espesor de melamina de 18 mm y las reglas de fabricación permanecen en el motor compartido.
 
-**Tipo de construcción** separa la estructura de la categoría comercial: almacenaje con trasera, estante sin trasera, escritorio abierto o escritorio con módulo lateral. Al cambiar de tipo se propone una configuración compatible para revisar. En el escritorio con almacenaje puedes elegir lado y ancho exterior del módulo lateral; las repisas y puerta pertenecen a ese módulo. La categoría organiza la búsqueda, pero no cambia por sí sola la construcción. El cliente solo recibe controles aplicables al tipo elegido.
+**Tipo de construcción** separa la estructura de la categoría comercial: almacenaje con trasera, estante sin trasera, escritorio abierto, escritorio con módulo lateral, ropero con maletero o base de cocina con zócalo. Al cambiar de tipo se propone una configuración compatible para revisar. En el escritorio con almacenaje puedes elegir lado y ancho exterior del módulo lateral; las repisas y puerta pertenecen a ese módulo. La categoría organiza la búsqueda, pero no cambia por sí sola la construcción. El cliente solo recibe controles aplicables al tipo elegido.
+
+En un **ropero**, ajusta **Altura del altillo** (altura libre del maletero) y **Módulos para colgar**, contados desde la izquierda. Las repisas corresponden únicamente a las columnas restantes; si todas llevan barra, quedan en cero y se conserva el maletero. En una **base de cocina**, ajusta altura y retiro frontal del zócalo; su altura está incluida en el alto total. La tapa es de melamina de 18 mm. No se incluyen lavatorio, electrodomésticos ni cubierta de piedra. Las alacenas usan almacenaje con trasera y requieren resolver su fijación mural antes de fabricar.
 
 La [colección de taller](coleccion-taller.md) añade 16 propuestas adaptadas de planos locales. El archivo JSON es una importación opcional; no reemplaza productos anteriores ni se carga de nuevo al iniciar. Las propuestas y su despiece requieren revisión de fabricación.
 
 La [ampliación de almacenaje con puertas](coleccion-taller-ampliada.md) aporta otras 12 propuestas con el mismo editor. La animación de la miniatura sigue las puertas de la configuración inicial: también se aplica a un mueble que crees o edites después. No cambia medidas, precios ni despieces. En dispositivos táctiles, tocar la tarjeta abre directamente su configurador.
+
+La [colección de cocinas y roperos](coleccion-cocinas-roperos.md) añade ocho propuestas con barras, maleteros, zócalos y alacenas. Cada registro se edita desde el mismo panel. Las familias constructivas, sus límites y las adaptaciones de los planos se detallan en esa guía.
+
+## Imagen de cada modelo
+
+En **Imagen y galería**, activa o desactiva la imagen ambientada, elige ambiente **Cálido**, **Claro** u **Oscuro** y añade una leyenda opcional. La imagen se genera a partir de la geometría, medidas y acabados de la configuración mostrada. Se identifica como render digital; no es una fotografía de un mueble fabricado. Cambiar el ambiente no cambia el precio ni el despiece. Los modelos anteriores sin estos ajustes muestran la galería cálida por defecto.
 
 ## Materiales, capacidad y costos
 
 En **Ajustes del taller** se pueden cambiar los dos contactos de WhatsApp, disponibilidad, plazo general, acabados y reglas de cotización. Los cambios se aplican al pulsar **Guardar ajustes**. Los costos internos se muestran únicamente en administración.
 
 - **WhatsApp comercial 1 y 2:** código de país y teléfono, sin signos ni espacios. Cada número vacío queda oculto; dejar ambos vacíos desactiva el contacto comercial. Si ambos contienen el mismo número, se muestra una sola opción. El cliente elige a cuál escribir y abre WhatsApp con un mensaje preparado. No se envía automáticamente el mismo mensaje a ambos destinatarios.
+- **Facebook comercial:** enlace HTTPS de una página o perfil en Facebook. Dejarlo vacío oculta el enlace. Se guarda con los demás ajustes; no requiere editar componentes ni publicar código.
 - **Acabados:** añadir marca, nombre comercial, código del fabricante (opcional), tablero estándar o RH, identificador, color e índice de costo. Un índice de 100 equivale a la tarifa base por m²; 110 representa un costo 10 % mayor. Activa los que el taller ofrece. El código interno no es un SKU del fabricante.
 - **Identificadores de acabado:** conservarlos si ya se utilizan en modelos o configuraciones. La interfaz bloquea el cambio de los identificadores usados por el catálogo.
-- **Costos:** material, tapacanto, herrajes, instalación, transporte y margen. El precio se calcula en servidor. La mano de obra se configura para cada mueble.
+- **Costos:** material, tapacanto, herrajes, barra de colgado por metro, soporte de barra por unidad, instalación, transporte y margen. El precio se calcula en servidor. Cada barra usa dos soportes; los costos de estos accesorios siguen siendo privados. La mano de obra se configura para cada mueble.
 
 **Añadir catálogo de marcas** incorpora las referencias faltantes de Hispano, Vesto y Pelikano como ocultas. Conserva precios, nombres y cambios de los IDs existentes. Revisa las referencias, establece tus costos, activa los acabados que ofreces y guarda. El filtro de marca facilita administrar la lista. Las fuentes están en [material-sources.md](material-sources.md); la selección no representa un ranking de ventas ni inventario confirmado en Cusco.
 
@@ -55,6 +64,8 @@ La pestaña **Despiece** solo está disponible después de iniciar sesión y com
 
 La descarga CSV disponible permanece dentro del panel privado. El formato definitivo del taller queda pendiente de definición; no se da por validada la compatibilidad con CutMaster ni la fabricación. El despiece sigue siendo preliminar y requiere revisión del taller.
 
+Las barras de colgado se muestran como accesorios metálicos y se cotizan por longitud y soportes. No se mezclan con las piezas de melamina de 18 mm de la tabla de corte.
+
 El cliente recibe únicamente geometría para la vista 3D y precio. Las consultas públicas y los enlaces compartidos no entregan la tabla de corte, veta, tapacantos, accesorios ni costos internos. Las dimensiones visibles del mueble pueden inferirse de su representación; no se promete ocultarlas.
 
 ## Ambiente y escala
@@ -65,7 +76,7 @@ La vista 3D incluye un ambiente de estudio y una persona de referencia de **1,70
 
 **Exportar** descarga el catálogo actual en CSV, incluidos los borradores. **Descargar plantilla CSV** proporciona la estructura admitida. El importador también recibe JSON con una lista de productos o un objeto `{ "products": [...] }`.
 
-Las columnas **Tipo constructivo**, **Lado del módulo lateral** y **Ancho del módulo lateral mm** conservan las nuevas estructuras al exportar/importar. Los CSV antiguos siguen funcionando sin esas columnas; para nuevos escritorios especifica `desk` o `desk-storage`. Un tipo desconocido o un parámetro lateral colocado en otra estructura genera un error, sin transformarse silenciosamente en una carcasa.
+El CSV conserva **Tipo constructivo**, lado y ancho del módulo lateral, alto libre del maletero, columnas para colgar, alto y retranqueo del zócalo, y habilitación, ambiente y texto de la galería. Los tipos admitidos son `cabinet`, `open-shelf`, `desk`, `desk-storage`, `wardrobe` y `kitchen-base`. Los CSV antiguos siguen funcionando sin las columnas nuevas. Un tipo desconocido o un parámetro colocado en otra estructura genera un error, sin transformarse silenciosamente en una carcasa.
 
 La importación muestra una vista previa antes de escribir. Todos los modelos se crean como borradores. Si hay errores de estructura, identificadores duplicados o identificadores que ya existen, se debe corregir el archivo antes de confirmar. Importar no sobrescribe los modelos existentes; para actualizarlos, usa el editor. Máximo de archivo y datos preparados en la interfaz: 1 MB; máximo de 200 muebles por importación.
 

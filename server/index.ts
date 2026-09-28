@@ -224,6 +224,7 @@ function publicSettings(settings: Settings) {
   return {
     whatsapp: settings.whatsapp,
     whatsappSecondary: settings.whatsappSecondary,
+    ...(settings.facebook !== undefined ? { facebook: settings.facebook } : {}),
     availability: settings.availability,
     leadWeeks: settings.leadWeeks,
     materials: publicMaterials(settings),
@@ -236,7 +237,10 @@ function publicProduct(product: Product, price: number) {
 }
 
 function publicResult(result: ReturnType<typeof buildFurniture>) {
-  return { geometry: publicGeometry(result.panels), price: result.price };
+  return {
+    geometry: publicGeometry(result.panels, result.fixtures),
+    price: result.price,
+  };
 }
 
 function validateDomain<T>(operation: () => T): T {

@@ -61,13 +61,11 @@ import { api, download } from "../lib/api";
 import {
   defaultSettings,
   getConstruction,
-  getConstructionOptions,
   productCategories,
   seedProducts,
   settingsSchema,
   validateProduct,
   type Config,
-  type Construction,
   type Product,
   type Result,
   type Settings,
@@ -83,14 +81,10 @@ import { mergeCommercialMaterials } from "../lib/material-catalog";
 import { materialLabel, materialBrands } from "./materials";
 import { MaterialSource, MaterialSwatch } from "./MaterialSwatch";
 import { Brand } from "./Brand";
-import {
-  constructionTemplates,
-  productTemplate,
-} from "../lib/product-templates";
-import {
-  constructionDescriptions,
-  constructionLabels,
-} from "./construction-labels";
+import { constructionTemplates } from "../lib/product-templates";
+import { constructionLabels } from "./construction-labels";
+import { AdminProductEditor } from "./AdminProductEditor";
+import { productEditorError } from "./admin-product-preview";
 
 type AdminSnapshot = {
   admin: boolean;
@@ -120,11 +114,6 @@ type CutListSnapshot = {
   config: Config;
   result: Result;
 };
-const dimensions = [
-  { key: "width", name: "Ancho" },
-  { key: "height", name: "Alto" },
-  { key: "depth", name: "Fondo" },
-] as const;
 const clone = <T,>(value: T): T => structuredClone(value);
 const materialSearchText = (value: string) =>
   value
@@ -319,24 +308,6 @@ export default function Admin() {
   const editorDirty =
     !!editor &&
     (!original || JSON.stringify(editor) !== JSON.stringify(original));
-  // Numeric draft fields may temporarily be empty or outside their range.
-  // Resolve capabilities from the kind; validate the full draft when saving.
-  const editorConstructionBase = editor
-    ? getConstruction({
-        construction:
-          editor.construction?.kind === "desk-storage"
-            ? { kind: "desk-storage" }
-            : editor.construction,
-      })
-    : null;
-  const editorConstruction =
-    editorConstructionBase?.kind === "desk-storage" &&
-    editor?.construction?.kind === "desk-storage"
-      ? { ...editorConstructionBase, ...editor.construction }
-      : editorConstructionBase;
-  const editorOptions = editorConstructionBase
-    ? getConstructionOptions({ construction: editorConstructionBase })
-    : null;
 
   async function load() {
     setLoading(true);
@@ -415,35 +386,6 @@ export default function Admin() {
   const activeCount = products.filter((product) => product.active).length;
   const setSetting = <K extends keyof Settings>(key: K, value: Settings[K]) =>
     setSettings((current) => ({ ...current, [key]: value }));
-  const setProduct = <K extends keyof Product>(key: K, value: Product[K]) =>
-    setEditor((current) => (current ? { ...current, [key]: value } : null));
-  const setConfig = <K extends keyof Config>(key: K, value: Config[K]) =>
-    setEditor((current) =>
-      current
-        ? { ...current, defaults: { ...current.defaults, [key]: value } }
-        : null,
-    );
-  function changeConstruction(kind: Construction["kind"]) {
-    const template = productTemplate(kind);
-    setEditor((current) =>
-      current
-        ? {
-            ...current,
-            construction: template.construction,
-            limits: clone(template.limits),
-            defaults: {
-              ...template.defaults,
-              finish: current.defaults.finish,
-              interior: current.defaults.interior,
-              handle: current.defaults.handle,
-              install: current.defaults.install,
-              transport: current.defaults.transport,
-            },
-          }
-        : null,
-    );
-    setEditorError("");
-  }
   const mergeProducts = (changed: Product[]) =>
     setProducts((current) => [
       ...current.filter(
@@ -633,14 +575,15 @@ export default function Admin() {
     setBusy("product");
     setEditorError("");
     try {
-      validateProduct(editor, settings);
+      const candidate = original ? editor : { ...editor, active: false };
+      validateProduct(candidate, settings);
       if (!original && products.some((product) => product.id === editor.id))
         throw Error(
           "Este identificador ya existe. Usa uno distinto para el nuevo mueble.",
         );
       const result = await api("", {
         op: "product",
-        product: editor,
+        product: candidate,
         expectedVersion: original?.version ?? 0,
       });
       if (result.product) mergeProducts([result.product]);
@@ -651,11 +594,13 @@ export default function Admin() {
       setEditor(null);
       announce(
         original
-          ? "Mueble actualizado. El catálogo ya usa estos datos."
+          ? candidate.active
+            ? "Mueble actualizado y visible en el catálogo."
+            : "Mueble actualizado. Se conserva oculto del catálogo."
           : "Borrador creado. Revísalo y actívalo cuando esté listo.",
       );
     } catch (cause) {
-      setEditorError(errorMessage(cause));
+      setEditorError(productEditorError(cause));
     } finally {
       setBusy(null);
     }
@@ -1536,6 +1481,20 @@ export default function Admin() {
                       }
                     />
                   </Field>
+                  <Field
+                    title="Facebook comercial"
+                    note="Enlace HTTPS de tu página o perfil de Facebook. Vacío oculta el enlace del sitio."
+                  >
+                    <input
+                      type="url"
+                      value={settings.facebook ?? ""}
+                      maxLength={600}
+                      placeholder="https://www.facebook.com/tu-pagina"
+                      onChange={(event) =>
+                        setSetting("facebook", event.target.value)
+                      }
+                    />
+                  </Field>
                   <Field title="Disponibilidad del taller">
                     <select
                       value={settings.availability}
@@ -1898,6 +1857,22 @@ export default function Admin() {
                     change={(value) => setSetting("doorHardware", value)}
                   />
                   <NumberField
+                    title="Barra de colgado · S/ por metro"
+                    max={1000}
+                    step={0.1}
+                    value={settings.clothesRailRate ?? 35}
+                    change={(value) => setSetting("clothesRailRate", value)}
+                    note="Se aplica a la longitud de las barras de los roperos."
+                  />
+                  <NumberField
+                    title="Soporte de barra · S/ por unidad"
+                    max={500}
+                    step={0.1}
+                    value={settings.clothesRailSupport ?? 8}
+                    change={(value) => setSetting("clothesRailSupport", value)}
+                    note="Cada barra utiliza dos soportes."
+                  />
+                  <NumberField
                     title="Instalación · S/"
                     max={5000}
                     step={0.1}
@@ -2151,376 +2126,27 @@ export default function Admin() {
           >
             <X size={21} />
           </button>
-          {editor && editorConstruction && editorOptions && (
+          {editor && (
             <form onSubmit={saveProduct}>
-              <div className="admin-dialog-body">
-                {editorError && (
-                  <div className="admin-message is-error" role="alert">
-                    {editorError}
-                  </div>
-                )}
-                <Field
-                  title="Tipo de construcción"
-                  note="Al cambiar el tipo se restablecen las medidas, límites y distribución de su plantilla. La identidad, categoría y acabados se conservan."
+              <div className="admin-dialog-body admin-model-body">
+                <fieldset
+                  className="admin-editor-fields-lock"
+                  disabled={!!busy}
                 >
-                  <select
-                    value={editorConstruction.kind}
-                    onChange={(event) =>
-                      changeConstruction(
-                        event.target.value as Construction["kind"],
-                      )
-                    }
-                  >
-                    {constructionTemplates.map((template) => (
-                      <option
-                        key={getConstruction(template).kind}
-                        value={getConstruction(template).kind}
-                      >
-                        {constructionLabels[getConstruction(template).kind]}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-                <p className="admin-help">
-                  {constructionDescriptions[editorConstruction.kind]}
-                </p>
-                {editorConstruction.kind === "desk-storage" && (
-                  <div className="admin-form-grid admin-construction-settings">
-                    <Field
-                      title="Ubicación del módulo lateral"
-                      note="Mirando el escritorio de frente."
-                    >
-                      <select
-                        value={editorConstruction.storageSide}
-                        onChange={(event) =>
-                          setProduct("construction", {
-                            ...editorConstruction,
-                            storageSide: event.target.value as "left" | "right",
-                          })
-                        }
-                      >
-                        <option value="left">Izquierda</option>
-                        <option value="right">Derecha</option>
-                      </select>
-                    </Field>
-                    <NumberField
-                      title="Ancho exterior del módulo · mm"
-                      value={editorConstruction.storageWidth}
-                      min={250}
-                      max={650}
-                      step={10}
-                      change={(value) =>
-                        setProduct("construction", {
-                          ...editorConstruction,
-                          storageWidth: value,
-                        })
-                      }
-                      note="Incluye los laterales de 18 mm. El ancho del hueco de trabajo se valida al guardar."
-                    />
-                  </div>
-                )}
-                <h3>Información del modelo</h3>
-                <div className="admin-form-grid">
-                  <Field title="Nombre del mueble">
-                    <input
-                      value={editor.name}
-                      onChange={(event) =>
-                        setProduct("name", event.target.value)
-                      }
-                      minLength={2}
-                      maxLength={70}
-                      required
-                      placeholder="Ej. Librero Esencial"
-                    />
-                  </Field>
-                  <Field
-                    title="Identificador único"
-                    note={
-                      original
-                        ? "Permanente: conecta este modelo con sus configuraciones."
-                        : "Minúsculas, números y guiones. Ej. librero-esencial"
-                    }
-                  >
-                    <input
-                      value={editor.id}
-                      onChange={(event) =>
-                        setProduct("id", event.target.value.toLowerCase())
-                      }
-                      readOnly={!!original}
-                      pattern="[a-z0-9-]{2,60}"
-                      required
-                    />
-                  </Field>
-                  <Field title="Categoría">
-                    <select
-                      value={editor.category}
-                      onChange={(event) =>
-                        setProduct(
-                          "category",
-                          event.target.value as Product["category"],
-                        )
-                      }
-                    >
-                      {productCategories.map((category) => (
-                        <option key={category}>{category}</option>
-                      ))}
-                    </select>
-                  </Field>
-                  <NumberField
-                    title="Orden en catálogo"
-                    max={999}
-                    value={editor.order}
-                    change={(value) => setProduct("order", value)}
+                  <AdminProductEditor
+                    value={editor}
+                    settings={settings}
+                    isNew={!original}
+                    settingsDirty={settingsDirty}
+                    change={setEditor}
                   />
-                  <Field title="Descripción" wide>
-                    <textarea
-                      rows={3}
-                      minLength={5}
-                      maxLength={350}
-                      required
-                      value={editor.description}
-                      onChange={(event) =>
-                        setProduct("description", event.target.value)
-                      }
-                    />
-                  </Field>
-                  <NumberField
-                    title="Mano de obra base · S/"
-                    max={50000}
-                    step={0.1}
-                    value={editor.basePrice}
-                    change={(value) => setProduct("basePrice", value)}
-                    note="Costo interno; no es el precio final del mueble."
-                  />
-                  <NumberField
-                    title="Fabricación · semanas"
-                    min={1}
-                    max={52}
-                    value={editor.weeks}
-                    change={(value) => setProduct("weeks", value)}
-                  />
-                </div>
-                <h3>Medidas y límites</h3>
-                <p className="admin-help">
-                  Todas las medidas están en milímetros, en pasos de 10 mm. La
-                  medida inicial debe estar dentro del rango.
-                </p>
-                <div className="admin-dimension-grid">
-                  <span />
-                  <span>Mínimo</span>
-                  <span>Inicial</span>
-                  <span>Máximo</span>
-                  {dimensions.map(({ key, name }) => (
-                    <div className="admin-dimension-row" key={key}>
-                      <strong>{name}</strong>
-                      <input
-                        type="number"
-                        aria-label={`${name} mínimo en mm`}
-                        required
-                        min={100}
-                        max={3000}
-                        step={10}
-                        value={
-                          Number.isNaN(editor.limits[key].min)
-                            ? ""
-                            : editor.limits[key].min
-                        }
-                        onChange={(event) =>
-                          setProduct("limits", {
-                            ...editor.limits,
-                            [key]: {
-                              ...editor.limits[key],
-                              min:
-                                event.target.value === ""
-                                  ? Number.NaN
-                                  : Number(event.target.value),
-                            },
-                          })
-                        }
-                      />
-                      <input
-                        type="number"
-                        aria-label={`${name} inicial en mm`}
-                        required
-                        min={100}
-                        max={3000}
-                        step={10}
-                        value={
-                          Number.isNaN(editor.defaults[key])
-                            ? ""
-                            : editor.defaults[key]
-                        }
-                        onChange={(event) =>
-                          setConfig(
-                            key,
-                            event.target.value === ""
-                              ? Number.NaN
-                              : Number(event.target.value),
-                          )
-                        }
-                      />
-                      <input
-                        type="number"
-                        aria-label={`${name} máximo en mm`}
-                        required
-                        min={100}
-                        max={3000}
-                        step={10}
-                        value={
-                          Number.isNaN(editor.limits[key].max)
-                            ? ""
-                            : editor.limits[key].max
-                        }
-                        onChange={(event) =>
-                          setProduct("limits", {
-                            ...editor.limits,
-                            [key]: {
-                              ...editor.limits[key],
-                              max:
-                                event.target.value === ""
-                                  ? Number.NaN
-                                  : Number(event.target.value),
-                            },
-                          })
-                        }
-                      />
-                    </div>
-                  ))}
-                </div>
-                <h3>Configuración inicial</h3>
-                <div className="admin-form-grid">
-                  {editorOptions.modules.length > 1 && (
-                    <Field title="Módulos verticales">
-                      <select
-                        value={editor.defaults.modules}
-                        onChange={(event) =>
-                          setConfig("modules", Number(event.target.value))
-                        }
-                      >
-                        {editorOptions.modules.map((value) => (
-                          <option key={value} value={value}>
-                            {value}
-                          </option>
-                        ))}
-                      </select>
-                    </Field>
-                  )}
-                  {editorOptions.shelves.length > 1 && (
-                    <Field
-                      title={
-                        editorConstruction.kind === "desk-storage"
-                          ? "Repisas en el módulo lateral"
-                          : "Repisas por módulo"
-                      }
-                    >
-                      <select
-                        value={editor.defaults.shelves}
-                        onChange={(event) =>
-                          setConfig("shelves", Number(event.target.value))
-                        }
-                      >
-                        {editorOptions.shelves.map((value) => (
-                          <option key={value} value={value}>
-                            {value}
-                          </option>
-                        ))}
-                      </select>
-                    </Field>
-                  )}
-                  {editorOptions.doors.length > 1 && (
-                    <Field title="Puertas">
-                      <select
-                        value={editor.defaults.doors}
-                        onChange={(event) =>
-                          setConfig(
-                            "doors",
-                            event.target.value as Config["doors"],
-                          )
-                        }
-                      >
-                        {editorOptions.doors.map((value) => (
-                          <option key={value} value={value}>
-                            {
-                              {
-                                none: "Sin puertas",
-                                lower: "Puertas inferiores",
-                                full: "Puertas completas",
-                              }[value]
-                            }
-                          </option>
-                        ))}
-                      </select>
-                    </Field>
-                  )}
-                  <Field title="Acabado exterior">
-                    <select
-                      value={editor.defaults.finish}
-                      onChange={(event) =>
-                        setConfig("finish", event.target.value)
-                      }
-                    >
-                      {settings.materials.map((material) => (
-                        <option value={material.id} key={material.id}>
-                          {materialLabel(material)}
-                          {material.active ? "" : " · oculto"}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
-                  <Field title="Acabado interior">
-                    <select
-                      value={editor.defaults.interior}
-                      onChange={(event) =>
-                        setConfig("interior", event.target.value)
-                      }
-                    >
-                      <option value="same">Igual al exterior</option>
-                      {settings.materials.map((material) => (
-                        <option value={material.id} key={material.id}>
-                          {materialLabel(material)}
-                          {material.active ? "" : " · oculto"}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
-                  {editor.defaults.doors !== "none" && (
-                    <Field title="Sistema de apertura">
-                      <select
-                        value={editor.defaults.handle}
-                        onChange={(event) =>
-                          setConfig(
-                            "handle",
-                            event.target.value as Config["handle"],
-                          )
-                        }
-                      >
-                        <option value="push">Push</option>
-                        <option value="exterior">Jalador exterior</option>
-                        <option value="embutido">Jalador embutido</option>
-                      </select>
-                    </Field>
-                  )}
-                  <label className="admin-switch-label">
-                    <Switch
-                      checked={editor.defaults.install}
-                      onCheckedChange={(value) => setConfig("install", value)}
-                    />
-                    Instalación seleccionada por defecto
-                  </label>
-                  <label className="admin-switch-label">
-                    <Switch
-                      checked={editor.defaults.transport}
-                      onCheckedChange={(value) => setConfig("transport", value)}
-                    />
-                    Transporte seleccionado por defecto
-                  </label>
-                </div>
-                <p className="admin-editor-note">
-                  La melamina de 18 mm y las reglas de seguridad del
-                  configurador son permanentes. Un modelo nuevo se publica
-                  activándolo desde la tabla.
-                </p>
+                </fieldset>
               </div>
+              {editorError && (
+                <p className="admin-editor-error" role="alert">
+                  {editorError}
+                </p>
+              )}
               <div className="admin-dialog-footer">
                 <button
                   type="button"
