@@ -31,6 +31,49 @@ const approximate = (actual: number, expected: number) =>
     `${actual} differs from ${expected}`,
   );
 const axis = { x: 0, y: 1, z: 2 } as const;
+test("Facebook business contact accepts only the supported HTTPS origins", () => {
+  for (const facebook of [
+    "",
+    "https://facebook.com/mi-taller",
+    "https://www.facebook.com/profile.php?id=123456",
+    "https://m.facebook.com/mi-taller",
+  ]) {
+    assert.equal(
+      settingsSchema.parse({ ...defaultSettings, facebook }).facebook,
+      facebook,
+    );
+  }
+  for (const facebook of [
+    "javascript:alert(1)",
+    "data:text/html,example",
+    "http://facebook.com/mi-taller",
+    "//facebook.com/mi-taller",
+    "https://facebook.com.ejemplo.test/mi-taller",
+    "https://ejemplo.test/facebook.com",
+    "https://facebook.com@ejemplo.test/",
+    "https://usuario:clave@facebook.com/",
+    "https://%75suario@www.facebook.com/",
+    "https://www.facebook.com:8443/",
+    "https://www.facebook.com%2Fejemplo.test/",
+  ]) {
+    assert.equal(
+      settingsSchema.safeParse({ ...defaultSettings, facebook }).success,
+      false,
+      facebook,
+    );
+  }
+});
+
+test("reading older business settings never inserts a Facebook link", () => {
+  const legacy = structuredClone(defaultSettings);
+  delete legacy.facebook;
+  const before = structuredClone(legacy);
+  const parsed = settingsSchema.parse(legacy);
+  assert.equal(Object.hasOwn(parsed, "facebook"), false);
+  assert.deepEqual(legacy, before);
+  assert.equal(settingsSchema.parse({ ...legacy, facebook: "" }).facebook, "");
+});
+
 test("older business settings preserve the primary contact and default the second contact", () => {
   const { whatsappSecondary: _secondary, ...legacy } = defaultSettings;
   const parsed = settingsSchema.parse({ ...legacy, whatsapp: "51900000001" });

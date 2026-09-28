@@ -1,0 +1,344 @@
+{
+  "products": [
+    {
+      "id": "ropero-duo-120",
+      "name": "Ropero Dúo 120",
+      "category": "Roperos",
+      "description": "Barra para colgar a la izquierda, repisas a la derecha y maletero superior, protegidos por dos puertas.",
+      "active": false,
+      "version": 1,
+      "order": 37,
+      "basePrice": 180,
+      "weeks": 3,
+      "construction": {
+        "kind": "wardrobe",
+        "loftHeight": 300,
+        "hangingModules": 1
+      },
+      "limits": {
+        "width": {
+          "min": 800,
+          "max": 1250
+        },
+        "height": {
+          "min": 1650,
+          "max": 2200
+        },
+        "depth": {
+          "min": 500,
+          "max": 650
+        }
+      },
+      "defaults": {
+        "width": 1200,
+        "height": 1800,
+        "depth": 600,
+        "modules": 2,
+        "shelves": 3,
+        "doors": "full",
+        "finish": "hispano-chiavenna",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "ropero-familiar-195",
+      "name": "Ropero Familiar 195",
+      "category": "Roperos",
+      "description": "Cuatro puertas, dos columnas para colgar ropa y dos con repisas, además de un maletero amplio en la parte superior.",
+      "active": false,
+      "version": 1,
+      "order": 38,
+      "basePrice": 180,
+      "weeks": 3,
+      "construction": {
+        "kind": "wardrobe",
+        "loftHeight": 470,
+        "hangingModules": 2
+      },
+      "limits": {
+        "width": {
+          "min": 1500,
+          "max": 2400
+        },
+        "height": {
+          "min": 2000,
+          "max": 2600
+        },
+        "depth": {
+          "min": 500,
+          "max": 700
+        }
+      },
+      "defaults": {
+        "width": 1950,
+        "height": 2420,
+        "depth": 500,
+        "modules": 4,
+        "shelves": 3,
+        "doors": "full",
+        "finish": "hispano-almendra-02",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "ropero-abierto-175",
+      "name": "Ropero Abierto 175",
+      "category": "Roperos",
+      "description": "Dos espacios para colgar ropa y una columna de repisas a la vista, con maletero superior y sin puertas.",
+      "active": false,
+      "version": 1,
+      "order": 39,
+      "basePrice": 180,
+      "weeks": 3,
+      "construction": {
+        "kind": "wardrobe",
+        "loftHeight": 300,
+        "hangingModules": 2
+      },
+      "limits": {
+        "width": {
+          "min": 1200,
+          "max": 2200
+        },
+        "height": {
+          "min": 1600,
+          "max": 2400
+        },
+        "depth": {
+          "min": 500,
+          "max": 650
+        }
+      },
+      "defaults": {
+        "width": 1750,
+        "height": 1830,
+        "depth": 520,
+        "modules": 3,
+        "shelves": 4,
+        "doors": "none",
+        "finish": "hispano-roble-catania",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "ropero-colgado-124",
+      "name": "Ropero Colgado 124",
+      "category": "Roperos",
+      "description": "Dos columnas para colgar ropa, cada una con su barra y maletero, cerradas por puertas completas.",
+      "active": false,
+      "version": 1,
+      "order": 40,
+      "basePrice": 180,
+      "weeks": 3,
+      "construction": {
+        "kind": "wardrobe",
+        "loftHeight": 250,
+        "hangingModules": 2
+      },
+      "limits": {
+        "width": {
+          "min": 800,
+          "max": 1250
+        },
+        "height": {
+          "min": 1600,
+          "max": 2200
+        },
+        "depth": {
+          "min": 500,
+          "max": 650
+        }
+      },
+      "defaults": {
+        "width": 1240,
+        "height": 1830,
+        "depth": 520,
+        "modules": 2,
+        "shelves": 0,
+        "doors": "full",
+        "finish": "hispano-blanco-100",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "base-cocina-60",
+      "name": "Base de Cocina 60",
+      "category": "Cocina",
+      "description": "Un módulo bajo con puerta, repisa y tapa completa, elevado sobre un zócalo retranqueado.",
+      "active": false,
+      "version": 1,
+      "order": 41,
+      "basePrice": 140,
+      "weeks": 3,
+      "construction": {
+        "kind": "kitchen-base",
+        "plinthHeight": 100,
+        "plinthSetback": 70
+      },
+      "limits": {
+        "width": {
+          "min": 400,
+          "max": 630
+        },
+        "height": {
+          "min": 800,
+          "max": 1000
+        },
+        "depth": {
+          "min": 450,
+          "max": 700
+        }
+      },
+      "defaults": {
+        "width": 600,
+        "height": 930,
+        "depth": 560,
+        "modules": 1,
+        "shelves": 1,
+        "doors": "full",
+        "finish": "hispano-blanco-100",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "base-auxiliar-cocina-143",
+      "name": "Base Auxiliar de Cocina 143",
+      "category": "Cocina",
+      "description": "Tres puertas y repisas interiores en una base de cocina poco profunda, con tapa y zócalo retranqueado.",
+      "active": false,
+      "version": 1,
+      "order": 42,
+      "basePrice": 140,
+      "weeks": 3,
+      "construction": {
+        "kind": "kitchen-base",
+        "plinthHeight": 80,
+        "plinthSetback": 60
+      },
+      "limits": {
+        "width": {
+          "min": 1000,
+          "max": 1870
+        },
+        "height": {
+          "min": 700,
+          "max": 950
+        },
+        "depth": {
+          "min": 450,
+          "max": 650
+        }
+      },
+      "defaults": {
+        "width": 1430,
+        "height": 780,
+        "depth": 480,
+        "modules": 3,
+        "shelves": 1,
+        "doors": "full",
+        "finish": "hispano-gris-suave",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "alacena-cocina-104",
+      "name": "Alacena de Cocina 104",
+      "category": "Cocina",
+      "description": "Dos puertas y seis espacios interiores en un módulo superior para organizar vajilla y provisiones.",
+      "active": false,
+      "version": 1,
+      "order": 43,
+      "basePrice": 140,
+      "weeks": 3,
+      "construction": {
+        "kind": "cabinet"
+      },
+      "limits": {
+        "width": {
+          "min": 600,
+          "max": 1250
+        },
+        "height": {
+          "min": 500,
+          "max": 1000
+        },
+        "depth": {
+          "min": 250,
+          "max": 450
+        }
+      },
+      "defaults": {
+        "width": 1040,
+        "height": 780,
+        "depth": 300,
+        "modules": 2,
+        "shelves": 2,
+        "doors": "full",
+        "finish": "hispano-almendra-02",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "alacena-mixta-202",
+      "name": "Alacena Mixta 202",
+      "category": "Cocina",
+      "description": "Puertas inferiores y repisas abiertas arriba en un módulo superior amplio para piezas de uso frecuente.",
+      "active": false,
+      "version": 1,
+      "order": 44,
+      "basePrice": 140,
+      "weeks": 3,
+      "construction": {
+        "kind": "cabinet"
+      },
+      "limits": {
+        "width": {
+          "min": 1400,
+          "max": 2490
+        },
+        "height": {
+          "min": 550,
+          "max": 900
+        },
+        "depth": {
+          "min": 250,
+          "max": 450
+        }
+      },
+      "defaults": {
+        "width": 2020,
+        "height": 570,
+        "depth": 320,
+        "modules": 4,
+        "shelves": 1,
+        "doors": "lower",
+        "finish": "hispano-chiavenna",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    }
+  ]
+}

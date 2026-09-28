@@ -660,7 +660,7 @@
   flex-direction: column !important;
 }
 .admin-editor {
-  width: 760px !important;
+  width: 1180px !important;
   max-width: calc(100vw - 32px) !important;
 }
 .admin-dialog [data-slot="dialog-title"] {

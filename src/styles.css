@@ -1848,3 +1848,6 @@ footer > span {
     padding: 20px;
   }
 }
+.footer-brand-access { border: 0; padding: 0; background: transparent; cursor: pointer; touch-action: manipulation; }
+.footer-brand-access:focus-visible { outline: 2px solid #a93f2d; outline-offset: 8px; }
+.contact-facebook { display: inline-flex; align-items: center; gap: 9px; margin-top: 24px; padding-bottom: 7px; border-bottom: 1px solid currentColor; font-size: 14px; }

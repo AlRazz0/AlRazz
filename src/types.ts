@@ -13,6 +13,7 @@ export type PublicProduct = Omit<Product, "basePrice"> & {
 export type PublicSettings = {
   whatsapp: string;
   whatsappSecondary: string;
+  facebook?: string;
   availability: string;
   leadWeeks: number;
   materials: PublicMaterial[];
