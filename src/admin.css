@@ -1284,3 +1284,109 @@
     font-size: 11px;
   }
 }
+.admin-kitchens > .admin-help {
+  max-width: 900px;
+  margin: 20px 0;
+}
+.admin-kitchen-reference {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+  margin: 26px 0;
+}
+.admin-kitchen-reference label {
+  display: grid;
+  gap: 8px;
+  flex: 1;
+  font-size: 13px;
+}
+.admin-kitchen-reference input {
+  border: 1px solid #d4d1cb;
+  border-radius: 7px;
+  padding: 13px;
+  width: 100%;
+  min-width: 0;
+}
+.admin-kitchen-list-heading,
+.admin-kitchen-export-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.admin-kitchen-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 10px;
+  max-height: 280px;
+  overflow: auto;
+  margin: 18px 0 30px;
+}
+.admin-kitchen-list button {
+  background: #faf9f6;
+  border: 1px solid #ddd8d0;
+  border-radius: 8px;
+  padding: 14px;
+  text-align: left;
+  display: grid;
+  gap: 8px;
+  cursor: pointer;
+}
+.admin-kitchen-list button.selected {
+  border-color: #914d31;
+  background: #f5e9e0;
+}
+.admin-kitchen-list button span {
+  font-size: 12px;
+  color: #6b665e;
+}
+.admin-kitchen-module {
+  border: 1px solid #ddd8d0;
+  border-radius: 10px;
+  margin-top: 14px;
+  padding: 18px;
+}
+.admin-kitchen-module summary {
+  cursor: pointer;
+}
+.admin-kitchen-module summary span {
+  display: block;
+  font-size: 12px;
+  color: #6b665e;
+  margin: 7px 0 0 18px;
+}
+.admin-kitchen-table-scroll {
+  overflow-x: auto;
+}
+.admin-kitchen-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  margin: 18px 0;
+}
+.admin-kitchen-table th,
+.admin-kitchen-table td {
+  padding: 10px;
+  border-bottom: 1px solid #e4e0d9;
+  text-align: left;
+}
+.admin-kitchen-glass {
+  background: #f0f4f4;
+  padding: 14px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+.admin-kitchen-accessories {
+  font-size: 13px;
+  line-height: 1.7;
+  padding-left: 20px;
+}
+@media (max-width: 700px) {
+  .admin-kitchen-reference {
+    display: grid;
+  }
+  .admin-kitchen-module {
+    padding: 12px;
+  }
+}

@@ -10,6 +10,9 @@ const fieldNames: Record<string, string> = {
   name: "Nombre",
   description: "Descripción",
   basePrice: "Mano de obra base",
+  "pricing.amount": "Tarifa de venta base",
+  "defaults.front": "Material de puertas",
+  frontOptions: "Materiales de puerta permitidos",
   weeks: "Plazo",
   order: "Orden",
   "defaults.width": "Ancho inicial",
@@ -82,6 +85,8 @@ export function buildAdminPreview(draft: Product, settings: Settings) {
     weeks: 1,
     construction: draft.construction,
     basePrice: draft.basePrice,
+    pricing: draft.pricing,
+    frontOptions: draft.frontOptions,
     limits: draft.limits,
     defaults: draft.defaults,
   };

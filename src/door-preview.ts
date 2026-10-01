@@ -14,7 +14,7 @@ export function doorPreviewBounds(
   let radius = 0;
   try {
     doors.forEach((door) => {
-      door.rotation.y = 0;
+      door.rotation.y = door.userData.closedRotationY ?? 0;
     });
     root.updateMatrixWorld(true);
     for (const door of doors) {
@@ -30,7 +30,9 @@ export function doorPreviewBounds(
     }
     for (let step = 0; step <= steps; step++) {
       doors.forEach((door) => {
-        door.rotation.y = (DOOR_OPEN_ANGLE * step) / steps;
+        door.rotation.y =
+          (door.userData.closedRotationY ?? 0) +
+          (DOOR_OPEN_ANGLE * step) / steps;
       });
       bounds.union(new THREE.Box3().setFromObject(root));
     }

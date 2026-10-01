@@ -1,0 +1,554 @@
+{
+  "products": [
+    {
+      "id": "base-cocina-duo-80",
+      "name": "Base de Cocina Dúo 80",
+      "category": "Cocina",
+      "description": "Dos puertas y repisas interiores sobre un zócalo retranqueado para organizar recipientes y utensilios.",
+      "active": false,
+      "version": 1,
+      "order": 45,
+      "basePrice": 140,
+      "weeks": 3,
+      "construction": {
+        "kind": "kitchen-base",
+        "plinthHeight": 100,
+        "plinthSetback": 70
+      },
+      "frontOptions": ["melamine", "glass", "aluminum-glass"],
+      "pricing": {
+        "basis": "calculated"
+      },
+      "limits": {
+        "width": {
+          "min": 600,
+          "max": 1200
+        },
+        "height": {
+          "min": 700,
+          "max": 1000
+        },
+        "depth": {
+          "min": 450,
+          "max": 700
+        }
+      },
+      "defaults": {
+        "width": 800,
+        "height": 850,
+        "depth": 600,
+        "modules": 2,
+        "shelves": 1,
+        "doors": "full",
+        "front": "melamine",
+        "finish": "hispano-blanco-100",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "base-cocina-familiar-120",
+      "name": "Base de Cocina Familiar 120",
+      "category": "Cocina",
+      "description": "Una base de dos puertas con tres niveles por columna, tapa completa y zócalo para combinar con otros módulos.",
+      "active": false,
+      "version": 1,
+      "order": 46,
+      "basePrice": 140,
+      "weeks": 3,
+      "construction": {
+        "kind": "kitchen-base",
+        "plinthHeight": 100,
+        "plinthSetback": 70
+      },
+      "frontOptions": ["melamine", "glass", "aluminum-glass"],
+      "pricing": {
+        "basis": "calculated"
+      },
+      "limits": {
+        "width": {
+          "min": 800,
+          "max": 1250
+        },
+        "height": {
+          "min": 700,
+          "max": 1000
+        },
+        "depth": {
+          "min": 450,
+          "max": 700
+        }
+      },
+      "defaults": {
+        "width": 1200,
+        "height": 850,
+        "depth": 600,
+        "modules": 2,
+        "shelves": 2,
+        "doors": "full",
+        "front": "melamine",
+        "finish": "hispano-chiavenna",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "alacena-cristal-60",
+      "name": "Alacena Cristal 60",
+      "category": "Cocina",
+      "description": "Alacena de una puerta de vidrio y repisas de melamina para mantener la vajilla visible y ordenada.",
+      "active": false,
+      "version": 1,
+      "order": 47,
+      "basePrice": 140,
+      "weeks": 3,
+      "construction": {
+        "kind": "cabinet"
+      },
+      "frontOptions": ["melamine", "glass", "aluminum-glass"],
+      "pricing": {
+        "basis": "calculated"
+      },
+      "limits": {
+        "width": {
+          "min": 400,
+          "max": 630
+        },
+        "height": {
+          "min": 500,
+          "max": 1000
+        },
+        "depth": {
+          "min": 250,
+          "max": 450
+        }
+      },
+      "defaults": {
+        "width": 600,
+        "height": 700,
+        "depth": 350,
+        "modules": 1,
+        "shelves": 2,
+        "doors": "full",
+        "front": "glass",
+        "finish": "hispano-blanco-100",
+        "interior": "same",
+        "handle": "exterior",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "alacena-aluminio-120",
+      "name": "Alacena Aluminio 120",
+      "category": "Cocina",
+      "description": "Dos frentes de vidrio con marco de aluminio y repisas interiores para combinar con los módulos bajos de cocina.",
+      "active": false,
+      "version": 1,
+      "order": 48,
+      "basePrice": 140,
+      "weeks": 3,
+      "construction": {
+        "kind": "cabinet"
+      },
+      "frontOptions": ["melamine", "glass", "aluminum-glass"],
+      "pricing": {
+        "basis": "calculated"
+      },
+      "limits": {
+        "width": {
+          "min": 800,
+          "max": 1250
+        },
+        "height": {
+          "min": 500,
+          "max": 1000
+        },
+        "depth": {
+          "min": 250,
+          "max": 450
+        }
+      },
+      "defaults": {
+        "width": 1200,
+        "height": 700,
+        "depth": 350,
+        "modules": 2,
+        "shelves": 2,
+        "doors": "full",
+        "front": "aluminum-glass",
+        "finish": "hispano-gris-suave",
+        "interior": "same",
+        "handle": "exterior",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "alacena-horizontal-90",
+      "name": "Alacena Horizontal 90",
+      "category": "Cocina",
+      "description": "Alacena de perfil horizontal con dos puertas de vidrio y marco de aluminio para piezas de uso frecuente.",
+      "active": false,
+      "version": 1,
+      "order": 49,
+      "basePrice": 140,
+      "weeks": 3,
+      "construction": {
+        "kind": "cabinet"
+      },
+      "frontOptions": ["melamine", "glass", "aluminum-glass"],
+      "pricing": {
+        "basis": "calculated"
+      },
+      "limits": {
+        "width": {
+          "min": 600,
+          "max": 1250
+        },
+        "height": {
+          "min": 300,
+          "max": 500
+        },
+        "depth": {
+          "min": 250,
+          "max": 450
+        }
+      },
+      "defaults": {
+        "width": 900,
+        "height": 400,
+        "depth": 350,
+        "modules": 2,
+        "shelves": 0,
+        "doors": "full",
+        "front": "aluminum-glass",
+        "finish": "hispano-roble-catania",
+        "interior": "same",
+        "handle": "exterior",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "despensa-compacta-60",
+      "name": "Despensa Compacta 60",
+      "category": "Cocina",
+      "description": "Una columna de cinco niveles y puerta completa para organizar provisiones en cocinas de espacio contenido.",
+      "active": false,
+      "version": 1,
+      "order": 50,
+      "basePrice": 140,
+      "weeks": 3,
+      "construction": {
+        "kind": "cabinet"
+      },
+      "frontOptions": ["melamine", "glass", "aluminum-glass"],
+      "pricing": {
+        "basis": "calculated"
+      },
+      "limits": {
+        "width": {
+          "min": 400,
+          "max": 630
+        },
+        "height": {
+          "min": 1000,
+          "max": 1540
+        },
+        "depth": {
+          "min": 350,
+          "max": 650
+        }
+      },
+      "defaults": {
+        "width": 600,
+        "height": 1500,
+        "depth": 550,
+        "modules": 1,
+        "shelves": 4,
+        "doors": "full",
+        "front": "melamine",
+        "finish": "hispano-almendra-02",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "vitrina-aluminio-80",
+      "name": "Vitrina Aluminio 80",
+      "category": "Auxiliares",
+      "description": "Dos puertas de vidrio con marco fino de aluminio y ocho espacios interiores para vajilla, libros u objetos de colección.",
+      "active": false,
+      "version": 1,
+      "order": 51,
+      "basePrice": 140,
+      "weeks": 3,
+      "construction": {
+        "kind": "cabinet"
+      },
+      "frontOptions": ["melamine", "glass", "aluminum-glass"],
+      "pricing": {
+        "basis": "calculated"
+      },
+      "limits": {
+        "width": {
+          "min": 600,
+          "max": 1250
+        },
+        "height": {
+          "min": 900,
+          "max": 1540
+        },
+        "depth": {
+          "min": 250,
+          "max": 450
+        }
+      },
+      "defaults": {
+        "width": 800,
+        "height": 1450,
+        "depth": 350,
+        "modules": 2,
+        "shelves": 3,
+        "doors": "full",
+        "front": "aluminum-glass",
+        "finish": "hispano-roble-catania",
+        "interior": "same",
+        "handle": "exterior",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "vitrina-cristal-120",
+      "name": "Vitrina Cristal 120",
+      "category": "Auxiliares",
+      "description": "Vitrina ancha de dos puertas de vidrio, con repisas de melamina y seis espacios para exhibir objetos.",
+      "active": false,
+      "version": 1,
+      "order": 52,
+      "basePrice": 140,
+      "weeks": 3,
+      "construction": {
+        "kind": "cabinet"
+      },
+      "frontOptions": ["melamine", "glass", "aluminum-glass"],
+      "pricing": {
+        "basis": "calculated"
+      },
+      "limits": {
+        "width": {
+          "min": 800,
+          "max": 1250
+        },
+        "height": {
+          "min": 800,
+          "max": 1540
+        },
+        "depth": {
+          "min": 300,
+          "max": 550
+        }
+      },
+      "defaults": {
+        "width": 1200,
+        "height": 1100,
+        "depth": 400,
+        "modules": 2,
+        "shelves": 2,
+        "doors": "full",
+        "front": "glass",
+        "finish": "hispano-gris-suave",
+        "interior": "same",
+        "handle": "exterior",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "estante-cubos-112",
+      "name": "Estante Cubos 112",
+      "category": "Estanterías",
+      "description": "Nueve compartimentos abiertos y sin trasera para organizar libros, cajas y objetos decorativos.",
+      "active": false,
+      "version": 1,
+      "order": 53,
+      "basePrice": 180,
+      "weeks": 3,
+      "construction": {
+        "kind": "open-shelf"
+      },
+      "pricing": {
+        "basis": "calculated"
+      },
+      "limits": {
+        "width": {
+          "min": 900,
+          "max": 1800
+        },
+        "height": {
+          "min": 900,
+          "max": 1600
+        },
+        "depth": {
+          "min": 250,
+          "max": 450
+        }
+      },
+      "defaults": {
+        "width": 1120,
+        "height": 1120,
+        "depth": 350,
+        "modules": 3,
+        "shelves": 2,
+        "doors": "none",
+        "finish": "hispano-chiavenna",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "biblioteca-lineal-60",
+      "name": "Biblioteca Lineal 60",
+      "category": "Libreros",
+      "description": "Una columna abierta con seis niveles y trasera de melamina para guardar libros aprovechando el alto del ambiente.",
+      "active": false,
+      "version": 1,
+      "order": 54,
+      "basePrice": 150,
+      "weeks": 3,
+      "construction": {
+        "kind": "cabinet"
+      },
+      "pricing": {
+        "basis": "calculated"
+      },
+      "limits": {
+        "width": {
+          "min": 400,
+          "max": 750
+        },
+        "height": {
+          "min": 1400,
+          "max": 2300
+        },
+        "depth": {
+          "min": 250,
+          "max": 450
+        }
+      },
+      "defaults": {
+        "width": 600,
+        "height": 2000,
+        "depth": 300,
+        "modules": 1,
+        "shelves": 5,
+        "doors": "none",
+        "finish": "hispano-blanco-100",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "repisa-horizontal-120",
+      "name": "Repisa Horizontal 120",
+      "category": "Estanterías",
+      "description": "Tres nichos abiertos de perfil horizontal, sin trasera, para libros pequeños y objetos decorativos.",
+      "active": false,
+      "version": 1,
+      "order": 55,
+      "basePrice": 180,
+      "weeks": 3,
+      "construction": {
+        "kind": "open-shelf"
+      },
+      "pricing": {
+        "basis": "calculated"
+      },
+      "limits": {
+        "width": {
+          "min": 900,
+          "max": 1600
+        },
+        "height": {
+          "min": 200,
+          "max": 500
+        },
+        "depth": {
+          "min": 200,
+          "max": 350
+        }
+      },
+      "defaults": {
+        "width": 1200,
+        "height": 360,
+        "depth": 250,
+        "modules": 3,
+        "shelves": 0,
+        "doors": "none",
+        "finish": "hispano-roble-catania",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    },
+    {
+      "id": "auxiliar-cafe-90",
+      "name": "Auxiliar Café 90",
+      "category": "Auxiliares",
+      "description": "Dos puertas inferiores y repisas abiertas arriba para tazas, frascos y accesorios de un rincón de café.",
+      "active": false,
+      "version": 1,
+      "order": 56,
+      "basePrice": 140,
+      "weeks": 3,
+      "construction": {
+        "kind": "cabinet"
+      },
+      "frontOptions": ["melamine", "glass", "aluminum-glass"],
+      "pricing": {
+        "basis": "calculated"
+      },
+      "limits": {
+        "width": {
+          "min": 600,
+          "max": 1250
+        },
+        "height": {
+          "min": 700,
+          "max": 1100
+        },
+        "depth": {
+          "min": 350,
+          "max": 600
+        }
+      },
+      "defaults": {
+        "width": 900,
+        "height": 900,
+        "depth": 450,
+        "modules": 2,
+        "shelves": 1,
+        "doors": "lower",
+        "front": "melamine",
+        "finish": "hispano-almendra-02",
+        "interior": "same",
+        "handle": "push",
+        "install": false,
+        "transport": false
+      }
+    }
+  ]
+}

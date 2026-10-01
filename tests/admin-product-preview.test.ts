@@ -110,3 +110,39 @@ test("previewing old models does not materialize optional catalog or tariff fiel
   assert.deepEqual(product, beforeProduct);
   assert.deepEqual(settings, beforeSettings);
 });
+
+test("admin preview applies edited selling tariffs, allowed glass fronts and their current extra costs", () => {
+  const draft = productTemplate("kitchen-base");
+  draft.frontOptions = ["melamine", "aluminum-glass"];
+  draft.defaults = {
+    ...draft.defaults,
+    doors: "full",
+    front: "aluminum-glass",
+    handle: "exterior",
+  };
+  draft.pricing = { basis: "linear-meter", amount: 650 };
+  const settings = structuredClone(defaultSettings);
+  settings.frontRates = {
+    glass: { basis: "unit", amount: 80 },
+    aluminum: { basis: "unit", amount: 45 },
+    hardware: 30,
+  };
+  const preview = buildAdminPreview(draft, settings);
+  const expected = buildFurniture(draft, draft.defaults, settings);
+  assert.equal(preview.result.price, expected.price);
+  assert.deepEqual(
+    preview.geometry,
+    publicGeometry(expected.panels, expected.fixtures),
+  );
+  assert.ok(
+    preview.geometry.some((panel) => panel.surface === "aluminum-glass"),
+  );
+  const lowerTariff = buildAdminPreview(
+    { ...draft, pricing: { basis: "linear-meter", amount: 400 } },
+    settings,
+  );
+  assert.ok(lowerTariff.result.price < preview.result.price);
+  assert.throws(() =>
+    buildAdminPreview({ ...draft, frontOptions: ["melamine"] }, settings),
+  );
+});

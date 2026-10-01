@@ -19,6 +19,7 @@ import { api } from "../lib/api";
 import {
   getConstruction,
   getConstructionOptions,
+  getFrontOptions,
   money,
 } from "../lib/furniture";
 import type { Config } from "../lib/furniture";
@@ -27,7 +28,12 @@ import { Header, Footer } from "./App";
 import { Choice } from "./UI";
 import Viewer, { type View, type ViewerHandle } from "./Viewer";
 import { materialLabel, materialBrands } from "./materials";
-import { MaterialSource, MaterialSwatch } from "./MaterialSwatch";
+import {
+  MaterialDetails,
+  MaterialSource,
+  MaterialSwatch,
+} from "./MaterialSwatch";
+import { DoorLayoutSelector, FrontSelector } from "./FrontSelector";
 import { constructionDescriptions } from "./construction-labels";
 import ModelShowcase from "./ModelShowcase";
 const searchText = (value: string) =>
@@ -36,11 +42,6 @@ const searchText = (value: string) =>
     .replace(/[\u0300-\u036f]/g, "")
     .toLocaleLowerCase("es");
 const dimensionLabels = { width: "Ancho", height: "Alto", depth: "Fondo" };
-const doorOptions = [
-  { value: "none", label: "Todo abierto" },
-  { value: "lower", label: "Puertas inferiores" },
-  { value: "full", label: "Puertas completas" },
-];
 export default function Configurator() {
   const [products, setProducts] = useState<PublicProduct[]>([]);
   const [product, setProduct] = useState<PublicProduct>();
@@ -502,16 +503,41 @@ export default function Configurator() {
                 </p>
               )}
               {distributionOptions.doors.length > 1 && (
-                <Choice
-                  label="Puertas"
+                <DoorLayoutSelector
                   value={config.doors}
-                  options={doorOptions.filter((option) =>
-                    distributionOptions.doors.includes(
-                      option.value as Config["doors"],
-                    ),
-                  )}
-                  onChange={(v) =>
-                    change({ ...config, doors: v as Config["doors"] })
+                  options={distributionOptions.doors}
+                  onChange={(doors) => {
+                    const front =
+                      doors === "none"
+                        ? "melamine"
+                        : getFrontOptions(product).includes(
+                              config.front ?? "melamine",
+                            )
+                          ? config.front
+                          : getFrontOptions(product)[0];
+                    change({
+                      ...config,
+                      doors,
+                      front,
+                      ...(front && front !== "melamine"
+                        ? { handle: "exterior" as const }
+                        : {}),
+                    });
+                  }}
+                />
+              )}
+              {config.doors !== "none" && (
+                <FrontSelector
+                  value={config.front}
+                  options={getFrontOptions(product)}
+                  onChange={(front) =>
+                    change({
+                      ...config,
+                      front,
+                      ...(front !== "melamine"
+                        ? { handle: "exterior" as const }
+                        : {}),
+                    })
                   }
                 />
               )}
@@ -519,11 +545,15 @@ export default function Configurator() {
                 <Choice
                   label="Tipo de apertura"
                   value={config.handle}
-                  options={[
-                    { value: "push", label: "Sin jalador · Push" },
-                    { value: "exterior", label: "Jalador exterior" },
-                    { value: "embutido", label: "Jalador embutido" },
-                  ]}
+                  options={
+                    config.front && config.front !== "melamine"
+                      ? [{ value: "exterior", label: "Jalador exterior" }]
+                      : [
+                          { value: "push", label: "Sin jalador · Push" },
+                          { value: "exterior", label: "Jalador exterior" },
+                          { value: "embutido", label: "Jalador embutido" },
+                        ]
+                  }
                   onChange={(v) =>
                     change({ ...config, handle: v as Config["handle"] })
                   }
@@ -571,11 +601,7 @@ export default function Configurator() {
                   onChange={(event) => setFinishSearch(event.target.value)}
                 />
               </label>
-              <p className="finish-name">
-                Exterior ·{" "}
-                <b>{finish ? materialLabel(finish) : config.finish}</b>
-                {finish?.texture && <small> · {finish.texture}</small>}
-              </p>
+              <MaterialDetails material={finish} label="Exterior del mueble" />
               <MaterialSource material={finish} />
               <p className="material-result-count" role="status">
                 {filteredFinishes.length} acabados de nuestra selección de
@@ -619,8 +645,11 @@ export default function Configurator() {
                 onChange={(v) => change({ ...config, interior: v })}
               />
               {interiorFinish && config.interior !== "same" && (
-                <div className="material-interior-preview">
-                  <MaterialSwatch material={interiorFinish} />
+                <div>
+                  <MaterialDetails
+                    material={interiorFinish}
+                    label="Interior del mueble"
+                  />
                   <MaterialSource material={interiorFinish} />
                 </div>
               )}

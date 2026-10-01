@@ -78,6 +78,35 @@ export const materialSchema = z
   })
   .strict();
 export type Material = z.infer<typeof materialSchema>;
+export const frontKinds = ["melamine", "glass", "aluminum-glass"] as const;
+export const frontSchema = z.enum(frontKinds);
+export type Front = z.infer<typeof frontSchema>;
+export const pricingSchema = z.discriminatedUnion("basis", [
+  z.object({ basis: z.literal("calculated") }).strict(),
+  z.object({ basis: z.literal("unit"), amount: amount(100000) }).strict(),
+  z
+    .object({ basis: z.literal("linear-meter"), amount: amount(100000) })
+    .strict(),
+]);
+export const frontRatesSchema = z
+  .object({
+    glass: z
+      .object({
+        basis: z.enum(["square-meter", "unit"]),
+        amount: amount(10000),
+      })
+      .strict()
+      .optional(),
+    aluminum: z
+      .object({
+        basis: z.enum(["linear-meter", "unit"]),
+        amount: amount(10000),
+      })
+      .strict()
+      .optional(),
+    hardware: amount(2000).optional(),
+  })
+  .strict();
 export const configSchema = z
   .object({
     width: dim,
@@ -86,6 +115,7 @@ export const configSchema = z
     modules: z.number().int().min(1).max(6),
     shelves: z.number().int().min(0).max(7),
     doors: z.enum(["none", "lower", "full"]),
+    front: frontSchema.optional(),
     finish: materialId,
     interior: z.union([z.literal("same"), materialId]),
     handle: z.enum(["push", "exterior", "embutido"]),
@@ -181,6 +211,16 @@ export const productSchema = z
     category: z.enum(productCategories),
     construction: constructionSchema.optional(),
     gallery: gallerySchema.optional(),
+    frontOptions: z
+      .array(frontSchema)
+      .min(1)
+      .max(3)
+      .refine(
+        (values) => new Set(values).size === values.length,
+        "No repitas tipos de frente",
+      )
+      .optional(),
+    pricing: pricingSchema.optional(),
     description: z.string().trim().min(5).max(350),
     active: z.boolean(),
     version: z.number().int().min(1),
@@ -192,6 +232,29 @@ export const productSchema = z
   })
   .strict();
 export type Product = z.infer<typeof productSchema>;
+/** Optional fields remain absent in historical products, settings and snapshots. */
+export function getFrontOptions(
+  product: Pick<Product, "frontOptions">,
+): Front[] {
+  return [...(product.frontOptions ?? ["melamine"])];
+}
+export function getFrontRates(settings: Pick<Settings, "frontRates">) {
+  return {
+    glass: {
+      ...(settings.frontRates?.glass ?? {
+        basis: "square-meter" as const,
+        amount: 180,
+      }),
+    },
+    aluminum: {
+      ...(settings.frontRates?.aluminum ?? {
+        basis: "linear-meter" as const,
+        amount: 45,
+      }),
+    },
+    hardware: settings.frontRates?.hardware ?? 65,
+  };
+}
 /** Resolve locally without adding defaults to stored products or snapshots. */
 export function getConstruction(
   product: Pick<Product, "construction">,
@@ -331,6 +394,7 @@ export const settingsSchema = z
     doorHardware: amount(1000),
     clothesRailRate: amount(1000).optional(),
     clothesRailSupport: amount(500).optional(),
+    frontRates: frontRatesSchema.optional(),
     installation: amount(5000),
     delivery: amount(5000),
     margin: z.number().finite().min(0).max(0.8),
@@ -534,7 +598,7 @@ export type Panel = {
 };
 export type Result = {
   panels: Panel[];
-  fixtures?: ClothesRail[];
+  fixtures?: Fixture[];
   area: number;
   edges: number;
   doors: number;
@@ -546,11 +610,18 @@ export type Result = {
     labor: number;
     installation: number;
     delivery: number;
+    fronts?: number;
+    sellingBase?: {
+      basis: "unit" | "linear-meter";
+      quantity: number;
+      unitPrice: number;
+      amount: number;
+    };
   };
   accessories: {
     name: string;
     quantity: number;
-    unit?: "m" | "ud";
+    unit?: "m" | "m²" | "ud";
     unitCost?: number;
     cost?: number;
   }[];
@@ -564,6 +635,21 @@ export type ClothesRail = {
   diameter: 25;
   position: [number, number, number];
 };
+/** A glass front is a separate fitting, never an 18 mm melamine cutting panel. */
+export type FrontDoor = {
+  id: string;
+  name: string;
+  kind: "front-door";
+  surface: "glass" | "aluminum-glass";
+  size: [number, number, number];
+  position: [number, number, number];
+  glassThickness: 6;
+  glassWidth: number;
+  glassHeight: number;
+  glassArea: number;
+  frameMeters: number;
+};
+export type Fixture = ClothesRail | FrontDoor;
 export function clothesRailRates(
   settings: Pick<Settings, "clothesRailRate" | "clothesRailSupport">,
 ) {
@@ -632,6 +718,23 @@ export function validateConfig(product: Product, config: Config): true {
   }
   const construction = getConstruction(product);
   const options = getConstructionOptions(product, config);
+  const front = config.front ?? "melamine";
+  if (
+    !(config.doors === "none" && front === "melamine") &&
+    !getFrontOptions(product).includes(front)
+  )
+    throw new Error("Este tipo de frente no está habilitado para el modelo.");
+  if (
+    (construction.kind === "desk" || construction.kind === "open-shelf") &&
+    getFrontOptions(product).some((option) => option !== "melamine")
+  )
+    throw new Error("Esta construcción abierta no admite frentes de vidrio.");
+  if (front !== "melamine" && config.doors === "none")
+    throw new Error("Selecciona puertas para utilizar un frente de vidrio.");
+  if (front !== "melamine" && config.handle !== "exterior")
+    throw new Error(
+      "Los frentes de vidrio requieren jalador exterior en este modelo preliminar.",
+    );
   if (
     !options.modules.includes(config.modules) ||
     !options.shelves.includes(config.shelves) ||
@@ -722,6 +825,13 @@ export function validateConfig(product: Product, config: Config): true {
       ? { ...config, height: config.height - construction.plinthHeight }
       : config,
   );
+  if (
+    front !== "melamine" &&
+    (layout.lowerHeight || layout.interiorHeight) - 2 * FRONT_GAP > 1500
+  )
+    throw new Error(
+      "Los frentes de vidrio admiten hasta 1500 mm de alto por puerta; reduce el alto o utiliza melamina.",
+    );
   const shelfZone =
     construction.kind === "wardrobe"
       ? wardrobeLayout(config, construction).mainHeight
@@ -804,7 +914,7 @@ function buildWithSettings(
     } = verticalLayout(config),
     widths = moduleWidths(config);
   const panels: Panel[] = [];
-  const fixtures: ClothesRail[] = [];
+  const fixtures: Fixture[] = [];
   const plainEdges: Panel["edges"] = {
     top: "Ninguno",
     bottom: "Ninguno",
@@ -832,6 +942,27 @@ function buildWithSettings(
     door = false,
   ) {
     // Top/bottom end the length axis; left/right end the width axis. Front is +Z.
+    const front = config.front ?? "melamine";
+    if (door && front !== "melamine") {
+      const frameWidth = front === "aluminum-glass" ? 20 : 0;
+      const depth = front === "aluminum-glass" ? 20 : 6;
+      const glassWidth = size[0] - frameWidth * 2;
+      const glassHeight = size[1] - frameWidth * 2;
+      fixtures.push({
+        id,
+        name: `${name} · ${front === "glass" ? "vidrio" : "vidrio con marco de aluminio"}`,
+        kind: "front-door",
+        surface: front,
+        size: [size[0], size[1], depth],
+        position: [position[0], position[1], D / 2 - depth / 2],
+        glassThickness: 6,
+        glassWidth,
+        glassHeight,
+        glassArea: (glassWidth * glassHeight) / 1e6,
+        frameMeters: frameWidth ? (2 * (size[0] + size[1])) / 1000 : 0,
+      });
+      return;
+    }
     panels.push({
       id,
       name,
@@ -1230,17 +1361,39 @@ function buildWithSettings(
         (panel.edges.right === "Ninguno" ? 0 : panel.length),
       0,
     ) / 1000;
-  const railMeters = fixtures.reduce(
+  const rails = fixtures.filter(
+    (fixture): fixture is ClothesRail => fixture.kind === "clothes-rail",
+  );
+  const fronts = fixtures.filter(
+    (fixture): fixture is FrontDoor => fixture.kind === "front-door",
+  );
+  const railMeters = rails.reduce(
     (total, fixture) => total + fixture.length / 1000,
     0,
   );
   const railRates = clothesRailRates(settings);
   const railCost =
-    railMeters * railRates.perMeter +
-    fixtures.length * 2 * railRates.perSupport;
+    railMeters * railRates.perMeter + rails.length * 2 * railRates.perSupport;
   const doorPanels = panels.filter((panel) => panel.door),
-    doors = doorPanels.length,
-    hardware = doors * settings.doorHardware + railCost;
+    doors = doorPanels.length + fronts.length,
+    hardware = doorPanels.length * settings.doorHardware + railCost;
+  const frontRates = getFrontRates(settings);
+  const glassArea = fronts.reduce((sum, front) => sum + front.glassArea, 0);
+  const aluminumFronts = fronts.filter(
+    (front) => front.surface === "aluminum-glass",
+  );
+  const frameMeters = aluminumFronts.reduce(
+    (sum, front) => sum + front.frameMeters,
+    0,
+  );
+  const glassQuantity =
+    frontRates.glass.basis === "unit" ? fronts.length : glassArea;
+  const aluminumQuantity =
+    frontRates.aluminum.basis === "unit" ? aluminumFronts.length : frameMeters;
+  const frontCost =
+    glassQuantity * frontRates.glass.amount +
+    aluminumQuantity * frontRates.aluminum.amount +
+    fronts.length * frontRates.hardware;
   const materials = panels.reduce(
     (sum, panel) =>
       sum + ((panel.length * panel.width) / 1e6) * rates.get(panel.material)!,
@@ -1249,10 +1402,26 @@ function buildWithSettings(
   const installation = config.install ? settings.installation : 0,
     delivery = config.transport ? settings.delivery : 0;
   const cost =
-    product.basePrice + materials + edges * settings.edgeRate + hardware;
-  const price =
-    Math.ceil((cost / (1 - settings.margin) + installation + delivery) / 10) *
-    10;
+    product.basePrice +
+    materials +
+    edges * settings.edgeRate +
+    hardware +
+    frontCost;
+  const sellingBase =
+    product.pricing && product.pricing.basis !== "calculated"
+      ? {
+          basis: product.pricing.basis,
+          quantity: product.pricing.basis === "unit" ? 1 : W / 1000,
+          unitPrice: product.pricing.amount,
+          amount:
+            product.pricing.amount *
+            (product.pricing.basis === "unit" ? 1 : W / 1000),
+        }
+      : undefined;
+  const furniturePrice = sellingBase
+    ? sellingBase.amount + frontCost / (1 - settings.margin)
+    : cost / (1 - settings.margin);
+  const price = Math.ceil((furniturePrice + installation + delivery) / 10) * 10;
   return {
     panels,
     ...(fixtures.length ? { fixtures } : {}),
@@ -1267,9 +1436,11 @@ function buildWithSettings(
       labor: product.basePrice,
       installation,
       delivery,
+      ...(fronts.length ? { fronts: frontCost } : {}),
+      ...(sellingBase ? { sellingBase } : {}),
     },
     accessories: [
-      ...(fixtures.length
+      ...(rails.length
         ? [
             {
               name: "Barra de colgado metálica Ø25 mm",
@@ -1280,10 +1451,45 @@ function buildWithSettings(
             },
             {
               name: "Soportes de barra de colgado",
-              quantity: fixtures.length * 2,
+              quantity: rails.length * 2,
               unit: "ud" as const,
               unitCost: railRates.perSupport,
-              cost: fixtures.length * 2 * railRates.perSupport,
+              cost: rails.length * 2 * railRates.perSupport,
+            },
+          ]
+        : []),
+      ...(fronts.length
+        ? [
+            {
+              name: "Vidrio de frente 6 mm (medida preliminar)",
+              quantity: glassQuantity,
+              unit:
+                frontRates.glass.basis === "unit"
+                  ? ("ud" as const)
+                  : ("m²" as const),
+              unitCost: frontRates.glass.amount,
+              cost: glassQuantity * frontRates.glass.amount,
+            },
+            ...(aluminumFronts.length
+              ? [
+                  {
+                    name: "Marco de aluminio de frente 20 mm (perímetro exterior preliminar)",
+                    quantity: aluminumQuantity,
+                    unit:
+                      frontRates.aluminum.basis === "unit"
+                        ? ("ud" as const)
+                        : ("m" as const),
+                    unitCost: frontRates.aluminum.amount,
+                    cost: aluminumQuantity * frontRates.aluminum.amount,
+                  },
+                ]
+              : []),
+            {
+              name: "Herrajes y jalador exterior para frente de vidrio (juego)",
+              quantity: fronts.length,
+              unit: "ud" as const,
+              unitCost: frontRates.hardware,
+              cost: fronts.length * frontRates.hardware,
             },
           ]
         : []),
@@ -1299,7 +1505,7 @@ function buildWithSettings(
           config.handle === "push"
             ? "Sistema push"
             : `Jalador ${config.handle}`,
-        quantity: doors,
+        quantity: doorPanels.length,
       },
       {
         name: "Soportes de repisa",

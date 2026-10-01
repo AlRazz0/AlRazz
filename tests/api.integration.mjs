@@ -120,6 +120,8 @@ function publicOnly(value) {
     "doorHardware",
     "clothesRailRate",
     "clothesRailSupport",
+    "frontRates",
+    "amount",
     "breakdown",
     "owner_hash",
     "snapshot",
@@ -154,13 +156,35 @@ function publicOnly(value) {
       if (key === "geometry") {
         assert.ok(Array.isArray(item) && item.length > 0);
         for (const panel of item) {
+          const keys = ["material", "position", "size"];
+          if ("door" in panel) {
+            assert.equal(typeof panel.door, "boolean");
+            keys.push("door");
+          }
+          if ("shape" in panel) {
+            assert.equal(panel.shape, "cylinder");
+            assert.equal(panel.door, undefined);
+            assert.equal(panel.surface, undefined);
+            keys.push("shape");
+          }
+          if ("surface" in panel) {
+            assert.ok(["glass", "aluminum-glass", "placeholder"].includes(panel.surface));
+            if (panel.surface !== "placeholder") assert.equal(panel.door, true);
+            keys.push("surface");
+          }
+          if ("rotationY" in panel) {
+            assert.ok(Number.isFinite(panel.rotationY));
+            assert.ok(Math.abs(panel.rotationY) <= Math.PI * 2);
+            keys.push("rotationY");
+          }
+          if ("handle" in panel) {
+            assert.equal(panel.door, true);
+            assert.ok(["push", "exterior", "embutido"].includes(panel.handle));
+            keys.push("handle");
+          }
           assert.deepEqual(
             Object.keys(panel).sort(),
-            panel.shape === "cylinder"
-              ? ["material", "position", "shape", "size"]
-              : "door" in panel
-              ? ["door", "material", "position", "size"]
-              : ["material", "position", "size"],
+            keys.sort(),
           );
           assert.equal(panel.size.length, 3);
           assert.equal(panel.position.length, 3);

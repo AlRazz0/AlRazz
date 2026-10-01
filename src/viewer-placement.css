@@ -1,0 +1,6 @@
+.viewer-placements { position:absolute; inset:0; z-index:4; pointer-events:none; }
+.viewer-placements[hidden], .viewer-placement[hidden], .viewer-placement-leader[hidden] { display:none; }
+.viewer-placement { position:absolute; display:grid; place-items:center; width:46px; height:46px; min-width:46px; min-height:46px; padding:0; transform:translate(-50%,-50%); border:1px solid #ffffffd9; border-radius:50%; color:#fff; background:#242821ef; box-shadow:0 3px 15px #24282130; font:300 31px/1 Arial,sans-serif; cursor:pointer; pointer-events:auto; touch-action:manipulation; transition:background .16s,box-shadow .16s; }
+.viewer-placement:hover { background:#647052; box-shadow:0 4px 20px #24282145; }
+.viewer-placement:focus-visible { outline:3px solid #aa7241; outline-offset:4px; background:#46503b; }
+.viewer-placement-leader { position:absolute; height:1px; background:#35402bc0; transform-origin:0 50%; pointer-events:none; }
