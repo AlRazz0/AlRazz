@@ -131,6 +131,8 @@ function publicOnly(value) {
     "ADMIN_TOTP_SECRET",
     "ADMIN_RECOVERY_HASHES",
     "RESEND_API_KEY",
+    "ADMIN_EMAIL_RELAY_SECRET",
+    "ADMIN_EMAIL_RELAY_URL",
     "panels",
     "length",
     "thickness",

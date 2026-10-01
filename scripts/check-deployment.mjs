@@ -75,7 +75,7 @@ export function checkConfig(config) {
     "Publica solo dist/client como archivos estáticos y conserva /api/* en el Worker.",
   );
   assert(
-    [...requiredSecrets, "RESEND_API_KEY", "ADMIN_EMAIL_FROM"].every(
+    [...requiredSecrets, "RESEND_API_KEY", "ADMIN_EMAIL_FROM", "ADMIN_EMAIL_RELAY_SECRET", "ADMIN_EMAIL_RELAY_URL"].every(
       (key) => !(key in (config.vars || {})),
     ),
     "Las credenciales administrativas deben ser secretos de Cloudflare, no vars públicas en Git.",

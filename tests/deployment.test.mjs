@@ -52,6 +52,10 @@ test("deployment never serves the Worker folder or puts private credentials into
     "ADMIN_TOTP_SECRET",
     "ADMIN_RECOVERY_HASHES",
     "SESSION_SECRET",
+    "ADMIN_EMAIL_RELAY_SECRET",
+    "ADMIN_EMAIL_RELAY_URL",
+    "RESEND_API_KEY",
+    "ADMIN_EMAIL_FROM",
   ]) {
     const config = provisionedConfig();
     config.vars = { [key]: "test-fixture-only" };

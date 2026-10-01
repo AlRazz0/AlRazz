@@ -8,7 +8,7 @@ El desafío caduca a los cinco minutos y admite intentos limitados. El código d
 
 1. Abre [el panel de la web publicada](https://alrazz.pages.dev/admin), o pulsa seis veces seguidas el logotipo **El capo** del pie de página. Deja menos de cuatro segundos entre pulsaciones. Este gesto solo abre el acceso: siguen siendo obligatorios la contraseña y el segundo factor.
 2. Introduce el correo autorizado y la contraseña de producción. Pulsa **Continuar**.
-3. Abre la aplicación autenticadora vinculada, introduce su código vigente de seis dígitos y pulsa **Verificar y entrar**. El envío por correo solo funciona cuando está configurado; la interfaz indica si está disponible.
+3. Abre la aplicación autenticadora vinculada, introduce su código vigente de seis dígitos y pulsa **Verificar y entrar**. Si está activado el correo, también puedes pulsar **Recibir un código por correo**, luego **Enviar código al correo autorizado**, consultar tu Gmail e introducir los seis dígitos. Revisa Spam si no aparece. El enlace permanece desactivado hasta configurar el envío; consulta la [activación con Gmail](correo-gmail.md).
 4. En **Catálogo**, pulsa el lápiz **Editar** del modelo. El editor reúne **General**, **Medidas y distribución**, **Acabados**, **Imagen y galería** y **Publicación**, junto a una vista 3D que muestra los cambios. Revisa la configuración y pulsa **Guardar cambios**.
 5. Usa **Ajustes del taller** para acabados, costos y contactos, y termina con **Guardar ajustes**. Pulsa **Cerrar sesión** al terminar en un equipo compartido.
 
