@@ -19,7 +19,7 @@ La identidad visible es **El capo**, con la firma **Muebles en melamina Marlon**
 - Resumen de solicitud e imagen PNG para el cliente. Despiece preliminar y CSV exclusivos del administrador, con segundo factor verificado.
 - Dos contactos de WhatsApp configurables desde el panel. El cliente elige el destinatario y envía su mensaje en WhatsApp; no hay envío automático ni simultáneo a ambos números.
 - Entradas de sección, transiciones del catálogo y movimiento de cámara y puertas 3D, respetando la preferencia de movimiento reducido.
-- Panel privado con correo, contraseña y segundo factor: autenticador, correo opcional o recuperación de un solo uso. Materiales, costos, margen, plazos orientativos y disponibilidad.
+- Panel privado con correo, contraseña y segundo factor: autenticador, correo mediante [Gmail propio](docs/correo-gmail.md) o Resend, o recuperación de un solo uso. El envío requiere autorización y configuración; materiales, costos, margen, plazos y disponibilidad se administran desde el panel.
 - CSV/JSON con vista previa y validación antes de importar borradores. Un CSV exportado de Google Sheets puede usarse directamente con la plantilla.
 
 **Los modelos, precios y plazos iniciales son datos de muestra.** Los nombres y muestras comerciales tienen [fuentes oficiales documentadas](docs/material-sources.md), pero no confirman existencias en Cusco ni equivalencia colorimétrica de una pantalla. Todo importe es referencial y el despiece está marcado «no autorizado para producción».
@@ -74,7 +74,7 @@ La primera publicación se realizó desde Wrangler con OAuth. El flujo manual de
 
 La [guía de Pages](docs/pages.md) documenta la dirección corta: sirve el frontend estático y conecta `/api/*` al mismo Worker mediante un binding fijo. Se conservan D1 y la autenticación. Cada entrega con cambios de interfaz debe publicar el Worker y la copia de Pages del mismo commit.
 
-Antes de operar comercialmente, confirmar tarifas, materiales, contactos y disponibilidad reales, y validar las piezas con el taller. El acceso completo ya funcionó en Workers Free; no se han medido sus métricas exactas de CPU ni su capacidad bajo carga. El envío de códigos por correo requiere configurar un remitente y proveedor, según la [guía de seguridad](docs/admin-security.md).
+Antes de operar comercialmente, confirmar tarifas, materiales, contactos y disponibilidad reales, y validar las piezas con el taller. El acceso completo ya funcionó en Workers Free; no se han medido sus métricas exactas de CPU ni su capacidad bajo carga. El envío de códigos requiere [autorizar Gmail mediante Apps Script](docs/correo-gmail.md), sin comprar dominio, o configurar Resend con dominio propio, según la [guía de seguridad](docs/admin-security.md).
 
 No publicar el directorio completo `dist/` como archivos estáticos: la parte pública es `dist/client` y la API requiere su Worker. Nunca subir `.dev.vars`, cookies, secretos, `.wrangler/` ni `node_modules/`. No existe acceso administrativo predeterminado ni reclamación de propietario por el primer visitante.
 

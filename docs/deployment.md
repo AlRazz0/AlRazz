@@ -49,7 +49,7 @@ Configurar el entorno `production` en GitHub Actions con los secretos `CLOUDFLAR
 
 El listado de secretos de Cloudflare permite comprobar sus nombres, no sus valores. La prueba final comprueba que la aplicación reconoce una configuración administrativa válida. El aprovisionamiento inicial del Worker y sus secretos se realiza antes del primer flujo; un Worker inexistente o sin secretos hace fallar la comprobación previa y no se publica a medias.
 
-Los códigos enviados por correo son opcionales y requieren `RESEND_API_KEY` y `ADMIN_EMAIL_FROM`, con remitente verificado. El flujo no configura un proveedor de correo, no envía pruebas automáticamente y no activa planes de pago. Hasta resolver el envío gratuito, la interfaz debe mostrar su disponibilidad real.
+Los códigos enviados por correo admiten dos transportes: [Google Apps Script con Gmail propio](correo-gmail.md), sin comprar dominio, o Resend con remitente de dominio verificado. El primero usa `ADMIN_EMAIL_PROVIDER=apps-script`, `ADMIN_EMAIL_RELAY_URL` y `ADMIN_EMAIL_RELAY_SECRET`; el segundo conserva `RESEND_API_KEY` y `ADMIN_EMAIL_FROM`. La publicación de código no concede permisos de Google ni activa el correo por sí sola. Configura y autoriza el transporte, comprueba recepción real y acceso con ese código. El flujo de CI no envía pruebas ni activa planes de pago.
 
 ## Cómo funciona el flujo
 

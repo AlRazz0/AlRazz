@@ -3,7 +3,7 @@ import { createHash, createHmac, scryptSync } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { Miniflare, createFetchMock } from "miniflare";
+import { Miniflare, createFetchMock, fetch as mockFetch } from "miniflare";
 
 // Isolated security fixtures only. Never read .dev.vars, real credentials, local
 // development D1, or the network. The compiled Worker is the code under test.
@@ -24,6 +24,12 @@ const bindings = {
   SESSION_SECRET: "isolated-session-secret-not-for-deployment-1234567890",
   RESEND_API_KEY: "re_isolated-test-key-never-real",
   ADMIN_EMAIL_FROM: "AlRazz Test <access@example.test>",
+};
+const relayBindings = {
+  ADMIN_EMAIL_PROVIDER: "apps-script",
+  ADMIN_EMAIL_RELAY_URL:
+    "https://script.google.com/macros/s/isolated-auth-relay/exec",
+  ADMIN_EMAIL_RELAY_SECRET: "abcdef0123456789".repeat(4),
 };
 
 // Independent RFC 6238 HMAC-SHA1 fixture; the ASCII key corresponds to the
@@ -121,7 +127,13 @@ async function createHarness(
           },
         }
       : {},
-    fetchMock,
+    // Miniflare's default fetchMock bridge reconstructs requests with a follow
+    // redirect mode. Keep the bridge manual so the compiled Worker's own
+    // redirect validation and GET request are exercised, including POST bodies.
+    outboundService: (request) => mockFetch(request, {
+      dispatcher: fetchMock,
+      redirect: "manual",
+    }),
   };
   const mf = new Miniflare(options);
   let db = await mf.getD1Database("DB");
@@ -199,6 +211,68 @@ async function createHarness(
             ),
             responseOptions: {
               headers: { "Content-Type": "application/json" },
+            },
+          };
+        });
+      return captured;
+    },
+    relay(mode = "accepted") {
+      const captured = [];
+      captured.redirects = [];
+      let envelope;
+      const resultPath = "/macros/echo?user_content_key=isolated-auth";
+      fetchMock
+        .get("https://script.google.com")
+        .intercept({ path: "/macros/s/isolated-auth-relay/exec", method: "POST" })
+        .reply((request) => {
+          captured.push((async () => {
+            const message = JSON.parse(await new Response(request.body).text());
+            assert.deepEqual(Object.keys(message).sort(), [
+              "code", "recipient", "requestId", "signature", "timestamp", "v",
+            ]);
+            assert.equal(message.v, 1);
+            assert.equal(message.recipient, email);
+            assert.match(message.code, /^\d{6}$/);
+            assert.match(message.requestId, /^[a-f0-9]{64}$/);
+            assert.ok(Math.abs(message.timestamp - Math.floor(Date.now() / 1000)) <= 2);
+            assert.equal(
+              message.signature,
+              createHmac("sha256", relayBindings.ADMIN_EMAIL_RELAY_SECRET)
+                .update(JSON.stringify([
+                  "elcapo-admin-email-v1", message.timestamp, message.requestId,
+                  message.recipient, message.code,
+                ]))
+                .digest("hex"),
+            );
+            envelope = message;
+            return message;
+          })());
+          return {
+            statusCode: 302,
+            data: "",
+            responseOptions: {
+              headers: { Location: "https://script.googleusercontent.com" + resultPath },
+            },
+          };
+        });
+      fetchMock
+        .get("https://script.googleusercontent.com")
+        .intercept({ path: resultPath, method: "GET" })
+        .reply((request) => {
+          assert.ok(envelope, "The POST body is captured before its redirect is requested");
+          captured.redirects.push((async () => {
+            assert.equal(
+              await new Response(request.body).text(), "",
+              "No email envelope is forwarded to ContentService",
+            );
+          })());
+          return {
+            statusCode: 200,
+            data: mode === "html"
+              ? "<html>Google authorization required</html>"
+              : JSON.stringify({ sent: true, requestId: envelope.requestId }),
+            responseOptions: {
+              headers: { "Content-Type": mode === "html" ? "text/html" : "application/json" },
             },
           };
         });
@@ -794,6 +868,74 @@ test("unconfigured email delivery fails closed while the authenticator remains u
     const mail = await client.sendEmail();
     assert.equal(mail.status, 503);
     assert.equal((await client.verify("000000", "email")).status, 401);
+    assert.equal((await client.verify()).status, 200);
+  } finally {
+    await h.close();
+  }
+});
+
+test("Apps Script codes require both factors and survive only one successful verification", async () => {
+  const h = await createHarness(relayBindings);
+  try {
+    const client = h.client();
+    assert.equal((await client.sendEmail()).status, 401);
+    const first = await client.login();
+    assert.equal(first.data.emailAvailable, true);
+    assert.equal((await client.state()).data.admin, false);
+    const messages = h.relay();
+    const sent = await client.sendEmail();
+    assert.equal(sent.status, 200);
+    assert.equal(sent.data.sent, true);
+    assert.equal(messages.length, 1);
+    const envelope = await messages[0];
+    assert.equal(messages.redirects.length, 1);
+    await Promise.all(messages.redirects);
+    assert.equal(JSON.stringify(sent.data).includes(envelope.code), false);
+    assert.equal(JSON.stringify(sent.data).includes(envelope.signature), false);
+    assert.equal((await client.state()).data.admin, false);
+    assert.equal(await h.count("admin_auth_sessions"), 0);
+    assert.equal((await client.sendEmail()).status, 429);
+    const copied = client.copy();
+    assert.equal((await client.verify(envelope.code, "email")).status, 200);
+    assert.equal((await client.state()).data.admin, true);
+    assert.equal((await copied.verify(envelope.code, "email")).status, 401);
+    assert.equal(await h.count("admin_auth_sessions"), 1);
+    await client.request({ op: "logout" });
+    assert.equal((await client.state()).data.admin, false);
+  } finally {
+    await h.close();
+  }
+});
+
+test("Apps Script HTTP 200 HTML creates no usable email code or session", async () => {
+  const h = await createHarness(relayBindings);
+  try {
+    const client = h.client();
+    await client.login();
+    const messages = h.relay("html");
+    const sent = await client.sendEmail();
+    assert.equal(sent.status, 503);
+    assert.equal(sent.data.code, "EMAIL_DELIVERY_FAILED");
+    const envelope = await messages[0];
+    assert.equal(messages.redirects.length, 1);
+    await Promise.all(messages.redirects);
+    assert.equal((await client.verify(envelope.code, "email")).status, 401);
+    assert.equal(await h.count("admin_auth_sessions"), 0);
+    assert.equal((await client.verify()).status, 200);
+  } finally {
+    await h.close();
+  }
+});
+
+test("invalid relay configuration never falls back to existing Resend credentials", async () => {
+  const h = await createHarness({ ...relayBindings, ADMIN_EMAIL_RELAY_SECRET: "invalid" });
+  try {
+    const client = h.client();
+    const first = await client.login();
+    assert.equal(first.data.emailAvailable, false);
+    const sent = await client.sendEmail();
+    assert.equal(sent.status, 503);
+    assert.equal(sent.data.code, "EMAIL_NOT_CONFIGURED");
     assert.equal((await client.verify()).status, 200);
   } finally {
     await h.close();

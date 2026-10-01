@@ -25,13 +25,15 @@ El archivo privado `.admin-credentials.txt` contiene la contraseña inicial loca
 
 ## Correo como segundo factor
 
-La integración utiliza [Resend Send Email](https://resend.com/docs/api-reference/emails/send-email). Requiere `RESEND_API_KEY` y `ADMIN_EMAIL_FROM` en los secretos del servidor, con un [dominio remitente verificado](https://resend.com/docs/dashboard/domains/introduction). El correo autorizado recibe el código; no se utiliza su contraseña de Gmail.
+El transporte se selecciona con `ADMIN_EMAIL_PROVIDER`. Para una cuenta Gmail sin dominio propio, `apps-script` utiliza un relay del propietario en Google Apps Script: requiere `ADMIN_EMAIL_RELAY_URL` y `ADMIN_EMAIL_RELAY_SECRET` en los secretos del servidor. La [guía de activación](correo-gmail.md) explica la autorización de envío, los límites y la prueba de recepción. MailApp solo necesita permiso para enviar; no se utiliza la contraseña de Gmail ni acceso de lectura al buzón.
+
+La opción `resend` (predeterminada para instalaciones anteriores) utiliza [Resend Send Email](https://resend.com/docs/api-reference/emails/send-email). Requiere `RESEND_API_KEY` y `ADMIN_EMAIL_FROM`, con un [dominio remitente verificado](https://resend.com/docs/dashboard/domains/introduction). El dominio compartido `resend.dev` solo sirve para pruebas y no se presenta como remitente de producción.
 
 Hasta configurar el proveedor, la interfaz indica que el envío está pendiente y no simula un mensaje entregado. El usuario debe solicitar cada envío expresamente después de la contraseña. Hay límites de envíos y reintentos; reenviar invalida el código anterior. Un fallo del proveedor no abre una sesión ni devuelve el código en JSON. La confirmación de la API de correo significa aceptación del envío, no entrega comprobada al buzón. Antes de publicar, realiza una prueba real de recepción y revisa las políticas de envío del dominio.
 
 ## Producción
 
-Configura valores nuevos en los secretos de Cloudflare: `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, `ADMIN_TOTP_SECRET`, `ADMIN_RECOVERY_HASHES` (array JSON de hashes) y `SESSION_SECRET`. Para correo, añade los dos secretos opcionales indicados arriba. No reutilices los secretos de la muestra ni pongas valores en `VITE_*`, `wrangler.jsonc`, un PR o la conversación. La semilla del autenticador se entrega al propietario por un canal privado de aprovisionamiento, nunca como respuesta pública.
+Configura valores nuevos en los secretos de Cloudflare: `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, `ADMIN_TOTP_SECRET`, `ADMIN_RECOVERY_HASHES` (array JSON de hashes) y `SESSION_SECRET`. Para correo, añade la configuración del transporte elegido indicada arriba. No reutilices los secretos de la muestra ni pongas valores en `VITE_*`, `wrangler.jsonc`, un PR o la conversación. La semilla del autenticador se entrega al propietario por un canal privado de aprovisionamiento, nunca como respuesta pública.
 
 El verificador usa `node:crypto` con `nodejs_compat`, soportado por [Cloudflare Workers](https://developers.cloudflare.com/workers/runtime-apis/nodejs/crypto/). La comprobación scrypt se ejecuta exclusivamente en el Durable Object interno `AdminPasswordVerifier`, con backend SQLite compatible con Workers Free. Sus [límites específicos](https://developers.cloudflare.com/durable-objects/platform/limits/) contemplan 30 segundos de CPU por petición; así se mantiene el perfil criptográfico sin ejecutar ese cálculo en el Worker público, cuyo presupuesto gratuito es de 10 ms.
 

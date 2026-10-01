@@ -5,6 +5,10 @@ ADMIN_PASSWORD_HASH=""
 ADMIN_TOTP_SECRET=""
 ADMIN_RECOVERY_HASHES="[]"
 SESSION_SECRET=""
-# Opcional: habilitar códigos por correo después de verificar el remitente.
+# Opcional: apps-script para Gmail propio, resend para un dominio verificado.
+# No activar hasta autorizar y probar el servicio elegido.
+ADMIN_EMAIL_PROVIDER="resend"
+ADMIN_EMAIL_RELAY_URL=""
+ADMIN_EMAIL_RELAY_SECRET=""
 RESEND_API_KEY=""
 ADMIN_EMAIL_FROM=""
