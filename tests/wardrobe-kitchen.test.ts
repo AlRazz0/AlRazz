@@ -36,7 +36,10 @@ function verify(result: Result, config: Config) {
   const boxes: Box[] = [
     ...result.panels,
     ...(result.fixtures || []).map((f) => ({
-      size: [f.length, f.diameter, f.diameter] as [number, number, number],
+      size:
+        f.kind === "clothes-rail"
+          ? ([f.length, f.diameter, f.diameter] as [number, number, number])
+          : f.size,
       position: f.position,
     })),
   ];
@@ -215,7 +218,10 @@ test("rail length and supports are billed as hardware and never enter melamine c
     clothesRailSupport: 13,
   };
   const result = buildFurniture(model, model.defaults, settings);
-  const meters = result.fixtures!.reduce((sum, f) => sum + f.length / 1000, 0);
+  const meters = result.fixtures!.reduce(
+    (sum, f) => sum + (f.kind === "clothes-rail" ? f.length / 1000 : 0),
+    0,
+  );
   const fittings = meters * 90 + result.fixtures!.length * 2 * 13;
   assert.equal(
     result.breakdown.hardware,
@@ -286,9 +292,10 @@ test("new construction constraints reject impossible hanging, plinth and cabinet
     ...wardrobe,
     construction: { kind: "wardrobe", hangingModules: 2 },
   };
-  assert.deepEqual(getConstructionOptions(allHang, { modules: 2 }).shelves, [
-    0,
-  ]);
+  assert.deepEqual(
+    getConstructionOptions(allHang, { modules: 2 }).shelves,
+    [0],
+  );
   assert.equal(getConstructionOptions(allHang).modules[0], 2);
   assert.throws(() => validateConfig(allHang, allHang.defaults), /compatible/);
   for (const change of [

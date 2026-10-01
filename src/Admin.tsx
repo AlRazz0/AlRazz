@@ -61,6 +61,7 @@ import { api, download } from "../lib/api";
 import {
   defaultSettings,
   getConstruction,
+  getFrontRates,
   productCategories,
   seedProducts,
   settingsSchema,
@@ -85,6 +86,7 @@ import { constructionTemplates } from "../lib/product-templates";
 import { constructionLabels } from "./construction-labels";
 import { AdminProductEditor } from "./AdminProductEditor";
 import { productEditorError } from "./admin-product-preview";
+import { KitchenAdmin } from "./KitchenAdmin";
 
 type AdminSnapshot = {
   admin: boolean;
@@ -1215,6 +1217,9 @@ export default function Admin() {
               <Ruler size={17} />
               Despiece
             </TabsTrigger>
+            <TabsTrigger value="kitchens">
+              <SlidersHorizontal size={17} /> Cocinas
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="catalog">
             <section className="admin-panel">
@@ -1896,6 +1901,112 @@ export default function Admin() {
                     note="Precio = costo / (1 − margen), más servicios."
                   />
                 </div>
+                <fieldset className="admin-rate-fieldset">
+                  <legend>Costos adicionales de frentes especiales</legend>
+                  <p>
+                    Estos importes son costos internos. Se añade el margen
+                    comercial antes de sumarlos a la venta, tanto con precio
+                    calculado como con tarifa por unidad o metro. Solo se
+                    aplican a las puertas de vidrio.
+                  </p>
+                  <div className="admin-form-grid">
+                    <label className="admin-field">
+                      <span>Vidrio · forma de cobrar</span>
+                      <select
+                        value={getFrontRates(settings).glass.basis}
+                        onChange={(event) =>
+                          setSetting("frontRates", {
+                            ...settings.frontRates,
+                            glass: {
+                              ...getFrontRates(settings).glass,
+                              basis: event.target.value as
+                                "square-meter" | "unit",
+                            },
+                          })
+                        }
+                      >
+                        <option value="square-meter">Por m² de vidrio</option>
+                        <option value="unit">Por hoja de vidrio</option>
+                      </select>
+                      <small>
+                        Con marco se mide el vidrio interior, descontando 20 mm
+                        por borde.
+                      </small>
+                    </label>
+                    <NumberField
+                      title={
+                        getFrontRates(settings).glass.basis === "unit"
+                          ? "Vidrio · costo S/ por hoja"
+                          : "Vidrio · costo S/ por m²"
+                      }
+                      max={10000}
+                      step={0.1}
+                      value={getFrontRates(settings).glass.amount}
+                      change={(amount) =>
+                        setSetting("frontRates", {
+                          ...settings.frontRates,
+                          glass: { ...getFrontRates(settings).glass, amount },
+                        })
+                      }
+                    />
+                    <label className="admin-field">
+                      <span>Marco de aluminio · forma de cobrar</span>
+                      <select
+                        value={getFrontRates(settings).aluminum.basis}
+                        onChange={(event) =>
+                          setSetting("frontRates", {
+                            ...settings.frontRates,
+                            aluminum: {
+                              ...getFrontRates(settings).aluminum,
+                              basis: event.target.value as
+                                "linear-meter" | "unit",
+                            },
+                          })
+                        }
+                      >
+                        <option value="linear-meter">
+                          Por metro de perímetro exterior
+                        </option>
+                        <option value="unit">Por marco completo</option>
+                      </select>
+                      <small>
+                        Por metro: 2 × (ancho + alto) de cada puerta, en metros.
+                      </small>
+                    </label>
+                    <NumberField
+                      title={
+                        getFrontRates(settings).aluminum.basis === "unit"
+                          ? "Aluminio · costo S/ por marco"
+                          : "Aluminio · costo S/ por metro lineal"
+                      }
+                      max={10000}
+                      step={0.1}
+                      value={getFrontRates(settings).aluminum.amount}
+                      change={(amount) =>
+                        setSetting("frontRates", {
+                          ...settings.frontRates,
+                          aluminum: {
+                            ...getFrontRates(settings).aluminum,
+                            amount,
+                          },
+                        })
+                      }
+                    />
+                    <NumberField
+                      title="Herrajes para vidrio · costo S/ por puerta"
+                      max={2000}
+                      step={0.1}
+                      value={getFrontRates(settings).hardware}
+                      change={(hardware) =>
+                        setSetting("frontRates", {
+                          ...settings.frontRates,
+                          hardware,
+                        })
+                      }
+                      note="Sustituye los herrajes comunes en cada puerta de vidrio, con o sin marco."
+                    />
+                  </div>
+                </fieldset>
               </section>
               <div className="admin-save-bar">
                 <p>
@@ -2088,6 +2199,9 @@ export default function Admin() {
                 )}
               </div>
             </section>
+          </TabsContent>
+          <TabsContent value="kitchens">
+            <KitchenAdmin />
           </TabsContent>
         </Tabs>
       </main>

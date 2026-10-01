@@ -1848,6 +1848,35 @@ footer > span {
     padding: 20px;
   }
 }
-.footer-brand-access { border: 0; padding: 0; background: transparent; cursor: pointer; touch-action: manipulation; }
-.footer-brand-access:focus-visible { outline: 2px solid #a93f2d; outline-offset: 8px; }
-.contact-facebook { display: inline-flex; align-items: center; gap: 9px; margin-top: 24px; padding-bottom: 7px; border-bottom: 1px solid currentColor; font-size: 14px; }
+.footer-brand-access {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.footer-brand-access:focus-visible {
+  outline: 2px solid #a93f2d;
+  outline-offset: 8px;
+}
+.contact-facebook {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 24px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid currentColor;
+  font-size: 14px;
+}
+.hero-kitchen-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  margin-top: 20px;
+  color: inherit;
+  font-size: 14px;
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 5px;
+}

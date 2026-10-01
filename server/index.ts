@@ -13,6 +13,12 @@ import {
 } from "./admin-auth.ts";
 import { z } from "zod";
 import { publicGeometry } from "../lib/public-geometry";
+import {
+  buildKitchen,
+  kitchenPlanSchema,
+  type KitchenSnapshot,
+  type KitchenDesign,
+} from "../lib/kitchen";
 export { AdminPasswordVerifier } from "./admin-password.ts";
 import {
   buildFurniture,
@@ -232,8 +238,12 @@ function publicSettings(settings: Settings) {
 }
 
 function publicProduct(product: Product, price: number) {
-  const { basePrice: _basePrice, ...safe } = product;
-  return { ...safe, publicPrice: price };
+  const { basePrice: _basePrice, pricing, ...safe } = product;
+  return {
+    ...safe,
+    ...(pricing ? { pricing: { basis: pricing.basis } } : {}),
+    publicPrice: price,
+  };
 }
 
 function publicResult(result: ReturnType<typeof buildFurniture>) {
@@ -269,6 +279,153 @@ async function calculate(db: Database, data: Record<string, unknown>) {
     settings,
     result: validateDomain(() => buildFurniture(product, config, settings)),
   };
+}
+
+async function calculateKitchen(db: Database, data: Record<string, unknown>) {
+  const plan = kitchenPlanSchema.parse(data.plan);
+  const [products, { settings }] = await Promise.all([
+    readProducts(db),
+    readSettings(db),
+  ]);
+  return validateDomain(() => buildKitchen(plan, products, settings));
+}
+
+type KitchenRow = {
+  id: string;
+  name: string;
+  version: number;
+  created_at: string;
+  snapshot: string;
+};
+function publicKitchen(row: KitchenRow): KitchenDesign {
+  const snapshot = JSON.parse(row.snapshot) as KitchenSnapshot;
+  return {
+    id: row.id,
+    name: row.name,
+    version: row.version,
+    created: row.created_at,
+    plan: snapshot.plan,
+    result: snapshot.result,
+  };
+}
+async function saveKitchen(
+  request: Request,
+  db: Database,
+  data: Record<string, unknown>,
+) {
+  const snapshot = await calculateKitchen(db, data);
+  const identity = await owner(request, true);
+  const name = z
+    .string()
+    .trim()
+    .min(1)
+    .max(80)
+    .parse(data.name ?? "Mi cocina");
+  const row: KitchenRow = {
+    id: crypto.randomUUID(),
+    name,
+    version: 1,
+    created_at: new Date().toISOString(),
+    snapshot: JSON.stringify(snapshot),
+  };
+  // The conditional insert enforces the quota even for concurrent saves.
+  const inserted = await db
+    .prepare(
+      "INSERT INTO kitchens(id,owner_hash,snapshot,name,version,created_at) SELECT ?,?,?,?,1,? WHERE (SELECT count(*) FROM kitchens WHERE owner_hash=? AND deleted_at IS NULL)<50",
+    )
+    .bind(
+      row.id,
+      identity.hash,
+      row.snapshot,
+      row.name,
+      row.created_at,
+      identity.hash,
+    )
+    .run();
+  if (!inserted.meta.changes)
+    throw new HttpError(
+      409,
+      "Has guardado 50 cocinas. Quita una para guardar otra.",
+    );
+  return json(
+    { kitchen: publicKitchen(row) },
+    201,
+    identity.header ? { "Set-Cookie": identity.header } : {},
+  );
+}
+async function removeKitchen(
+  request: Request,
+  db: Database,
+  data: Record<string, unknown>,
+) {
+  const id = z.string().regex(UUID).parse(data.id);
+  const version = positiveVersion.parse(data.version);
+  const identity = await owner(request);
+  if (!identity.hash)
+    throw new HttpError(404, "No se encontró esta cocina en tu selección.");
+  const changed = await db
+    .prepare(
+      "UPDATE kitchens SET deleted_at=?,version=version+1 WHERE id=? AND owner_hash=? AND version=? AND deleted_at IS NULL",
+    )
+    .bind(new Date().toISOString(), id, identity.hash, version)
+    .run();
+  if (!changed.meta.changes)
+    throw new HttpError(
+      409,
+      "Esta cocina cambió o ya no está en tu selección.",
+      "VERSION_CONFLICT",
+    );
+  return json({ removed: true });
+}
+async function kitchenCutList(db: Database, data: Record<string, unknown>) {
+  const selection = z
+    .union([
+      z
+        .object({
+          op: z.literal("kitchen-cut-list"),
+          kitchenId: z.string().regex(UUID),
+        })
+        .strict(),
+      z
+        .object({ op: z.literal("kitchen-cut-list"), plan: kitchenPlanSchema })
+        .strict(),
+    ])
+    .parse(data);
+  let snapshot: KitchenSnapshot;
+  let kitchen: Omit<KitchenRow, "snapshot"> | null = null;
+  if ("kitchenId" in selection) {
+    const row = await db
+      .prepare("SELECT * FROM kitchens WHERE id=? AND deleted_at IS NULL")
+      .bind(selection.kitchenId)
+      .first<KitchenRow>();
+    if (!row)
+      throw new HttpError(
+        404,
+        "Esta cocina ya no está disponible.",
+        "KITCHEN_UNAVAILABLE",
+      );
+    snapshot = JSON.parse(row.snapshot) as KitchenSnapshot;
+    kitchen = {
+      id: row.id,
+      name: row.name,
+      version: row.version,
+      created_at: row.created_at,
+    };
+  } else snapshot = await calculateKitchen(db, selection);
+  return json({
+    source: kitchen ? "saved" : "current",
+    kitchen,
+    plan: snapshot.plan,
+    price: snapshot.result.price,
+    modules: snapshot.modules.map((module) => ({
+      itemId: module.itemId,
+      product: { id: module.product.id, name: module.product.name },
+      config: module.config,
+      result: module.result,
+    })),
+    warning:
+      "Despiece preliminar por módulo. Requiere validación técnica de fabricación e instalación.",
+  });
 }
 
 type Snapshot = {
@@ -609,8 +766,8 @@ async function get(request: Request, env: Env) {
   const url = new URL(request.url);
   const action =
     url.searchParams.get("action") ||
-    ["catalog", "admin", "design", "designs"].find((key) =>
-      url.searchParams.has(key),
+    ["catalog", "admin", "design", "designs", "kitchen", "kitchens"].find(
+      (key) => url.searchParams.has(key),
     ) ||
     "catalog";
   switch (action) {
@@ -673,14 +830,60 @@ async function get(request: Request, env: Env) {
         identity.header ? { "Set-Cookie": identity.header } : {},
       );
     }
+    case "kitchen": {
+      const id = z.string().regex(UUID).parse(url.searchParams.get("id"));
+      const row = await env.DB.prepare(
+        "SELECT * FROM kitchens WHERE id=? AND deleted_at IS NULL",
+      )
+        .bind(id)
+        .first<KitchenRow>();
+      if (!row)
+        throw new HttpError(
+          404,
+          "Esta cocina ya no está disponible.",
+          "KITCHEN_UNAVAILABLE",
+        );
+      return json({ kitchen: publicKitchen(row) });
+    }
+    case "kitchens": {
+      const identity = await owner(request, true);
+      const { results } = await env.DB.prepare(
+        "SELECT * FROM kitchens WHERE owner_hash=? AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 50",
+      )
+        .bind(identity.hash)
+        .all<KitchenRow>();
+      return json(
+        { kitchens: results.map(publicKitchen) },
+        200,
+        identity.header ? { "Set-Cookie": identity.header } : {},
+      );
+    }
+    case "admin-kitchens": {
+      await requireAdmin(request, env);
+      const { results } = await env.DB.prepare(
+        "SELECT id,name,version,created_at FROM kitchens WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT 100",
+      ).all<Omit<KitchenRow, "snapshot">>();
+      return json({
+        kitchens: results.map((row) => ({
+          id: row.id,
+          name: row.name,
+          version: row.version,
+          created: row.created_at,
+        })),
+      });
+    }
     default:
       throw new HttpError(404, "Esta consulta no existe.");
   }
 }
 
-async function post(request: Request, env: Env, quote = false) {
+async function post(
+  request: Request,
+  env: Env,
+  quote: false | "quote" | "kitchen-quote" = false,
+) {
   const data = await bodyOf(request);
-  const op = quote ? "quote" : z.string().parse(data.op);
+  const op = quote || z.string().parse(data.op);
   if (op === "login") return login(request, env, data);
   if (op === "verify-login") return verifyLogin(request, env, data);
   if (op === "request-email-code") return requestEmailCode(request, env);
@@ -688,10 +891,15 @@ async function post(request: Request, env: Env, quote = false) {
   if (op === "logout") return logout(request, env);
   if (op === "quote")
     return json(publicResult((await calculate(env.DB, data)).result));
+  if (op === "kitchen-quote")
+    return json((await calculateKitchen(env.DB, data)).result);
+  if (op === "save-kitchen") return saveKitchen(request, env.DB, data);
+  if (op === "remove-kitchen") return removeKitchen(request, env.DB, data);
   if (op === "save-design") return saveDesign(request, env.DB, data);
   if (op === "remove-design") return mutateDesign(request, env.DB, data, true);
   if (op === "set-quantity") return mutateDesign(request, env.DB, data, false);
   await requireAdmin(request, env);
+  if (op === "kitchen-cut-list") return kitchenCutList(env.DB, data);
   if (op === "cut-list") return cutList(env.DB, data);
   if (op === "product") return saveProduct(env.DB, data);
   if (op === "settings") return saveSettings(env.DB, data);
@@ -707,7 +915,9 @@ export default {
       return new Response("Frontend no disponible.", { status: 404 });
     }
     try {
-      if (pathname !== "/api/store" && pathname !== "/api/quote")
+      if (
+        !["/api/store", "/api/quote", "/api/kitchen-quote"].includes(pathname)
+      )
         throw new HttpError(404, "Esta ruta no existe.");
       if (!env.DB)
         throw new HttpError(
@@ -723,7 +933,15 @@ export default {
       if (request.method === "GET" && pathname === "/api/store")
         return await get(request, env);
       if (request.method === "POST")
-        return await post(request, env, pathname === "/api/quote");
+        return await post(
+          request,
+          env,
+          pathname === "/api/quote"
+            ? "quote"
+            : pathname === "/api/kitchen-quote"
+              ? "kitchen-quote"
+              : false,
+        );
       throw new HttpError(405, "La cotización requiere POST.");
     } catch (error) {
       if (error instanceof AuthError)

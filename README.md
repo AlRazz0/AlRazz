@@ -1,6 +1,6 @@
 # El capo
 
-Plataforma en español para diseñar y cotizar muebles de **melamina de 18 mm**: almacenaje modular, estanterías sin trasera, escritorios abiertos y escritorios con módulo lateral. El catálogo incluye propuestas de libreros, aparadores, TV, veladores, zapateras y auxiliares de cocina. No incluye sofás.
+Plataforma en español para diseñar y cotizar muebles de **melamina de 18 mm**: almacenaje modular, estanterías, escritorios, roperos y cocinas completas por módulos. El catálogo incluye libreros, aparadores, TV, veladores, zapateras, alacenas y vitrinas. No incluye sofás.
 
 La identidad visible es **El capo**, con la firma **Muebles en melamina Marlon**. Los nombres técnicos del repositorio, alojamiento y autenticador se mantienen para conservar las conexiones existentes. Ver [identidad visual](docs/brand-identity.md) y [ampliación del catálogo](docs/catalog-expansion.md): cuatro propuestas adicionales importables y editables desde administración.
 
@@ -12,6 +12,9 @@ La identidad visible es **El capo**, con la firma **Muebles en melamina Marlon**
 - Configurador 3D con giro y zoom, vistas frontal/lateral/superior, apertura de puertas y cotas de ancho, alto y fondo sobre el modelo. Las cotas siguen la cámara y se incluyen en el PNG si están activadas.
 - Selector con 82 referencias comerciales de Hispano, Vesto y Pelíkano, buscador y muestras oficiales alojadas en la propia web. El panel permite editar los acabados sin cambiar código; los colores y vetas del visor son orientativos y la disponibilidad local se confirma con el taller.
 - Motor compartido de geometría, restricciones, despiece y precio. El servidor calcula la cotización; no acepta precios del navegador.
+- [Planificador de cocinas completas](docs/cocinas-modulares.md) en `/cocinas`: seis plantillas lineales/en L, espacios con «+» para añadir módulos compatibles, alacenas, columnas y reservas para equipos. Color, puertas y medidas se editan por módulo; instalación y transporte se cobran una vez.
+- [Doce propuestas adicionales de cocina, vitrinas y almacenaje](docs/coleccion-cocinas-vitrinas.md), administrables como los modelos anteriores. Frentes de melamina, vidrio de 6 mm o aluminio con vidrio, con animación y render ambientado por modelo.
+- [Tarifas configurables](docs/frentes-y-tarifas.md) por unidad, metro lineal o cálculo de materiales; vidrio, perfiles y herrajes se administran por separado. Los costos privados y el despiece no se entregan al cliente.
 - Diseños persistentes con enlace para compartir, cantidades, duplicación y copia histórica de parámetros y precio.
 - Resumen de solicitud e imagen PNG para el cliente. Despiece preliminar y CSV exclusivos del administrador, con segundo factor verificado.
 - Dos contactos de WhatsApp configurables desde el panel. El cliente elige el destinatario y envía su mensaje en WhatsApp; no hay envío automático ni simultáneo a ambos números.
@@ -56,13 +59,14 @@ npm run build
 npm run test:auth-api
 # Con npm run dev activo, exclusivamente contra la base local:
 npm run test:api
+npm run test:kitchen-api
 ```
 
 Las pruebas cubren motor, CSV, criptografía, autenticación, persistencia, aislamiento de visitantes, versiones y costos privados. GitHub Actions ejecuta tipos, pruebas unitarias, compilación y pruebas de seguridad contra Worker/D1 aislados con correo simulado, sin enviar mensajes reales. Integrar un PR no publica automáticamente la web.
 
 ## Publicación
 
-La dirección principal es [alrazz.pages.dev](https://alrazz.pages.dev), con [administración](https://alrazz.pages.dev/admin). La dirección anterior [alrazz.alrazz-cusco.workers.dev](https://alrazz.alrazz-cusco.workers.dev) sigue disponible. Se verificó **Workers Free ($0)** en el panel, D1 tiene ambas migraciones aplicadas y el Worker conserva sus cinco secretos de producción. En ambas direcciones se verificaron las 82 referencias, 79 imágenes, cotización y acceso real con contraseña, TOTP y cierre de sesión; el despiece anónimo devuelve 401 y las mutaciones desde otro origen, 403. La selección de acabados puede ampliarse desde administración sin volver a sembrar la base.
+La dirección principal es [alrazz.pages.dev](https://alrazz.pages.dev), con [administración](https://alrazz.pages.dev/admin) y [cocinas](https://alrazz.pages.dev/cocinas). La dirección anterior [alrazz.alrazz-cusco.workers.dev](https://alrazz.alrazz-cusco.workers.dev) sigue disponible. Se verificó **Workers Free ($0)** en el panel. La versión de cocinas requiere aplicar `0003_kitchens.sql` antes de publicar el Worker y conserva sus secretos administrativos. La selección de acabados puede ampliarse desde administración sin volver a sembrar la base.
 
 La web y su API se sirven desde el mismo origen; el catálogo permanece en D1. La contraseña se verifica en un Durable Object interno SQLite, disponible en el plan gratuito, sin reducir la protección scrypt. Se mantiene el requisito de **costo cero**, dentro de las cuotas gratuitas, sin activar suscripciones de pago.
 

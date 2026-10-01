@@ -4,6 +4,8 @@ import { Switch } from "../components/ui/switch";
 import {
   getConstruction,
   getConstructionOptions,
+  getFrontOptions,
+  frontKinds,
   money,
   productCategories,
   type Config,
@@ -20,7 +22,12 @@ import {
   constructionDescriptions,
   constructionLabels,
 } from "./construction-labels";
-import { MaterialSource, MaterialSwatch } from "./MaterialSwatch";
+import {
+  MaterialDetails,
+  MaterialSource,
+  MaterialSwatch,
+} from "./MaterialSwatch";
+import { FrontSelector, frontLabels } from "./FrontSelector";
 import { materialLabel } from "./materials";
 import Viewer, { type View } from "./Viewer";
 import "./admin-model-editor.css";
@@ -150,6 +157,8 @@ export function AdminProductEditor({
     value.defaults,
     value.limits,
     value.basePrice,
+    value.pricing,
+    value.frontOptions,
     value.category,
     settings,
   ]);
@@ -187,6 +196,9 @@ export function AdminProductEditor({
         modules: template.defaults.modules,
         shelves: template.defaults.shelves,
         doors: template.defaults.doors,
+        ...(template.defaults.doors === "none"
+          ? { front: "melamine" as const }
+          : {}),
       },
     });
   }
@@ -219,6 +231,35 @@ export function AdminProductEditor({
           hangingModules === value.defaults.modules
             ? 0
             : value.defaults.shelves,
+      },
+    });
+  }
+
+  function changeFrontOptions(
+    front: NonNullable<Config["front"]>,
+    enabled: boolean,
+  ) {
+    const current = getFrontOptions(value);
+    const next = enabled
+      ? [...current, front]
+      : current.filter((item) => item !== front);
+    if (!next.length) return;
+    const defaultFront = next.includes(value.defaults.front ?? "melamine")
+      ? value.defaults.front
+      : next[0];
+    change({
+      ...value,
+      frontOptions: next,
+      defaults: {
+        ...value.defaults,
+        ...(value.defaults.doors === "none"
+          ? {}
+          : {
+              front: defaultFront,
+              ...(defaultFront && defaultFront !== "melamine"
+                ? { handle: "exterior" as const }
+                : {}),
+            }),
       },
     });
   }
@@ -435,9 +476,28 @@ export function AdminProductEditor({
                 <Field title="Puertas">
                   <select
                     value={value.defaults.doors}
-                    onChange={(event) =>
-                      setConfig("doors", event.target.value as Config["doors"])
-                    }
+                    onChange={(event) => {
+                      const doors = event.target.value as Config["doors"];
+                      const front =
+                        doors === "none"
+                          ? "melamine"
+                          : getFrontOptions(value).includes(
+                                value.defaults.front ?? "melamine",
+                              )
+                            ? value.defaults.front
+                            : getFrontOptions(value)[0];
+                      change({
+                        ...value,
+                        defaults: {
+                          ...value.defaults,
+                          doors,
+                          front,
+                          ...(front && front !== "melamine"
+                            ? { handle: "exterior" as const }
+                            : {}),
+                        },
+                      });
+                    }}
                   >
                     {options.doors.map((doors) => (
                       <option key={doors} value={doors}>
@@ -577,6 +637,55 @@ export function AdminProductEditor({
               Define el aspecto inicial. Los clientes podrán elegir entre los
               acabados activos.
             </p>
+            {options.doors.some((door) => door !== "none") && (
+              <>
+                <p className="admin-help">
+                  Materiales de puerta que el cliente puede elegir en este
+                  modelo:
+                </p>
+                <div className="admin-front-allowances">
+                  {frontKinds.map((front) => (
+                    <label key={front}>
+                      <input
+                        type="checkbox"
+                        checked={getFrontOptions(value).includes(front)}
+                        disabled={
+                          getFrontOptions(value).length === 1 &&
+                          getFrontOptions(value).includes(front)
+                        }
+                        onChange={(event) =>
+                          changeFrontOptions(front, event.target.checked)
+                        }
+                      />
+                      {frontLabels[front]}
+                    </label>
+                  ))}
+                </div>
+                {value.defaults.doors !== "none" && (
+                  <FrontSelector
+                    value={value.defaults.front}
+                    options={getFrontOptions(value)}
+                    onChange={(front) =>
+                      change({
+                        ...value,
+                        defaults: {
+                          ...value.defaults,
+                          front,
+                          ...(front !== "melamine"
+                            ? { handle: "exterior" as const }
+                            : {}),
+                        },
+                      })
+                    }
+                  />
+                )}
+                <p className="admin-help">
+                  Los frentes de vidrio se limitan a 150 cm de alto por hoja y
+                  usan jalador exterior. El resto del mueble conserva melamina
+                  de 18 mm.
+                </p>
+              </>
+            )}
             <div className="admin-form-grid">
               <Field title="Acabado exterior">
                 <select
@@ -611,6 +720,10 @@ export function AdminProductEditor({
                 <Field title="Sistema de apertura">
                   <select
                     value={value.defaults.handle}
+                    disabled={
+                      !!value.defaults.front &&
+                      value.defaults.front !== "melamine"
+                    }
                     onChange={(event) =>
                       setConfig(
                         "handle",
@@ -643,6 +756,7 @@ export function AdminProductEditor({
                   ),
               )}
             </div>
+            <MaterialDetails material={exterior} label="Tablero exterior" />
             <p className="admin-help">
               Los colores en pantalla son aproximados. Confirma la muestra
               física antes de fabricar.
@@ -728,8 +842,62 @@ export function AdminProductEditor({
                 max={50000}
                 step={0.1}
                 change={(next) => setProduct("basePrice", next)}
-                note="Costo interno; el precio final incluye materiales, herrajes, margen y servicios."
+                note="Costo interno utilizado solo con cotización por materiales y herrajes."
               />
+              <Field
+                title="Forma de cotizar este modelo"
+                note="La tarifa de venta por unidad o por metro incluye materiales, herrajes comunes y mano de obra. Frentes especiales con margen y servicios se suman aparte; el total se redondea a S/ 10."
+              >
+                <select
+                  value={value.pricing?.basis ?? "calculated"}
+                  onChange={(event) => {
+                    const basis = event.target.value as
+                      "calculated" | "unit" | "linear-meter";
+                    setProduct(
+                      "pricing",
+                      basis === "calculated"
+                        ? { basis }
+                        : {
+                            basis,
+                            amount:
+                              value.pricing &&
+                              value.pricing.basis !== "calculated"
+                                ? value.pricing.amount
+                                : 0,
+                          },
+                    );
+                  }}
+                >
+                  <option value="calculated">Por materiales y herrajes</option>
+                  <option value="unit">Tarifa por unidad</option>
+                  <option value="linear-meter">
+                    Tarifa por metro lineal de ancho
+                  </option>
+                </select>
+              </Field>
+              {value.pricing && value.pricing.basis !== "calculated" && (
+                <NumberField
+                  title={
+                    value.pricing.basis === "unit"
+                      ? "Precio base de venta · S/ por unidad"
+                      : "Precio base de venta · S/ por metro lineal"
+                  }
+                  value={value.pricing.amount}
+                  max={100000}
+                  step={0.1}
+                  change={(amount) =>
+                    setProduct("pricing", {
+                      basis: value.pricing!.basis as "unit" | "linear-meter",
+                      amount,
+                    })
+                  }
+                  note={
+                    value.pricing.basis === "unit"
+                      ? "Una unidad es un mueble completo de este modelo, a cualquier medida admitida."
+                      : "Cantidad facturada = ancho configurado ÷ 1000. El alto y fondo no multiplican esta tarifa."
+                  }
+                />
+              )}
               <label className="admin-switch-label">
                 <Switch
                   checked={value.defaults.install}

@@ -20,6 +20,7 @@ import { nextLogoTap } from "./footer-access";
 const Configurator = lazy(() => import("./Configurator"));
 const Cart = lazy(() => import("./Cart"));
 const Admin = lazy(() => import("./Admin"));
+const KitchenPlanner = lazy(() => import("./KitchenPlanner"));
 const catalogSearchText = (text: string) =>
   text
     .normalize("NFD")
@@ -51,6 +52,7 @@ export function Header({ compact = false }: { compact?: boolean }) {
         </a>
         <nav>
           <a href="/#catalogo">Muebles ⌄</a>
+          <a href="/cocinas">Cocinas</a>
           <a href="/#proceso">Cómo funciona</a>
           <a href="/#materiales">Materiales</a>
           <a href="/#contacto">Hablemos</a>
@@ -116,6 +118,8 @@ export default function App() {
         <Configurator />
       ) : path === "/carrito" ? (
         <Cart />
+      ) : path === "/cocinas" ? (
+        <KitchenPlanner />
       ) : (
         <Home />
       )}
@@ -174,6 +178,9 @@ function Home() {
             </p>
             <a className="button cream" href="/configurar">
               Diseñar mi mueble <ArrowUpRight size={21} />
+            </a>
+            <a className="hero-kitchen-link" href="/cocinas">
+              Planificar mi cocina completa <ArrowRight size={18} />
             </a>
             <div className="hero-foot">
               <span>

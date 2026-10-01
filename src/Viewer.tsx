@@ -16,6 +16,10 @@ import {
 import { createSwatchTextures } from "./swatch-textures";
 import { createDimensionOverlay } from "./viewer-dimensions";
 import { DOOR_OPEN_ANGLE, doorPreviewBounds } from "./door-preview";
+import { createPlaceholder, createTransparentFront } from "./front-mesh";
+import { createPlacementOverlay, placementBounds } from "./viewer-placement";
+import type { PlacementSlot } from "./kitchen-slots";
+import "./viewer-placement.css";
 import type { VisualPanel } from "../lib/public-geometry";
 import type { PublicMaterial } from "./types";
 import {
@@ -42,6 +46,8 @@ type Props = {
   environment?: boolean;
   dimensions?: boolean;
   handle?: string;
+  placementSlots?: readonly PlacementSlot[];
+  onPlacementSelect?: (id: string) => void;
 };
 const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
   {
@@ -57,6 +63,8 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
     environment = !small,
     dimensions = false,
     handle = "push",
+    placementSlots = [],
+    onPlacementSelect,
   },
   ref,
 ) {
@@ -71,6 +79,8 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
     environment: THREE.Group;
     decoration: THREE.Object3D | null;
     dimensions: ReturnType<typeof createDimensionOverlay>;
+    placements: ReturnType<typeof createPlacementOverlay> | null;
+    placementBounds: THREE.Box3;
     width: number;
     depth: number;
     doors: THREE.Group[];
@@ -135,6 +145,7 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
     renderer.domElement.setAttribute("role", "img");
     el.appendChild(renderer.domElement);
     const dimensionOverlay = small ? null : createDimensionOverlay(el);
+    const placementOverlay = small ? null : createPlacementOverlay(el);
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(34, 1, 0.01, 200);
     camera.position.set(4, 3, 6);
@@ -203,6 +214,7 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
         el.clientWidth,
         el.clientHeight,
       );
+      placementOverlay?.draw(camera, el.clientWidth, el.clientHeight);
     };
     const tick = (now: number) => {
       animationFrame = 0;
@@ -263,7 +275,9 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
       // actual animated pose so closing returns to the closed composition.
       const rotations = r.doors.map((hinge) => hinge.rotation.y);
       r.doors.forEach((hinge) => {
-        hinge.rotation.y = DOOR_OPEN_ANGLE * r.doorTarget;
+        hinge.rotation.y =
+          (hinge.userData.closedRotationY ?? 0) +
+          DOOR_OPEN_ANGLE * r.doorTarget;
       });
       const bounds =
         small && r.previewBounds
@@ -273,6 +287,7 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
         hinge.rotation.y = rotations[index];
       });
       if (bounds.isEmpty()) return;
+      if (!r.placementBounds.isEmpty()) bounds.union(r.placementBounds);
       if (r.reference.visible) bounds.expandByObject(r.reference);
       if (r.decoration && r.environment.visible)
         bounds.expandByObject(r.decoration);
@@ -297,6 +312,7 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
               small && r.previewBounds
                 ? r.previewBounds.clone()
                 : new THREE.Box3().setFromObject(group);
+            if (!r.placementBounds.isEmpty()) currentBounds.union(r.placementBounds);
             if (r.reference.visible) {
               placeReference(r.reference, currentDirection, r.width, r.depth);
               currentBounds.expandByObject(r.reference);
@@ -348,6 +364,8 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
       environment: studio,
       decoration: null,
       dimensions: dimensionOverlay,
+      placements: placementOverlay,
+      placementBounds: new THREE.Box3(),
       width: 1,
       depth: 0.4,
       doors: [],
@@ -377,6 +395,7 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
       renderer.forceContextLoss();
       renderer.domElement.remove();
       dimensionOverlay?.dispose();
+      placementOverlay?.dispose();
       runtime.current = null;
     };
   }, [small]);
@@ -391,15 +410,25 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
       r.renderer.capabilities.getMaxAnisotropy(),
     );
     panels.forEach((panel) => {
+      const doorHandle = panel.handle ?? handle;
+      if (panel.surface === "placeholder") {
+        r.group.add(createPlaceholder(panel));
+        return;
+      }
+      if (
+        panel.door &&
+        (panel.surface === "glass" || panel.surface === "aluminum-glass")
+      ) {
+        const hinge = createTransparentFront(panel, doorHandle);
+        hinge.rotation.y += DOOR_OPEN_ANGLE * r.doorAmount;
+        r.doors.push(hinge);
+        r.group.add(hinge);
+        return;
+      }
       if (panel.shape === "cylinder") {
         const radius = panel.size[1] / 2000;
         const rod = new THREE.Mesh(
-          new THREE.CylinderGeometry(
-            radius,
-            radius,
-            panel.size[0] / 1000,
-            24,
-          ),
+          new THREE.CylinderGeometry(radius, radius, panel.size[0] / 1000, 24),
           new THREE.MeshStandardMaterial({
             color: "#a8aba8",
             roughness: 0.28,
@@ -407,6 +436,7 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
           }),
         );
         rod.rotation.z = Math.PI / 2;
+        rod.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), panel.rotationY ?? 0);
         rod.position.set(
           ...(panel.position.map((n) => n / 1000) as [number, number, number]),
         );
@@ -435,6 +465,7 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
       );
       mesh.castShadow = true;
       mesh.receiveShadow = true;
+      mesh.rotation.y = panel.rotationY ?? 0;
       const lines = new THREE.LineSegments(
         new THREE.EdgesGeometry(geo),
         new THREE.LineBasicMaterial({
@@ -446,16 +477,22 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
       mesh.add(lines);
       if (panel.door) {
         const hinge = new THREE.Group();
-        hinge.position.set(
-          mesh.position.x - panel.size[0] / 2000,
-          mesh.position.y,
-          mesh.position.z,
-        );
+        const closedRotationY = panel.rotationY ?? 0;
+        hinge.position
+          .copy(mesh.position)
+          .add(
+            new THREE.Vector3(-panel.size[0] / 2000, 0, 0).applyAxisAngle(
+              new THREE.Vector3(0, 1, 0),
+              closedRotationY,
+            ),
+          );
         mesh.position.set(panel.size[0] / 2000, 0, 0);
+        mesh.rotation.y = 0;
         hinge.add(mesh);
-        hinge.rotation.y = DOOR_OPEN_ANGLE * r.doorAmount;
+        hinge.userData.closedRotationY = closedRotationY;
+        hinge.rotation.y = closedRotationY + DOOR_OPEN_ANGLE * r.doorAmount;
         r.doors.push(hinge);
-        if (handle !== "push") {
+        if (doorHandle !== "push") {
           const h = new THREE.Mesh(
             new THREE.BoxGeometry(0.009, 0.09, 0.025),
             new THREE.MeshStandardMaterial({
@@ -464,6 +501,7 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
               roughness: 0.35,
             }),
           );
+          h.name = "front-handle";
           h.position.set(panel.size[0] / 2000 - 0.045, 0, 0.02);
           mesh.add(h);
         }
@@ -478,6 +516,17 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
   useEffect(() => {
     const r = runtime.current;
     if (!r) return;
+    const slots = !small && onPlacementSelect ? placementSlots : [];
+    const nextBounds = placementBounds(slots);
+    const changedBounds = !r.placementBounds.equals(nextBounds);
+    r.placementBounds.copy(nextBounds);
+    r.placements?.update(slots, onPlacementSelect);
+    if (changedBounds) r.frame(undefined, false);
+    r.render();
+  }, [placementSlots, onPlacementSelect, small]);
+  useEffect(() => {
+    const r = runtime.current;
+    if (!r) return;
     const start = r.doorAmount;
     const target = open && r.doors.length ? 1 : 0;
     r.doorTarget = target;
@@ -486,7 +535,9 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
       (progress) => {
         r.doorAmount = THREE.MathUtils.lerp(start, target, progress);
         r.doors.forEach((hinge) => {
-          hinge.rotation.y = DOOR_OPEN_ANGLE * r.doorAmount;
+          hinge.rotation.y =
+            (hinge.userData.closedRotationY ?? 0) +
+            DOOR_OPEN_ANGLE * r.doorAmount;
         });
       },
       Math.abs(start - target) < 0.000001 ? 0 : 540,

@@ -1,6 +1,8 @@
 import {
   quoteCSVCell,
   constructionSchema,
+  frontSchema,
+  pricingSchema,
   productCategories,
   seedProducts,
   settingsSchema,
@@ -29,6 +31,10 @@ type Column =
   | "galleryEnabled"
   | "galleryScene"
   | "galleryCaption"
+  | "frontOptions"
+  | "front"
+  | "pricingBasis"
+  | "pricingAmount"
   | "description"
   | "basePrice"
   | "weeks"
@@ -66,6 +72,10 @@ export const CATALOG_COLUMNS: ReadonlyArray<{ key: Column; label: string }> = [
   { key: "galleryEnabled", label: "Galería habilitada" },
   { key: "galleryScene", label: "Ambiente de galería" },
   { key: "galleryCaption", label: "Texto de galería" },
+  { key: "frontOptions", label: "Frentes permitidos" },
+  { key: "front", label: "Frente inicial" },
+  { key: "pricingBasis", label: "Base de cobro" },
+  { key: "pricingAmount", label: "Tarifa de venta S/" },
   { key: "description", label: "Descripción" },
   { key: "basePrice", label: "Precio base S/" },
   { key: "weeks", label: "Semanas" },
@@ -393,6 +403,43 @@ function doorsCell(
     throw new Error("Puertas: usa Sin puertas, Inferiores o Completas.");
   return result;
 }
+function frontCell(value: string): Config["front"] {
+  const aliases: Record<string, string> = {
+    melamina: "melamine",
+    vidrio: "glass",
+    aluminio_vidrio: "aluminum-glass",
+    aluminum_glass: "aluminum-glass",
+  };
+  return frontSchema.parse(aliases[normalized(value)] ?? value);
+}
+function pricingCell(
+  cells: Partial<Record<Column, string>>,
+): Product["pricing"] {
+  if (!cells.pricingBasis) {
+    if (cells.pricingAmount)
+      throw new Error(
+        "Indica la Base de cobro para configurar la Tarifa de venta.",
+      );
+    return undefined;
+  }
+  const aliases: Record<string, string> = {
+    calculado: "calculated",
+    unidad: "unit",
+    metro_lineal: "linear-meter",
+    linear_meter: "linear-meter",
+  };
+  const basis = aliases[normalized(cells.pricingBasis)] ?? cells.pricingBasis;
+  if (basis !== "calculated" && !cells.pricingAmount)
+    throw new Error(
+      "Indica la Tarifa de venta para cobro por unidad o metro lineal.",
+    );
+  return pricingSchema.parse({
+    basis,
+    ...(cells.pricingAmount
+      ? { amount: numberCell(cells.pricingAmount, 0, "Tarifa de venta S/") }
+      : {}),
+  });
+}
 function errorMessage(error: unknown): string {
   if (
     error &&
@@ -517,6 +564,10 @@ export function importCatalogCSV(
       const category = categoryCell(cells.category);
       const construction = constructionCell(cells);
       const gallery = galleryCell(cells);
+      const pricing = pricingCell(cells);
+      const frontOptions = cells.frontOptions
+        ? cells.frontOptions.split("|").map((value) => frontCell(value.trim())!)
+        : undefined;
       const fallback = construction
         ? productTemplate(construction.kind)
         : seedProducts.find((product) => product.category === category) ||
@@ -533,6 +584,8 @@ export function importCatalogCSV(
         category,
         ...(construction ? { construction } : {}),
         ...(gallery ? { gallery } : {}),
+        ...(pricing ? { pricing } : {}),
+        ...(frontOptions ? { frontOptions } : {}),
         description:
           cells.description ||
           `Mueble de melamina de 18 mm personalizable: ${cells.name || "nuevo modelo"}.`,
@@ -562,6 +615,7 @@ export function importCatalogCSV(
           modules: numeric("modules", fallback.defaults.modules),
           shelves: numeric("shelves", fallback.defaults.shelves),
           doors: doorsCell(cells.doors, fallback.defaults.doors),
+          ...(cells.front ? { front: frontCell(cells.front) } : {}),
           finish:
             cells.finish ||
             compatibleDefaultFinish(fallback.defaults.finish, settings),
@@ -632,6 +686,13 @@ export function exportCatalogCSV(
             : "No",
       galleryScene: product.gallery?.scene ?? "",
       galleryCaption: product.gallery?.caption ?? "",
+      frontOptions: product.frontOptions?.join("|") ?? "",
+      front: product.defaults.front ?? "",
+      pricingBasis: product.pricing?.basis ?? "",
+      pricingAmount:
+        product.pricing && product.pricing.basis !== "calculated"
+          ? product.pricing.amount
+          : "",
       description: product.description,
       basePrice: product.basePrice,
       weeks: product.weeks,

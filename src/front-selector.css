@@ -1,0 +1,140 @@
+.visual-options {
+  border: 0;
+  padding: 0;
+  margin: 22px 0;
+  min-width: 0;
+}
+.visual-options legend {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 11px;
+}
+.visual-option-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(85px, 1fr));
+  gap: 8px;
+}
+.visual-option-grid button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 112px;
+  padding: 13px 7px;
+  border: 1px solid #d7d3ca;
+  border-radius: 10px;
+  background: #faf9f6;
+  color: #6b6963;
+  font-size: 11px;
+  line-height: 1.4;
+  cursor: pointer;
+  transition:
+    background 0.18s,
+    border-color 0.18s,
+    color 0.18s;
+}
+.visual-option-grid button:hover {
+  border-color: #827366;
+  background: #f0eee7;
+}
+.visual-option-grid button.selected {
+  color: #353b32;
+  border-color: #4d5545;
+  background: #edf0e7;
+  box-shadow: inset 0 0 0 1px #4d5545;
+}
+.visual-option-grid button:focus-visible {
+  outline: 2px solid #9e4b32;
+  outline-offset: 3px;
+}
+.visual-options:disabled {
+  opacity: 0.55;
+}
+.visual-option-note {
+  font-size: 11px;
+  line-height: 1.6;
+  color: #74716a;
+  margin: 12px 0 0;
+}
+.finish-detail-card {
+  display: flex;
+  gap: 13px;
+  padding: 16px;
+  margin: 17px 0;
+  background: #f3f1eb;
+  border-radius: 12px;
+  border: 1px solid #e6e2d8;
+}
+.finish-detail-card > .material-swatch {
+  width: 62px;
+  height: 62px;
+  flex-shrink: 0;
+  border-radius: 6px;
+}
+.finish-detail-card strong {
+  font-size: 13px;
+  font-weight: 600;
+  display: block;
+}
+.finish-detail-card small {
+  display: block;
+  color: #7b766b;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+}
+.finish-qualities {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin: 11px 0 0;
+  padding: 0;
+}
+.finish-qualities li {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #645e52;
+  font-size: 10px;
+}
+.finish-qualities svg {
+  flex-shrink: 0;
+}
+.finish-qualities .rh {
+  color: #416450;
+}
+.admin-front-allowances {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  margin: 15px 0;
+}
+.admin-front-allowances label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+}
+.admin-front-allowances input {
+  accent-color: #4d5545;
+}
+.admin-rate-fieldset {
+  border: 1px solid #e1ddd3;
+  border-radius: 10px;
+  padding: 20px;
+  margin: 0 24px 24px;
+}
+.admin-rate-fieldset legend {
+  font-weight: 600;
+  font-size: 14px;
+  padding: 0 8px;
+}
+.admin-rate-fieldset > p {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #777166;
+  margin: 0 0 17px;
+}

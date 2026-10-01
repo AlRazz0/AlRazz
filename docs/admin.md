@@ -34,6 +34,36 @@ La [ampliación de almacenaje con puertas](coleccion-taller-ampliada.md) aporta 
 
 La [colección de cocinas y roperos](coleccion-cocinas-roperos.md) añade ocho propuestas con barras, maleteros, zócalos y alacenas. Cada registro se edita desde el mismo panel. Las familias constructivas, sus límites y las adaptaciones de los planos se detallan en esa guía.
 
+La [colección de cocinas, vitrinas y repisas](coleccion-cocinas-vitrinas.md) añade doce modelos: seis módulos de cocina, dos vitrinas y cuatro piezas de almacenaje abierto o mixto. Sus nueve modelos con puertas permiten seleccionar melamina, vidrio o vidrio con marco de aluminio. Las referencias consultadas y las medidas propias de cada propuesta aparecen en esa guía.
+
+## Frentes y tarifa de cada modelo
+
+En **Catálogo → Editar → Acabados**, marca los materiales de puerta que el cliente puede elegir y selecciona el frente inicial. El vidrio requiere jalador exterior; cada hoja admite hasta 1500 mm de alto en el piloto. La estructura y las repisas permanecen en melamina de 18 mm. Puedes deshabilitar un frente para un modelo concreto.
+
+En **Publicación**, abre **Forma de cotizar este modelo**:
+
+- **Por materiales y herrajes:** calcula las piezas reales, tapacantos, herrajes y **Mano de obra base · S/** con el margen del taller.
+- **Tarifa por unidad:** introduce **Precio base de venta · S/ por unidad**. Una unidad es un mueble completo, a cualquiera de sus medidas permitidas.
+- **Tarifa por metro lineal de ancho:** introduce **Precio base de venta · S/ por metro lineal**. La cantidad es el ancho configurado en milímetros dividido entre 1000; alto y fondo no multiplican esta tarifa.
+
+Las tarifas por unidad o metro sustituyen el cálculo base del mueble y ya incluyen material, mano de obra y herrajes comunes. Los frentes especiales se suman con el margen del taller; instalación y transporte se añaden aparte. El total se redondea hacia arriba a múltiplos de S/10. Pulsa **Guardar cambios** para aplicar la tarifa a nuevas cotizaciones.
+
+En **Ajustes del taller → Costos adicionales de frentes especiales**, configura **Vidrio · forma de cobrar** por m² o por hoja, **Marco de aluminio · forma de cobrar** por metro de perímetro exterior o por marco completo, y **Herrajes para vidrio · costo S/ por puerta**. Son costos internos; el sistema aplica el margen antes de añadirlos a la venta. El juego de herrajes para vidrio sustituye los herrajes comunes de esa puerta. Pulsa **Guardar ajustes**. Consulta [Frentes y tarifas](frentes-y-tarifas.md) para ver el cálculo de áreas, perímetros y restricciones.
+
+## Cocinas completas
+
+La pestaña **Cocinas** muestra **Cocinas completas** y las últimas distribuciones guardadas. **Planificar cocina** abre [el planificador](https://alrazz.pages.dev/cocinas) en otra pestaña. Allí puedes elegir **Lineal** o **En L**, introducir las medidas del espacio y combinar módulos de la categoría **Cocina** con reservas para **Refrigeradora**, **Cocina / horno**, **Lavadero** o **Espacio libre**. Las flechas cambian el orden y cada módulo permite ajustar medidas, distribución, acabados y frentes habilitados.
+
+Escribe **Nombre de tu cocina** y pulsa **Guardar mi cocina**. **Copiar enlace** permite compartir la versión guardada. Editar una versión consulta los modelos y tarifas actuales; **Guardar otra versión** crea una nueva sin modificar el presupuesto original. Las reservas de equipos no incluyen ni cobran esos equipos, lavadero o encimera. Instalación y transporte se seleccionan para la cocina completa y se cobran una sola vez.
+
+Para revisar una cocina en el taller:
+
+1. En la pestaña **Cocinas**, selecciona una entrada de **Últimas cocinas guardadas**, o pega su enlace en **Enlace o identificador de cocina** y pulsa **Consultar despiece**.
+2. Abre cada módulo para ver sus piezas de melamina, vidrio, perfiles y accesorios. La consulta conserva los datos originales, aunque cambien las tarifas o se oculte un modelo después.
+3. Usa **Ver distribución** para abrir la vista pública o **Despiece CSV** para descargar el detalle privado por módulo. **Actualizar** renueva la lista de cocinas guardadas.
+
+El CSV distingue **MELAMINA**, **VIDRIO** y **ACCESORIO / RESUMEN**; el vidrio no figura como tablero de 18 mm. Los espacios reservados no generan piezas de fabricación. La tabla y la descarga requieren sesión administrativa con segundo factor y permanecen como despiece preliminar, pendiente de validación del taller.
+
 ## Imagen de cada modelo
 
 En **Imagen y galería**, activa o desactiva la imagen ambientada, elige ambiente **Cálido**, **Claro** u **Oscuro** y añade una leyenda opcional. La imagen se genera a partir de la geometría, medidas y acabados de la configuración mostrada. Se identifica como render digital; no es una fotografía de un mueble fabricado. Cambiar el ambiente no cambia el precio ni el despiece. Los modelos anteriores sin estos ajustes muestran la galería cálida por defecto.
@@ -77,6 +107,8 @@ La vista 3D incluye un ambiente de estudio y una persona de referencia de **1,70
 **Exportar** descarga el catálogo actual en CSV, incluidos los borradores. **Descargar plantilla CSV** proporciona la estructura admitida. El importador también recibe JSON con una lista de productos o un objeto `{ "products": [...] }`.
 
 El CSV conserva **Tipo constructivo**, lado y ancho del módulo lateral, alto libre del maletero, columnas para colgar, alto y retranqueo del zócalo, y habilitación, ambiente y texto de la galería. Los tipos admitidos son `cabinet`, `open-shelf`, `desk`, `desk-storage`, `wardrobe` y `kitchen-base`. Los CSV antiguos siguen funcionando sin las columnas nuevas. Un tipo desconocido o un parámetro colocado en otra estructura genera un error, sin transformarse silenciosamente en una carcasa.
+
+También conserva **Frentes permitidos**, **Frente inicial**, **Base de cobro** y **Tarifa de venta S/**. Los frentes permitidos se separan con `|`, por ejemplo `melamine|glass|aluminum-glass`; las bases de cobro son `calculated`, `unit` y `linear-meter`. Una tarifa fija requiere base por unidad o metro; deja su importe vacío cuando uses cálculo por materiales. Los [doce modelos de cocina, vitrinas y repisas](../catalog/coleccion-cocinas-vitrinas.json) pueden importarse desde su JSON y permanecerán en borrador hasta que los publiques.
 
 La importación muestra una vista previa antes de escribir. Todos los modelos se crean como borradores. Si hay errores de estructura, identificadores duplicados o identificadores que ya existen, se debe corregir el archivo antes de confirmar. Importar no sobrescribe los modelos existentes; para actualizarlos, usa el editor. Máximo de archivo y datos preparados en la interfaz: 1 MB; máximo de 200 muebles por importación.
 

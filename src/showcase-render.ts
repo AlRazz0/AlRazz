@@ -8,6 +8,7 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { createSwatchTextures } from "./swatch-textures.ts";
 import { createStudio, disposeObjects, fitCamera } from "./viewer-scene.ts";
 import { DOOR_OPEN_ANGLE } from "./door-preview.ts";
+import { createPlaceholder, createTransparentFront } from "./front-mesh.ts";
 import type { VisualPanel } from "../lib/public-geometry";
 import type { PublicMaterial } from "./types";
 import type { Gallery } from "../lib/model-gallery";
@@ -25,6 +26,20 @@ export function createShowcaseModel(
   const finishes: { material: THREE.MeshStandardMaterial; swatch?: string }[] =
     [];
   for (const panel of geometry) {
+    const doorHandle = panel.handle ?? handle;
+    if (panel.surface === "placeholder") {
+      group.add(createPlaceholder(panel));
+      continue;
+    }
+    if (
+      panel.door &&
+      (panel.surface === "glass" || panel.surface === "aluminum-glass")
+    ) {
+      const pivot = createTransparentFront(panel, doorHandle);
+      group.add(pivot);
+      doors.push(pivot);
+      continue;
+    }
     const [w, h, d] = panel.size.map((n) => n / 1000);
     const fixture =
       (panel as VisualPanel & { shape?: string }).shape === "cylinder";
@@ -48,6 +63,7 @@ export function createShowcaseModel(
     if (fixture) shape.rotateZ(Math.PI / 2);
     const mesh = new THREE.Mesh(shape, material);
     mesh.position.fromArray(panel.position.map((n) => n / 1000));
+    mesh.rotation.y = panel.rotationY ?? 0;
     mesh.castShadow = mesh.receiveShadow = true;
     if (!fixture)
       finishes.push({
@@ -56,10 +72,21 @@ export function createShowcaseModel(
       });
     if (panel.door) {
       const pivot = new THREE.Group();
-      pivot.position.copy(mesh.position).add(new THREE.Vector3(-w / 2, 0, 0));
+      const closedRotationY = panel.rotationY ?? 0;
+      pivot.position
+        .copy(mesh.position)
+        .add(
+          new THREE.Vector3(-w / 2, 0, 0).applyAxisAngle(
+            new THREE.Vector3(0, 1, 0),
+            closedRotationY,
+          ),
+        );
+      pivot.rotation.y = closedRotationY;
+      pivot.userData.closedRotationY = closedRotationY;
       mesh.position.set(w / 2, 0, 0);
+      mesh.rotation.y = 0;
       pivot.add(mesh);
-      if (handle !== "push") {
+      if (doorHandle !== "push") {
         const grip = new THREE.Mesh(
           new RoundedBoxGeometry(0.009, 0.09, 0.025, 2, 0.003),
           new THREE.MeshStandardMaterial({
@@ -68,6 +95,7 @@ export function createShowcaseModel(
             roughness: 0.26,
           }),
         );
+        grip.name = "front-handle";
         grip.position.set(w / 2 - 0.045, 0, 0.02);
         grip.castShadow = true;
         mesh.add(grip);
@@ -252,6 +280,30 @@ async function renderShowcaseNow(
     ao.kernelRadius = 0.15;
     ao.minDistance = 0.001;
     ao.maxDistance = 0.12;
+    // Transparent glazing is not an opaque occluder in the ambient-occlusion pass.
+    const translucent: THREE.Mesh[] = [];
+    model.group.traverse((object) => {
+      if (
+        object instanceof THREE.Mesh &&
+        !Array.isArray(object.material) &&
+        object.material.transparent
+      )
+        translucent.push(object);
+    });
+    const renderAO = ao.render.bind(ao);
+    ao.render = (...args: Parameters<typeof ao.render>) => {
+      const visible = translucent.map((mesh) => mesh.visible);
+      translucent.forEach((mesh) => {
+        mesh.visible = false;
+      });
+      try {
+        renderAO(...args);
+      } finally {
+        translucent.forEach((mesh, index) => {
+          mesh.visible = visible[index];
+        });
+      }
+    };
     composer.addPass(ao);
     const output = new OutputPass();
     cleanup.push(() => output.dispose());
@@ -292,7 +344,9 @@ async function renderShowcaseNow(
     for (const view of views) {
       if (signal.aborted) return [];
       model.doors.forEach((door) => {
-        door.rotation.y = view.open ? DOOR_OPEN_ANGLE : 0;
+        door.rotation.y =
+          (door.userData.closedRotationY ?? 0) +
+          (view.open ? DOOR_OPEN_ANGLE : 0);
       });
       const frame = new THREE.Box3().setFromObject(model.group);
       const fit = fitCamera(camera, frame, view.direction.normalize());

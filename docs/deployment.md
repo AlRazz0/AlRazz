@@ -10,11 +10,13 @@ La contraseña conserva el mismo hash scrypt y el segundo paso obligatorio. El c
 
 La comprobación previa exige la vinculación `ADMIN_PASSWORD_VERIFIER` y la migración `v1-admin-password-verifier` con `new_sqlite_classes: ["AdminPasswordVerifier"]`, tanto en la configuración fuente como en la generada por el build. Si falta el servicio, el acceso falla cerrado. El acceso completo ya se comprobó en Workers Free; sus métricas exactas de CPU y su capacidad bajo carga no se han medido. Los límites gratuitos de solicitudes, duración y almacenamiento siguen siendo aplicables; no se activa automáticamente un plan de pago al alcanzarlos.
 
-## Estado del despliegue
+## Aprovisionamiento inicial y siguientes versiones
 
-La cuenta ya está conectada y su panel confirmó **Workers Free, $0**. La base `alrazz-db` está creada, ambas migraciones SQL están aplicadas y `wrangler.jsonc` contiene su UUID real. Se aprovisionaron los cinco secretos administrativos nuevos de producción. Los controles siguen rechazando identificadores D1 de ejemplo; no deben desactivarse.
+La cuenta está conectada y su panel confirmó **Workers Free, $0**. La base `alrazz-db` está creada y `wrangler.jsonc` contiene su UUID real. El aprovisionamiento inicial aplicó las dos primeras migraciones y configuró los cinco secretos administrativos. Los controles siguen rechazando identificadores D1 de ejemplo; no deben desactivarse.
 
-La versión `6e8ce787-7d51-4694-984e-0f654c6f8187` está publicada y responde por HTTPS. Pasó `node scripts/check-deployment.mjs smoke`: portada, catálogo conectado y administrador protegido. La revisión en navegador confirmó la portada en español con cuatro modelos y 23 acabados. También se completó un acceso normal de producción con contraseña y TOTP, consulta del panel privado y cierre de sesión. No se crearon fixtures ni se modificó el catálogo; no se consumieron códigos de recuperación ni se enviaron correos.
+La primera publicación (`6e8ce787-7d51-4694-984e-0f654c6f8187`) pasó la comprobación HTTPS de portada, catálogo y acceso administrativo con contraseña y TOTP. Las versiones siguientes amplían ese catálogo; no vuelven a sembrarlo ni reemplazan credenciales. La dirección principal actual es **alrazz.pages.dev**, conectada al mismo Worker por un binding de servicio.
+
+La entrega de cocinas añade `0003_kitchens.sql`, una tabla independiente de snapshots. Aplicar esta migración antes de desplegar las rutas nuevas. Publicar Worker y Pages del mismo commit y después importar los doce borradores de `catalog/coleccion-cocinas-vitrinas.json` por la API administrativa; activar únicamente esos IDs tras validarlos. No reemplazar registros anteriores ni ajustes del taller. Si ya existen IDs de la colección, revisar el estado antes de continuar en lugar de repetir la importación.
 
 El flujo manual de GitHub Actions está preparado, pero falta su token API dedicado. La publicación inicial utilizó OAuth local de Wrangler; ese token temporal no se copia a GitHub.
 

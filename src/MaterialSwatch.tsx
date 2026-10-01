@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import type { PublicMaterial } from "./types";
+import { Layers3, Droplets, ScanLine } from "lucide-react";
 import "./material-swatch.css";
 
 export function MaterialSwatch({
@@ -54,5 +55,50 @@ export function MaterialSource({ material }: { material?: PublicMaterial }) {
       Ver {material.name} en el catálogo de {material.brand || "la marca"}
       <span className="material-source-new-tab"> (otra pestaña)</span>
     </a>
+  );
+}
+
+export function MaterialDetails({
+  material,
+  label,
+}: {
+  material?: PublicMaterial;
+  label: string;
+}) {
+  if (!material) return null;
+  return (
+    <div className="finish-detail-card">
+      <MaterialSwatch material={material} />
+      <div>
+        <small>
+          {label} · {material.brand || "El capo"}
+        </small>
+        <strong>
+          {material.name}
+          {material.code ? ` · ${material.code}` : ""}
+        </strong>
+        <ul
+          className="finish-qualities"
+          aria-label={`Características de ${material.name}`}
+        >
+          <li>
+            <Layers3 size={14} aria-hidden="true" />
+            Melamina 18 mm
+          </li>
+          {material.board === "rh" && (
+            <li className="rh">
+              <Droplets size={14} aria-hidden="true" />
+              RH · Resiste humedad
+            </li>
+          )}
+          {material.texture && (
+            <li>
+              <ScanLine size={14} aria-hidden="true" />
+              {material.texture}
+            </li>
+          )}
+        </ul>
+      </div>
+    </div>
   );
 }

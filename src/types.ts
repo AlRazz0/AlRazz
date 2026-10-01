@@ -6,10 +6,18 @@ export type Quote = {
   geometry: VisualPanel[];
   price: number;
 };
-export type PublicProduct = Omit<Product, "basePrice"> & {
+export type PublicProduct = Omit<Product, "basePrice" | "pricing"> & {
+  pricing?: { basis: "calculated" | "unit" | "linear-meter" };
   publicPrice: number;
   preview: Quote;
 };
+export type {
+  KitchenPlan,
+  KitchenItem,
+  KitchenModule,
+  KitchenQuote,
+  KitchenDesign,
+} from "../lib/kitchen";
 export type PublicSettings = {
   whatsapp: string;
   whatsappSecondary: string;
