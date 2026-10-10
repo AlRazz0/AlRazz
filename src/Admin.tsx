@@ -3,7 +3,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
   type FormEvent,
   type ReactNode,
 } from "react";
@@ -63,7 +62,7 @@ import {
   getConstruction,
   getFrontRates,
   productCategories,
-  seedProducts,
+  money,
   settingsSchema,
   validateProduct,
   type Config,
@@ -85,6 +84,8 @@ import { Brand } from "./Brand";
 import { constructionTemplates } from "../lib/product-templates";
 import { constructionLabels } from "./construction-labels";
 import { AdminProductEditor } from "./AdminProductEditor";
+import { AdminTemplatePicker, ModelOutline } from "./AdminTemplatePicker";
+import { createCatalogDraft, duplicateCatalogDraft, getEditorIssue, uniqueProductId } from "./admin-catalog-draft";
 import { productEditorError } from "./admin-product-preview";
 import { KitchenAdmin } from "./KitchenAdmin";
 
@@ -275,6 +276,11 @@ export default function Admin() {
   const [editor, setEditor] = useState<Product | null>(null);
   const [original, setOriginal] = useState<Product | null>(null);
   const [editorError, setEditorError] = useState("");
+  const [templatePicker, setTemplatePicker] = useState(false);
+  const [editorSession, setEditorSession] = useState(0);
+  const [validationAttempt, setValidationAttempt] = useState(0);
+  const [autoId, setAutoId] = useState(true);
+  const [editorFeedback, setEditorFeedback] = useState("");
   const [discard, setDiscard] = useState(false);
   const [toggle, setToggle] = useState<Product | null>(null);
   const [importPreview, setImportPreview] = useState<ImportPreview | null>(
@@ -525,46 +531,44 @@ export default function Admin() {
       setBusy(null);
     }
   }
-  function freshId(base: string) {
-    const stem = base.slice(0, 48);
-    let id = `${stem}-copia`;
-    let count = 2;
-    while (products.some((product) => product.id === id))
-      id = `${stem}-copia-${count++}`;
-    return id;
-  }
   function openEditor(product?: Product, duplicate = false) {
+    if (!product) {
+      setTemplatePicker(true);
+      return;
+    }
     setEditorError("");
-    if (product && !duplicate) {
+    setEditorFeedback("");
+    setValidationAttempt(0);
+    setEditorSession((current) => current + 1);
+    setAutoId(false);
+    if (!duplicate) {
       setEditor(clone(product));
       setOriginal(clone(product));
       return;
     }
-    const template = compatibleTemplate(product ?? seedProducts[0]);
-    setEditor({
-      ...template,
-      id: product ? freshId(product.id) : "",
-      name: product ? `${product.name} · copia`.slice(0, 70) : "",
-      active: false,
-      version: 1,
-      order: Math.min(
-        999,
-        Math.max(0, ...products.map((item) => item.order)) + 1,
-      ),
-    });
+    setEditor(duplicateCatalogDraft(product, products, settings));
     setOriginal(null);
   }
-  function compatibleTemplate(product: Product): Product {
-    const template = clone(product);
-    const active = settings.materials.filter((m) => m.active);
-    if (!active.some((m) => m.id === template.defaults.finish) && active[0])
-      template.defaults.finish = active[0].id;
-    if (
-      template.defaults.interior !== "same" &&
-      !active.some((m) => m.id === template.defaults.interior)
-    )
-      template.defaults.interior = "same";
-    return template;
+  function startFromTemplate(template: Product) {
+    setTemplatePicker(false);
+    setEditor(createCatalogDraft(template, products, settings));
+    setOriginal(null);
+    setEditorError("");
+    setEditorFeedback("");
+    setValidationAttempt(0);
+    setEditorSession((current) => current + 1);
+    setAutoId(true);
+  }
+  function changeEditor(next: Product) {
+    if (!original && editor) {
+      if (next.id !== editor.id) setAutoId(false);
+      else if (autoId && next.name !== editor.name) {
+        next = { ...next, id: uniqueProductId(next.name, products.map((item) => item.id)) };
+      }
+    }
+    setEditor(next);
+    setEditorError("");
+    setEditorFeedback("");
   }
   function closeEditor() {
     if (busy === "product") return;
@@ -573,12 +577,17 @@ export default function Admin() {
   }
   async function saveProduct(event: FormEvent) {
     event.preventDefault();
-    if (!editor) return;
+    if (!editor || busy) return;
+    const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
+    const closeAfterSave = submitter?.value === "close";
+    setValidationAttempt((attempt) => attempt + 1);
     setBusy("product");
     setEditorError("");
+    setEditorFeedback("");
     try {
       const candidate = original ? editor : { ...editor, active: false };
-      validateProduct(candidate, settings);
+      const issue = getEditorIssue(candidate, settings);
+      if (issue) throw Error(issue.message);
       if (!original && products.some((product) => product.id === editor.id))
         throw Error(
           "Este identificador ya existe. Usa uno distinto para el nuevo mueble.",
@@ -588,19 +597,23 @@ export default function Admin() {
         product: candidate,
         expectedVersion: original?.version ?? 0,
       });
-      if (result.product) mergeProducts([result.product]);
-      else {
-        const data = await api("action=admin");
-        setProducts(data.products);
+      let saved: Product | undefined = result.product;
+      if (!saved) {
+        const data = await api<AdminSnapshot>("action=admin");
+        saved = data.products?.find((item) => item.id === candidate.id);
       }
-      setEditor(null);
-      announce(
-        original
+      if (!saved) throw Error("No pudimos confirmar el guardado. Conserva tus cambios y vuelve a consultar el catálogo antes de reintentar.");
+      mergeProducts([saved]);
+      const message = original
           ? candidate.active
             ? "Mueble actualizado y visible en el catálogo."
             : "Mueble actualizado. Se conserva oculto del catálogo."
-          : "Borrador creado. Revísalo y actívalo cuando esté listo.",
-      );
+          : "Borrador creado. Puedes seguir editándolo y publicarlo desde Precio y publicación.";
+      setOriginal(clone(saved));
+      setEditor(closeAfterSave ? null : clone(saved));
+      setAutoId(false);
+      setEditorFeedback(message);
+      if (closeAfterSave) announce(message);
     } catch (cause) {
       setEditorError(productEditorError(cause));
     } finally {
@@ -1236,6 +1249,13 @@ export default function Admin() {
                   <Plus size={17} /> Nuevo mueble
                 </button>
               </div>
+              <div className="admin-catalog-guide">
+                <Ruler size={18} />
+                <div>
+                  <strong>De tu plano al catálogo, paso a paso.</strong>
+                  <p>Elige una estructura o duplica un mueble parecido. Ajusta medidas, opciones y precio en la vista 3D; guarda un borrador y publícalo cuando esté listo.</p>
+                </div>
+              </div>
               <div className="admin-toolbar">
                 <label className="admin-search">
                   <Search size={17} />
@@ -1329,23 +1349,8 @@ export default function Admin() {
                     <TableRow key={product.id}>
                       <TableCell>
                         <div className="admin-product-cell">
-                          <div
-                            className="admin-product-icon"
-                            style={
-                              {
-                                "--furniture-color":
-                                  settings.materials.find(
-                                    (material) =>
-                                      material.id === product.defaults.finish,
-                                  )?.color ?? "#a57556",
-                              } as CSSProperties
-                            }
-                          >
-                            <Package
-                              size={24}
-                              strokeWidth={1.4}
-                              aria-hidden="true"
-                            />
+                          <div className="admin-catalog-outline">
+                            <ModelOutline product={product} />
                           </div>
                           <div>
                             <strong>{product.name}</strong>
@@ -1359,6 +1364,13 @@ export default function Admin() {
                                 ]
                               }
                             </small>
+                            <span className="admin-catalog-tariff">
+                              {product.pricing?.basis === "unit"
+                                ? `${money(product.pricing.amount!)} / unidad · tarifa base`
+                                : product.pricing?.basis === "linear-meter"
+                                  ? `${money(product.pricing.amount!)} / metro lineal · tarifa base`
+                                  : "Cotización por materiales y herrajes"}
+                            </span>
                           </div>
                         </div>
                       </TableCell>
@@ -2206,6 +2218,7 @@ export default function Admin() {
         </Tabs>
       </main>
 
+      <AdminTemplatePicker open={templatePicker} onOpenChange={setTemplatePicker} onSelect={startFromTemplate} />
       <Dialog
         open={!!editor}
         onOpenChange={(open) => {
@@ -2241,18 +2254,21 @@ export default function Admin() {
             <X size={21} />
           </button>
           {editor && (
-            <form onSubmit={saveProduct}>
+            <form onSubmit={saveProduct} noValidate>
               <div className="admin-dialog-body admin-model-body">
                 <fieldset
                   className="admin-editor-fields-lock"
                   disabled={!!busy}
                 >
                   <AdminProductEditor
+                    key={editorSession}
                     value={editor}
                     settings={settings}
                     isNew={!original}
                     settingsDirty={settingsDirty}
-                    change={setEditor}
+                    change={changeEditor}
+                    validationAttempt={validationAttempt}
+                    existingIds={products.filter((item) => item.id !== original?.id).map((item) => item.id)}
                   />
                 </fieldset>
               </div>
@@ -2261,16 +2277,20 @@ export default function Admin() {
                   {editorError}
                 </p>
               )}
+              {editorFeedback && <p className="admin-save-feedback" role="status"><Check size={16} />{editorFeedback}</p>}
               <div className="admin-dialog-footer">
+                <span className="admin-save-state">{editorDirty ? "Cambios sin guardar" : "Guardado"}</span>
+                <div className="admin-save-buttons">
                 <button
                   type="button"
                   className="button outline"
                   onClick={closeEditor}
                   disabled={!!busy}
                 >
-                  Cancelar
+                  {editorDirty ? "Cancelar" : "Cerrar"}
                 </button>
-                <button className="button rust" disabled={!!busy}>
+                {original?.active && !editorDirty && <a className="button outline" href={`/configurar?producto=${encodeURIComponent(original.id)}`} target="_blank" rel="noopener noreferrer">Ver en la web <ArrowUpRight size={15} /></a>}
+                <button className="button rust" name="save-action" value="continue" disabled={!!busy || !editorDirty}>
                   {busy === "product"
                     ? "Guardando…"
                     : original
@@ -2278,6 +2298,8 @@ export default function Admin() {
                       : "Crear borrador"}
                   <Check size={17} />
                 </button>
+                {original && editorDirty && <button className="button outline" name="save-action" value="close" disabled={!!busy}>Guardar y cerrar</button>}
+                </div>
               </div>
             </form>
           )}

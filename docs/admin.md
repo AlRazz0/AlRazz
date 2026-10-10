@@ -17,12 +17,14 @@ La contraseña de desarrollo local no abre el panel de producción. Las credenci
 ## Añadir, editar o retirar un mueble
 
 1. En **Catálogo**, selecciona **Nuevo mueble** o duplica uno existente.
-2. Elige una estructura de partida. Completa un nombre y un identificador único, con letras minúsculas, números y guiones.
-3. Ajusta la categoría, descripción, orden, mano de obra, plazo, medidas permitidas y configuración inicial.
-4. Guarda el borrador. Revisa sus datos y pulsa su estado **Borrador** para publicarlo.
+2. Elige una de las seis estructuras de partida con su dibujo de referencia. El identificador se propone automáticamente al escribir el nombre; puedes personalizarlo en **Identificador del modelo** antes del primer guardado.
+3. Recorre **General**, **Medidas y distribución**, **Opciones y acabados**, **Imagen y galería** y **Precio y publicación**, usando las pestañas o **Anterior/Siguiente**. La vista 3D permite comprobar medidas y puertas. En móvil, pulsa **Ver modelo 3D** para desplegarla.
+4. Pulsa **Crear borrador**. El editor permanece abierto para seguir trabajando. Después puedes activar la visibilidad en **Precio y publicación** y pulsar **Guardar cambios**, o publicarlo desde su estado **Borrador** en el catálogo. **Guardar y cerrar** aplica la edición y regresa a la lista.
 5. Para retirar un modelo, pulsa **Visible** y confirma. Sus datos se conservan y puede volver a activarse.
 
 El identificador de un modelo existente es permanente. Todas las medidas están en milímetros, en pasos de 10 mm; el configurador valida luces, puertas y separaciones. El espesor de melamina de 18 mm y las reglas de fabricación permanecen en el motor compartido.
+
+La lista muestra un esquema de cada modelo y su forma de cobro. Duplicar conserva sus medidas, opciones y tarifa en un borrador independiente. Si un dato impide guardar, el editor abre la sección correspondiente y conserva lo que escribiste. Cambiar de estructura requiere confirmar el reemplazo de medidas y distribución; conserva nombre, descripción y tarifa para revisarlos. Los planos PDF o imágenes sirven de referencia: introduce sus medidas en el editor, no se convierten automáticamente en geometría 3D.
 
 **Tipo de construcción** separa la estructura de la categoría comercial: almacenaje con trasera, estante sin trasera, escritorio abierto, escritorio con módulo lateral, ropero con maletero o base de cocina con zócalo. Al cambiar de tipo se propone una configuración compatible para revisar. En el escritorio con almacenaje puedes elegir lado y ancho exterior del módulo lateral; las repisas y puerta pertenecen a ese módulo. La categoría organiza la búsqueda, pero no cambia por sí sola la construcción. El cliente solo recibe controles aplicables al tipo elegido.
 
