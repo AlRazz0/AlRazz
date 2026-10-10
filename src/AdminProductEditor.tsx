@@ -1,5 +1,5 @@
-import { useEffect, useId, useMemo, useState, type ReactNode } from "react";
-import { Box, Eye, LockKeyhole, Ruler } from "lucide-react";
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
+import { AlertCircle, ArrowLeft, ArrowRight, Box, ChevronDown, Eye, LockKeyhole, Ruler } from "lucide-react";
 import { Switch } from "../components/ui/switch";
 import {
   getConstruction,
@@ -13,11 +13,9 @@ import {
   type Product,
   type Settings,
 } from "../lib/furniture";
-import {
-  constructionTemplates,
-  productTemplate,
-} from "../lib/product-templates";
+import { constructionTemplates } from "../lib/product-templates";
 import { buildAdminPreview, productEditorError } from "./admin-product-preview";
+import { changeDraftConstruction, getEditorIssue, type EditorSection } from "./admin-catalog-draft";
 import {
   constructionDescriptions,
   constructionLabels,
@@ -40,10 +38,10 @@ const dimensions = [
 const sections = [
   { id: "general", name: "General" },
   { id: "dimensions", name: "Medidas y distribución" },
-  { id: "finishes", name: "Acabados" },
+  { id: "finishes", name: "Opciones y acabados" },
   { id: "gallery", name: "Imagen y galería" },
-  { id: "publication", name: "Publicación" },
-];
+  { id: "publication", name: "Precio y publicación" },
+] as const;
 const numericValue = (value: string) =>
   value === "" ? Number.NaN : Number(value);
 
@@ -104,18 +102,49 @@ export function AdminProductEditor({
   settings,
   isNew,
   settingsDirty,
+  validationAttempt = 0,
+  existingIds = [],
   change,
 }: {
   value: Product;
   settings: Settings;
   isNew: boolean;
   settingsDirty: boolean;
+  validationAttempt?: number;
+  existingIds?: string[];
   change: (value: Product) => void;
 }) {
   const prefix = useId();
   const [view, setView] = useState<View>("iso");
   const [openDoors, setOpenDoors] = useState(false);
   const [showDimensions, setShowDimensions] = useState(true);
+  const [activeSection, setActiveSection] = useState<EditorSection>("general");
+  const [previewExpanded, setPreviewExpanded] = useState(false);
+  const [pendingConstruction, setPendingConstruction] = useState<Construction["kind"] | null>(null);
+  const [advancedIdOpen, setAdvancedIdOpen] = useState(false);
+  const [focusRequest, setFocusRequest] = useState(0);
+  const lastValidationAttempt = useRef(validationAttempt);
+  const activeIndex = sections.findIndex((section) => section.id === activeSection);
+  const issue = isNew && existingIds.includes(value.id)
+    ? { section: "general" as const, message: "Este identificador ya pertenece a otro mueble. Abre «Identificador del modelo» y elige otro." }
+    : getEditorIssue(value, settings);
+  const issueRef = useRef(issue);
+  issueRef.current = issue;
+  useEffect(() => {
+    if (lastValidationAttempt.current === validationAttempt) return;
+    lastValidationAttempt.current = validationAttempt;
+    if (!issueRef.current) return;
+    setActiveSection(issueRef.current.section);
+    setPreviewExpanded(false);
+    if (issueRef.current.section === "general") setAdvancedIdOpen(true);
+    setFocusRequest((request) => request + 1);
+  }, [validationAttempt]);
+  useEffect(() => {
+    if (!focusRequest) return;
+    const heading = document.getElementById(`${prefix}-${activeSection}`);
+    heading?.scrollIntoView({ block: "start", behavior: "instant" });
+    heading?.focus({ preventScroll: true });
+  }, [focusRequest, activeSection, prefix]);
   // Resolve only the kind here: an empty numeric draft must remain editable.
   const base = getConstruction({
     construction: value.construction
@@ -177,31 +206,12 @@ export function AdminProductEditor({
           (material) => material.id === value.defaults.interior,
         );
   const sectionId = (name: string) => `${prefix}-${name}`;
-  const goTo = (name: string) => {
-    const heading = document.getElementById(sectionId(name));
-    heading?.scrollIntoView({ block: "start", behavior: "instant" });
-    heading?.focus({ preventScroll: true });
+  const goTo = (name: EditorSection) => {
+    setPendingConstruction(null);
+    setPreviewExpanded(false);
+    setActiveSection(name);
+    setFocusRequest((request) => request + 1);
   };
-  function changeConstruction(kind: Construction["kind"]) {
-    const template = productTemplate(kind);
-    change({
-      ...value,
-      construction: template.construction,
-      limits: structuredClone(template.limits),
-      defaults: {
-        ...value.defaults,
-        width: template.defaults.width,
-        height: template.defaults.height,
-        depth: template.defaults.depth,
-        modules: template.defaults.modules,
-        shelves: template.defaults.shelves,
-        doors: template.defaults.doors,
-        ...(template.defaults.doors === "none"
-          ? { front: "melamine" as const }
-          : {}),
-      },
-    });
-  }
   function changeModules(modules: number) {
     if (construction.kind !== "wardrobe") return setConfig("modules", modules);
     const hangingModules = Math.min(
@@ -266,11 +276,17 @@ export function AdminProductEditor({
 
   return (
     <>
+      <div className="admin-editor-progress">
+        <span>Sección {activeIndex + 1} de {sections.length}</span>
+        <span>Melamina de 18 mm · cambios al guardar</span>
+      </div>
       <nav className="admin-editor-nav" aria-label="Secciones del editor">
         {sections.map((section, index) => (
           <button
             key={section.id}
             type="button"
+            aria-current={activeSection === section.id ? "step" : undefined}
+            aria-controls={`${sectionId(section.id)}-panel`}
             onClick={() => goTo(section.id)}
           >
             <span>{index + 1}</span>
@@ -280,8 +296,25 @@ export function AdminProductEditor({
       </nav>
       <div className="admin-model-layout">
         <div className="admin-model-fields">
+          {issue && (validationAttempt > 0 || (issue.section !== "general" && issue.section === activeSection)) && (
+            <div className="admin-section-warning" role="status">
+              <AlertCircle size={18} aria-hidden="true" />
+              <div>
+                <strong>Revisa este dato antes de guardar</strong>
+                <p>{issue.message}</p>
+                {issue.section !== activeSection && (
+                  <button type="button" onClick={() => goTo(issue.section)}>
+                    Ir a {sections.find((section) => section.id === issue.section)?.name}
+                    <ArrowRight size={14} aria-hidden="true" />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
           <section
             className="admin-model-section"
+            id={`${sectionId("general")}-panel`}
+            hidden={activeSection !== "general"}
             aria-labelledby={sectionId("general")}
           >
             <h3 id={sectionId("general")} tabIndex={-1}>
@@ -300,24 +333,6 @@ export function AdminProductEditor({
                   maxLength={70}
                   required
                   placeholder="Ej. Ropero de dos cuerpos"
-                />
-              </Field>
-              <Field
-                title="Identificador único"
-                note={
-                  isNew
-                    ? "Minúsculas, números y guiones. Ej. ropero-dos-cuerpos"
-                    : "Permanente: conecta el modelo con sus diseños guardados."
-                }
-              >
-                <input
-                  value={value.id}
-                  onChange={(event) =>
-                    setProduct("id", event.target.value.toLowerCase())
-                  }
-                  readOnly={!isNew}
-                  pattern="[a-z0-9-]{2,60}"
-                  required
                 />
               </Field>
               <Field title="Categoría">
@@ -355,10 +370,33 @@ export function AdminProductEditor({
                 />
               </Field>
             </div>
+            <details
+              className="admin-advanced-field"
+              open={advancedIdOpen}
+              onToggle={(event) => setAdvancedIdOpen(event.currentTarget.open)}
+            >
+              <summary>Identificador del modelo <span>{isNew ? "Opcional · avanzado" : "Permanente"}</span></summary>
+              <Field
+                title="Identificador único"
+                note={isNew
+                  ? "Se propone a partir del nombre. Puedes ajustarlo antes de crear el mueble: minúsculas, números y guiones."
+                  : "Conecta este mueble con sus diseños guardados y no se puede cambiar."}
+              >
+                <input
+                  value={value.id}
+                  onChange={(event) => setProduct("id", event.target.value.toLowerCase())}
+                  readOnly={!isNew}
+                  pattern="[a-z0-9-]{2,60}"
+                  required
+                />
+              </Field>
+            </details>
           </section>
 
           <section
             className="admin-model-section"
+            id={`${sectionId("dimensions")}-panel`}
+            hidden={activeSection !== "dimensions"}
             aria-labelledby={sectionId("dimensions")}
           >
             <h3 id={sectionId("dimensions")} tabIndex={-1}>
@@ -366,12 +404,12 @@ export function AdminProductEditor({
             </h3>
             <Field
               title="Tipo de construcción"
-              note="Cambiar el tipo restablece las medidas, límites y distribución de su plantilla. El resto de los datos se conserva."
+              note="Elige la estructura del mueble. Si la cambias, podrás revisar y confirmar antes de reemplazar su distribución."
             >
               <select
-                value={construction.kind}
+                value={pendingConstruction ?? construction.kind}
                 onChange={(event) =>
-                  changeConstruction(event.target.value as Construction["kind"])
+                  setPendingConstruction(event.target.value === construction.kind ? null : event.target.value as Construction["kind"])
                 }
               >
                 {constructionTemplates.map((template) => (
@@ -384,40 +422,67 @@ export function AdminProductEditor({
                 ))}
               </select>
             </Field>
+            {pendingConstruction && (
+              <div className="admin-construction-confirm" role="status">
+                <strong>¿Cambiar a {constructionLabels[pendingConstruction]}?</strong>
+                <p>Este cambio aún no se aplicó. Se reemplazarán el tamaño inicial, el rango permitido y la distribución por los de esta plantilla. Se conservarán el nombre, la descripción, los acabados compatibles y los precios.</p>
+                <div>
+                  <button type="button" onClick={() => setPendingConstruction(null)}>Conservar estructura actual</button>
+                  <button type="button" className="admin-confirm-construction" onClick={() => {
+                    change(changeDraftConstruction(value, pendingConstruction));
+                    setPendingConstruction(null);
+                  }}>Sí, cambiar estructura</button>
+                </div>
+              </div>
+            )}
             <p className="admin-section-intro">
               {constructionDescriptions[construction.kind]}
             </p>
             <p className="admin-help">
-              Medidas en milímetros, de 10 en 10. La medida inicial debe quedar
-              dentro de su rango. El espesor permanece en 18 mm.
+              Todas las medidas están en milímetros: 1 metro = 1000 mm.
+              Usa incrementos de 10 mm. El espesor del tablero es siempre 18 mm.
             </p>
-            <div className="admin-dimension-grid">
-              <span />
-              <span>Mínimo</span>
-              <span>Inicial</span>
-              <span>Máximo</span>
+            <div className="admin-measure-group">
+              <h4>Tamaño inicial</h4>
+              <p>Así aparecerá el modelo cuando el cliente lo abra.</p>
+              <div className="admin-initial-dimensions">
+                {dimensions.map(({ key, name }) => (
+                  <NumberField
+                    key={key}
+                    title={`${name} · mm`}
+                    min={100}
+                    max={3000}
+                    step={10}
+                    value={value.defaults[key]}
+                    change={(next) => setConfig(key, next)}
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="admin-measure-group">
+              <h4>Rango permitido al cliente</h4>
+              <p>El tamaño inicial debe quedar entre estos límites. Usa el mismo mínimo y máximo si la medida es fija.</p>
+              <div className="admin-dimension-grid admin-dimension-ranges">
+              <span>Medida</span>
+              <span>Mínimo · mm</span>
+              <span>Máximo · mm</span>
               {dimensions.map(({ key, name }) => (
                 <div className="admin-dimension-row" key={key}>
                   <strong>{name}</strong>
-                  {(["min", "initial", "max"] as const).map((position) => {
-                    const current =
-                      position === "initial"
-                        ? value.defaults[key]
-                        : value.limits[key][position];
+                  {(["min", "max"] as const).map((position) => {
+                    const current = value.limits[key][position];
                     return (
                       <input
                         key={position}
                         type="number"
-                        aria-label={`${name} ${position === "initial" ? "inicial" : position === "min" ? "mínimo" : "máximo"} en mm`}
+                        aria-label={`${name} ${position === "min" ? "mínimo" : "máximo"} en mm`}
                         required
                         min={100}
                         max={3000}
                         step={10}
                         value={Number.isNaN(current) ? "" : current}
                         onChange={(event) =>
-                          position === "initial"
-                            ? setConfig(key, numericValue(event.target.value))
-                            : setProduct("limits", {
+                          setProduct("limits", {
                                 ...value.limits,
                                 [key]: {
                                   ...value.limits[key],
@@ -430,6 +495,7 @@ export function AdminProductEditor({
                   })}
                 </div>
               ))}
+              </div>
             </div>
             <div className="admin-form-grid admin-construction-settings">
               {options.modules.length > 1 && (
@@ -628,10 +694,12 @@ export function AdminProductEditor({
 
           <section
             className="admin-model-section"
+            id={`${sectionId("finishes")}-panel`}
+            hidden={activeSection !== "finishes"}
             aria-labelledby={sectionId("finishes")}
           >
             <h3 id={sectionId("finishes")} tabIndex={-1}>
-              Acabados
+              Opciones y acabados
             </h3>
             <p className="admin-section-intro">
               Define el aspecto inicial. Los clientes podrán elegir entre los
@@ -765,6 +833,8 @@ export function AdminProductEditor({
 
           <section
             className="admin-model-section"
+            id={`${sectionId("gallery")}-panel`}
+            hidden={activeSection !== "gallery"}
             aria-labelledby={sectionId("gallery")}
           >
             <h3 id={sectionId("gallery")} tabIndex={-1}>
@@ -823,10 +893,12 @@ export function AdminProductEditor({
 
           <section
             className="admin-model-section"
+            id={`${sectionId("publication")}-panel`}
+            hidden={activeSection !== "publication"}
             aria-labelledby={sectionId("publication")}
           >
             <h3 id={sectionId("publication")} tabIndex={-1}>
-              Publicación
+              Precio y publicación
             </h3>
             <div className="admin-form-grid">
               <NumberField
@@ -934,18 +1006,54 @@ export function AdminProductEditor({
               conservan su versión original.
             </p>
           </section>
+          <div className="admin-editor-step-actions">
+            <button
+              type="button"
+              disabled={activeIndex === 0}
+              onClick={() => goTo(sections[activeIndex - 1].id)}
+            >
+              <ArrowLeft size={16} aria-hidden="true" />
+              Anterior
+            </button>
+            {activeIndex < sections.length - 1 ? (
+              <button type="button" onClick={() => goTo(sections[activeIndex + 1].id)}>
+                Siguiente
+                <ArrowRight size={16} aria-hidden="true" />
+              </button>
+            ) : (
+              <span>Al terminar, guarda los cambios con el botón de abajo.</span>
+            )}
+          </div>
         </div>
 
         <aside
-          className="admin-model-preview"
+          className={`admin-model-preview${previewExpanded ? " is-expanded" : ""}`}
           aria-label="Vista previa del modelo en edición"
         >
+          <button
+            type="button"
+            className="admin-mobile-preview-toggle"
+            aria-expanded={previewExpanded}
+            aria-controls={sectionId("preview-content")}
+            onClick={() => setPreviewExpanded(!previewExpanded)}
+          >
+            <Box size={18} aria-hidden="true" />
+            <span>{previewExpanded ? "Ocultar vista 3D" : "Ver modelo 3D"}</span>
+            {shown && <strong>{money(shown.result.price)}{preview.error ? " *" : ""}</strong>}
+            <ChevronDown size={16} aria-hidden="true" />
+          </button>
+          <div className="admin-preview-content" id={sectionId("preview-content")}>
           <div className="admin-preview-heading">
             <div>
               <span>VISTA PREVIA</span>
               <h4>{value.name.trim() || "Tu nuevo modelo"}</h4>
             </div>
-            <Box size={21} aria-hidden="true" />
+            {shown ? (
+              <div className="admin-preview-price">
+                <span>ESTIMADO{preview.error ? " ANTERIOR" : ""}</span>
+                <strong>{money(shown.result.price)}</strong>
+              </div>
+            ) : <Box size={21} aria-hidden="true" />}
           </div>
           <div className="admin-preview-stage">
             {shown ? (
@@ -1025,16 +1133,13 @@ export function AdminProductEditor({
             </p>
           )}
           {shown && (
-            <div className="admin-preview-summary">
-              <p>
+            <details className="admin-preview-summary">
+              <summary>
                 <LockKeyhole size={13} />
                 Resumen privado
                 {preview.error ? " · última configuración válida" : ""}
-              </p>
-              <div>
-                <span>Precio estimado</span>
-                <strong>{money(shown.result.price)}</strong>
-              </div>
+                <ChevronDown size={13} aria-hidden="true" />
+              </summary>
               <div>
                 <span>Piezas de melamina</span>
                 <strong>{shown.result.panels.length}</strong>
@@ -1053,8 +1158,9 @@ export function AdminProductEditor({
                   Guarda también los ajustes del negocio para aplicarlos.
                 </small>
               )}
-            </div>
+            </details>
           )}
+          </div>
         </aside>
       </div>
     </>
