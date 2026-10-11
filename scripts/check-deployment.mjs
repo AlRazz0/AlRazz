@@ -204,6 +204,27 @@ async function getPublic(origin, path, json = false) {
   return json ? response.json() : response.text();
 }
 
+export function isPublicPreview(preview) {
+  const record = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+  const vector = (value) => Array.isArray(value) && value.length === 3 && value.every(Number.isFinite);
+  // Match publicGeometry: rails and glass fronts need these visual fields,
+  // while manufacturing labels, cut details and internal costs remain forbidden.
+  const visualKeys = new Set(["size", "position", "material", "door", "shape", "surface"]);
+  return record(preview) &&
+    Object.keys(preview).every((key) => ["geometry", "price"].includes(key)) &&
+    Number.isFinite(preview.price) &&
+    Array.isArray(preview.geometry) &&
+    preview.geometry.every((panel) =>
+      record(panel) &&
+      Object.keys(panel).every((key) => visualKeys.has(key)) &&
+      vector(panel.size) && vector(panel.position) &&
+      typeof panel.material === "string" &&
+      (!("door" in panel) || typeof panel.door === "boolean") &&
+      (!("shape" in panel) || panel.shape === "cylinder") &&
+      (!("surface" in panel) || ["glass", "aluminum-glass"].includes(panel.surface)),
+    );
+}
+
 async function smoke() {
   const origin = publicOrigin(process.env.ALRAZZ_PUBLIC_URL);
   const html = await getPublic(origin, "/");
@@ -223,19 +244,8 @@ async function smoke() {
       catalog.settings.materials.every((material) => !("price" in material)),
     "El catálogo público está exponiendo tarifas internas.",
   );
-  const visualKeys = new Set(["size", "position", "material", "door"]);
   assert(
-    catalog.products.every(
-      (product) =>
-        product.preview &&
-        Object.keys(product.preview).every((key) =>
-          ["geometry", "price"].includes(key),
-        ) &&
-        Array.isArray(product.preview.geometry) &&
-        product.preview.geometry.every((panel) =>
-          Object.keys(panel).every((key) => visualKeys.has(key)),
-        ),
-    ),
+    catalog.products.every((product) => isPublicPreview(product.preview)),
     "El catálogo público está exponiendo información de despiece o usa un contrato antiguo.",
   );
   const admin = await getPublic(origin, "/api/store?action=admin", true);

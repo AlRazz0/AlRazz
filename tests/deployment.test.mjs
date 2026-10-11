@@ -2,11 +2,55 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import ts from "typescript";
+import { publicGeometry } from "../lib/public-geometry.ts";
 import {
   checkConfig,
+  isPublicPreview,
   publicOrigin,
   requireFreeCompatibleAuthentication,
 } from "../scripts/check-deployment.mjs";
+
+function visualPreview() {
+  return {
+    price: 1500,
+    geometry: publicGeometry(
+      [{ id: "side", name: "Lateral", size: [18, 2100, 550], position: [0, 1050, 0], material: "fixture-finish", door: false }],
+      [
+        { id: "rail", name: "Barra", kind: "clothes-rail", length: 850, diameter: 25, position: [0, 1700, 0] },
+        ...["glass", "aluminum-glass"].map((surface) => ({ id: surface, name: "Frente", kind: "front-door", surface, size: [400, 700, 6], position: [0, 350, 280], glassThickness: 6, glassWidth: 396, glassHeight: 696, glassArea: 0.276, frameMeters: 2.2 })),
+      ],
+    ),
+  };
+}
+
+test("public smoke accepts the actual visual contract for boards, wardrobe rails and glass fronts", () => {
+  const preview = visualPreview();
+  assert.equal(preview.geometry[1].shape, "cylinder");
+  assert.equal(preview.geometry[2].surface, "glass");
+  assert.equal(preview.geometry[3].surface, "aluminum-glass");
+  assert.equal(isPublicPreview(preview), true);
+});
+
+test("public smoke still rejects manufacturing details and internal costs", () => {
+  for (const field of ["id", "name", "edges", "grain", "glassWidth", "glassHeight", "glassArea", "frameMeters", "unitCost", "cost"]) {
+    const preview = visualPreview();
+    preview.geometry[2][field] = "private-fixture";
+    assert.equal(isPublicPreview(preview), false, field);
+  }
+  for (const field of ["panels", "fixtures", "costs", "accessories", "cutList"]) {
+    assert.equal(isPublicPreview({ ...visualPreview(), [field]: [] }), false, field);
+  }
+});
+
+test("public smoke rejects malformed visual previews without throwing", () => {
+  for (const value of [null, [], {}, { price: 100, geometry: [null] }, { price: "100", geometry: [] }])
+    assert.equal(isPublicPreview(value), false);
+  for (const patch of [{ shape: "private-description" }, { surface: "placeholder" }, { size: [18, 500] }, { position: [0, Infinity, 0] }, { door: "yes" }]) {
+    const preview = visualPreview();
+    Object.assign(preview.geometry[0], patch);
+    assert.equal(isPublicPreview(preview), false);
+  }
+});
 
 const filename = new URL("../wrangler.jsonc", import.meta.url);
 const source = ts.parseConfigFileTextToJson(
