@@ -146,6 +146,7 @@ function publicOnly(value) {
     "fixtures",
     "diameter",
     "unitCost",
+    "unitPrice",
     "cost",
   ];
   const visit = (object) => {
@@ -368,6 +369,93 @@ test("API persistente: autorización, catálogo, concurrencia, cotización y dis
   assert.ok(
     (await visitor.get("catalog")).data.products.some((p) => p.id === id),
   );
+
+  await t.test("opciones administrables: tarifas privadas, selección validada y snapshot histórico", async () => {
+    const extraId = id + "-extras";
+    fixtureProducts.push(extraId);
+    const extras = [
+      { id: "unidad", name: "Opción por unidad", active: true, maxQuantity: 4, pricing: { basis: "unit", amount: 25 } },
+      { id: "perfil", name: "Perfil por ancho", active: true, maxQuantity: 2, pricing: { basis: "linear-meter", dimension: "width", amount: 50 } },
+      { id: "superficie", name: "Superficie frontal", active: true, maxQuantity: 2, pricing: { basis: "square-meter", plane: "front", amount: 80 } },
+      { id: "reservado", name: "Opción aún privada", active: false, maxQuantity: 1, pricing: { basis: "unit", amount: 900 } },
+    ];
+    const draft = await staff.post({ op: "product", expectedVersion: 0, product: {
+      ...model, id: extraId, name: "Opciones automatizadas", active: true,
+      pricing: { basis: "unit", amount: 1000 }, extras,
+      defaults: { ...model.defaults, front: "melamine", install: false, transport: false, extras: [{ id: "unidad", quantity: 1 }] },
+    } });
+    assert.equal(draft.status, 201);
+    assert.equal(draft.data.product.active, false);
+    const activated = await staff.post({ op: "product", expectedVersion: draft.data.product.version, product: { ...draft.data.product, active: true } });
+    assert.equal(activated.status, 200);
+    const product = activated.data.product;
+    const publicModel = (await visitor.get("catalog")).data.products.find((item) => item.id === extraId);
+    publicOnly(publicModel);
+    assert.deepEqual(publicModel.extras.map((item) => item.id), ["unidad", "perfil", "superficie"]);
+    assert.deepEqual(publicModel.extras.map((item) => item.pricing), [{ basis: "unit" }, { basis: "linear-meter", dimension: "width" }, { basis: "square-meter", plane: "front" }]);
+    assert.equal(publicModel.publicPrice, 1030);
+    assert.deepEqual(publicModel.defaults.extras, [{ id: "unidad", quantity: 1 }]);
+
+    const selections = [{ id: "unidad", quantity: 2 }, { id: "perfil", quantity: 1 }, { id: "superficie", quantity: 1 }];
+    const config = { ...product.defaults, extras: selections };
+    const input = { productId: extraId, config };
+    const expectedPrice = Math.ceil((1000 + 50 + config.width / 1000 * 50 + config.width * config.height / 1e6 * 80) / 10) * 10;
+    const quoted = await visitor.quote(input);
+    assert.equal(quoted.status, 200);
+    assert.equal(quoted.data.price, expectedPrice);
+    publicOnly(quoted.data);
+    const privateResult = await staff.post({ op: "cut-list", ...input });
+    assert.equal(privateResult.status, 200);
+    assert.equal(privateResult.data.result.extras.length, 3);
+    assert.equal(privateResult.data.result.price, expectedPrice);
+    assert.deepEqual(privateResult.data.result.extras.map((line) => line.unitPrice), [25, 50, 80]);
+    for (const invalid of [
+      [{ id: "missing", quantity: 1 }],
+      [{ id: "reservado", quantity: 1 }],
+      [{ id: "unidad", quantity: 5 }],
+      [{ id: "unidad", quantity: 0 }],
+      [{ id: "unidad", quantity: 1.5 }],
+      [{ id: "unidad", quantity: 1, amount: 0 }],
+      [{ id: "unidad", quantity: 1 }, { id: "unidad", quantity: 1 }],
+    ]) {
+      assert.equal((await visitor.quote({ ...input, config: { ...config, extras: invalid } })).status, 400);
+    }
+    assert.equal((await visitor.post({ op: "save-design", ...input, config: { ...config, extras: [{ id: "unidad", quantity: 1, unitPrice: 0 }] } })).status, 400);
+    const savedExtra = await visitor.post({ op: "save-design", ...input, price: 1 });
+    assert.equal(savedExtra.status, 201);
+    fixtureDesigns.push(savedExtra.data.design.id);
+    const historical = savedExtra.data.design;
+    assert.equal(historical.price, expectedPrice);
+    assert.deepEqual(historical.config.extras, selections);
+    publicOnly(historical);
+    const exportRoundTrip = importCatalogCSV(exportCatalogCSV([product]), dashboard.settings);
+    assert.deepEqual(exportRoundTrip.errors, []);
+    assert.deepEqual(exportRoundTrip.products[0].extras, extras);
+    assert.deepEqual(exportRoundTrip.products[0].defaults.extras, product.defaults.extras);
+
+    const changedExtras = extras.map((option) => option.id === "unidad"
+      ? { ...option, name: "Nombre posterior", pricing: { basis: "unit", amount: 250 } }
+      : option.id === "perfil" ? { ...option, active: false } : option);
+    const updated = await staff.post({ op: "product", expectedVersion: product.version, product: { ...product, extras: changedExtras } });
+    assert.equal(updated.status, 200);
+    assert.equal((await visitor.quote(input)).status, 400, "Una opción retirada no puede contratarse de nuevo.");
+    const newQuote = await visitor.quote({ ...input, config: { ...config, extras: [{ id: "unidad", quantity: 2 }] } });
+    assert.equal(newQuote.status, 200);
+    assert.equal(newQuote.data.price, 1500);
+    const laterCatalog = (await visitor.get("catalog")).data.products.find((item) => item.id === extraId);
+    assert.deepEqual(laterCatalog.extras.map((option) => option.id), ["unidad", "superficie"]);
+    publicOnly(laterCatalog);
+    const preserved = (await stranger.get("design&id=" + historical.id)).data.design;
+    assert.deepEqual(preserved, historical, "El diseño compartido conserva selección, nombres, precios y vista anteriores.");
+    publicOnly(preserved);
+    const preservedPrivate = await staff.post({ op: "cut-list", designId: historical.id });
+    assert.equal(preservedPrivate.status, 200);
+    assert.deepEqual(preservedPrivate.data.result, privateResult.data.result, "El despiece conserva las tarifas y cantidades originales.");
+    assert.equal((await stranger.post({ op: "cut-list", designId: historical.id })).status, 401);
+    assert.equal((await staff.post({ op: "product", expectedVersion: updated.data.product.version, product: {
+      ...updated.data.product, extras: changedExtras.map((option) => ({ ...option, active: false })),
+    } })).status, 400, "El administrador debe retirar una selección inicial antes de ocultar esa opción.");
+  });
 
   const saved = await visitor.post({
     op: "save-design",

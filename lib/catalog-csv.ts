@@ -11,6 +11,7 @@ import {
 import type { Config, Product, Settings } from "./furniture.ts";
 import { productTemplate } from "./product-templates.ts";
 import { gallerySchema } from "./model-gallery.ts";
+import { productExtrasSchema, extraSelectionsSchema } from "./product-extras.ts";
 
 export type CatalogCSVError = { row: number; message: string };
 export type CatalogCSVImport = {
@@ -35,6 +36,8 @@ type Column =
   | "front"
   | "pricingBasis"
   | "pricingAmount"
+  | "extras"
+  | "selectedExtras"
   | "description"
   | "basePrice"
   | "weeks"
@@ -76,6 +79,8 @@ export const CATALOG_COLUMNS: ReadonlyArray<{ key: Column; label: string }> = [
   { key: "front", label: "Frente inicial" },
   { key: "pricingBasis", label: "Base de cobro" },
   { key: "pricingAmount", label: "Tarifa de venta S/" },
+  { key: "extras", label: "Opciones adicionales JSON" },
+  { key: "selectedExtras", label: "Opciones iniciales JSON" },
   { key: "description", label: "Descripción" },
   { key: "basePrice", label: "Precio base S/" },
   { key: "weeks", label: "Semanas" },
@@ -565,6 +570,8 @@ export function importCatalogCSV(
       const construction = constructionCell(cells);
       const gallery = galleryCell(cells);
       const pricing = pricingCell(cells);
+      const extras = cells.extras ? productExtrasSchema.parse(JSON.parse(cells.extras)) : undefined;
+      const selectedExtras = cells.selectedExtras ? extraSelectionsSchema.parse(JSON.parse(cells.selectedExtras)) : undefined;
       const frontOptions = cells.frontOptions
         ? cells.frontOptions.split("|").map((value) => frontCell(value.trim())!)
         : undefined;
@@ -585,6 +592,7 @@ export function importCatalogCSV(
         ...(construction ? { construction } : {}),
         ...(gallery ? { gallery } : {}),
         ...(pricing ? { pricing } : {}),
+        ...(extras ? { extras } : {}),
         ...(frontOptions ? { frontOptions } : {}),
         description:
           cells.description ||
@@ -625,6 +633,7 @@ export function importCatalogCSV(
             : fallback.defaults.handle) as Config["handle"],
           install: booleanCell(cells.install, false, "Instalación"),
           transport: booleanCell(cells.transport, false, "Transporte"),
+          ...(selectedExtras ? { extras: selectedExtras } : {}),
         },
       };
       if (seen.has(product.id))
@@ -693,6 +702,8 @@ export function exportCatalogCSV(
         product.pricing && product.pricing.basis !== "calculated"
           ? product.pricing.amount
           : "",
+      extras: product.extras ? JSON.stringify(product.extras) : "",
+      selectedExtras: product.defaults.extras ? JSON.stringify(product.defaults.extras) : "",
       description: product.description,
       basePrice: product.basePrice,
       weeks: product.weeks,

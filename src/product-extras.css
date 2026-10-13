@@ -1,0 +1,37 @@
+.admin-extras-editor { margin-top: 28px; padding-top: 24px; border-top: 1px solid #ded7ca; }
+.admin-extras-heading { display: flex; align-items: flex-start; gap: 18px; margin-bottom: 18px; }
+.admin-extras-heading h4 { font-size: 15px; font-weight: 550; margin: 0 0 8px; }
+.admin-extras-heading p { font-size: 12px; color: #686355; line-height: 1.6; margin: 0; }
+.admin-extras-heading .button { white-space: nowrap; padding: 10px 13px; font-size: 11px; }
+.admin-extras-list { display: grid; gap: 20px; }
+.admin-extra-card { min-width: 0; border: 1px solid #d9d0c1; border-radius: 10px; padding: 16px; background: #faf8f2; }
+.admin-extra-card legend { font-size: 11px; padding: 0 8px; color: #72634e; }
+.admin-extra-actions { display: flex; flex-wrap: wrap; gap: 12px 18px; margin: 16px 0; align-items: center; }
+.admin-extra-actions label { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.admin-extra-actions input[type="checkbox"] { accent-color: #855636; width: 16px; height: 16px; }
+.admin-extra-actions .admin-extra-default-count { width: 70px; padding: 8px; border: 1px solid #cbbfae; }
+.admin-extra-remove { display: flex; align-items: center; gap: 6px; background: transparent; border: 0; color: #874133; margin-left: auto; font-size: 12px; padding: 8px 0; cursor: pointer; }
+.extra-selector { margin: 24px 0; padding: 22px 0; border-top: 1px solid #dcd5c9; border-bottom: 1px solid #dcd5c9; }
+.extra-selector h3 { font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 9px; margin: 0 0 10px; }
+.extra-selector > p { color: #716b60; font-size: 12px; line-height: 1.6; margin: 0 0 16px; }
+.extra-option { border: 1px solid #ded7ca; border-radius: 8px; margin: 10px 0; padding: 14px; background: #fbfaf6; }
+.extra-option.selected { border-color: #936246; background: #f7eee3; }
+.extra-choice { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
+.extra-choice input { width: 17px; height: 17px; margin-top: 2px; accent-color: #936246; }
+.extra-choice strong { font-size: 13px; font-weight: 500; }
+.extra-choice small { display: block; font-size: 11px; color: #716b60; margin-top: 6px; line-height: 1.5; }
+.extra-basis { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #766753; margin: 10px 0 0 27px; }
+.extra-quantity { margin: 12px 0 0 27px; }
+.extra-quantity label { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 12px; }
+.extra-quantity input { width: 82px; max-width: 100%; border: 1px solid #cdbba4; border-radius: 4px; padding: 8px; background: #fffdf9; color: inherit; }
+.extra-quantity > small, .extra-unavailable { display: block; font-size: 11px; line-height: 1.6; color: #90472e; margin-top: 8px; }
+.extra-unavailable button { display: block; border: 0; background: none; color: inherit; padding: 5px 0; text-decoration: underline; cursor: pointer; }
+.extra-note { display: block; font-size: 10px; color: #7c7569; line-height: 1.6; margin-top: 14px; }
+.admin-extras-summary { margin: 22px 0; padding: 18px; background: #f6f0e6; border: 1px solid #ded5c6; border-radius: 8px; }
+.admin-extras-summary h4 { margin: 0 0 7px; font-size: 14px; font-weight: 550; }
+.admin-extras-summary p { color: #766b5b; font-size: 11px; margin: 0 0 12px; }
+.admin-extras-summary ul { list-style: none; margin: 0; padding: 0; }
+.admin-extras-summary li { display: flex; justify-content: space-between; align-items: center; gap: 14px; border-top: 1px solid #ded5c6; padding: 12px 0; }
+.admin-extras-summary strong, .admin-extras-summary b { font-size: 12px; font-weight: 500; }
+.admin-extras-summary span { display: block; color: #766b5b; font-size: 11px; margin-top: 5px; }
+@media (max-width: 740px) { .admin-extras-heading { flex-direction: column; } .admin-extra-card { padding: 12px; } }

@@ -1,4 +1,5 @@
-import type { Product, Config } from "../lib/furniture";
+import type { Config } from "../lib/furniture";
+import type { PublicProductMetadata } from "../lib/public-product";
 import type { VisualPanel } from "../lib/public-geometry";
 import type { PublicMaterial } from "../lib/furniture";
 export type { PublicMaterial } from "../lib/furniture";
@@ -6,9 +7,7 @@ export type Quote = {
   geometry: VisualPanel[];
   price: number;
 };
-export type PublicProduct = Omit<Product, "basePrice" | "pricing"> & {
-  pricing?: { basis: "calculated" | "unit" | "linear-meter" };
-  publicPrice: number;
+export type PublicProduct = PublicProductMetadata & {
   preview: Quote;
 };
 export type {

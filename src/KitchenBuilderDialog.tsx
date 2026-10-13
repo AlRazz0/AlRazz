@@ -15,8 +15,11 @@ import {
 } from "../lib/furniture";
 import type { PublicProduct, PublicSettings } from "./types";
 import type { KitchenSlot } from "./kitchen-slots";
-import { fitKitchenSlotProduct } from "./kitchen-placement";
-import { DoorLayoutSelector, FrontIcon, FrontSelector } from "./FrontSelector";
+import { fitKitchenSlotProduct, kitchenConfigIssue, kitchenDimensionLimits } from "./kitchen-placement";
+import { DoorLayoutSelector, FrontSelector } from "./FrontSelector";
+import { KitchenDimensionInput } from "./KitchenDimensionInput";
+import { KitchenModelPreview } from "./KitchenModelPreview";
+import { ExtraSelector } from "./ExtraSelector";
 import { MaterialDetails, MaterialSwatch } from "./MaterialSwatch";
 import { materialBrands, materialLabel } from "./materials";
 
@@ -46,6 +49,7 @@ export function KitchenBuilderDialog({
     candidates[0]?.config,
   );
   const [error, setError] = useState("");
+  const [invalidMeasures, setInvalidMeasures] = useState<string[]>([]);
   const [brand, setBrand] = useState("all");
   const selected = candidates.find(
     (candidate) => candidate.product.id === selectedId,
@@ -56,19 +60,12 @@ export function KitchenBuilderDialog({
   );
   const update = (next: Config) => {
     if (!selected) return;
-    const fitted = fitKitchenSlotProduct(
-      { ...selected, defaults: next },
-      space,
-    );
-    if (!fitted) {
-      setError(
-        "Esta combinación necesita otro tamaño de espacio. Prueba otra distribución o material de puertas.",
-      );
-      return;
-    }
-    setConfig(fitted);
+    setConfig(next);
     setError("");
   };
+  const issue = selected && config ? kitchenConfigIssue(selected, config, space) : "";
+  const limits = selected ? kitchenDimensionLimits(selected, space) : undefined;
+  const replacingFurniture = space.replaceKind === "furniture";
   return (
     <Dialog
       open
@@ -88,12 +85,12 @@ export function KitchenBuilderDialog({
             CONSTRUYE TU COCINA / PARED {space.wall.toUpperCase()}
           </p>
           <DialogTitle>
-            {space.replaceId
+            {replacingFurniture ? "Otra pieza, tu mismo espacio." : space.replaceId
               ? "Dale vida a este espacio."
               : "Añade la siguiente pieza."}
           </DialogTitle>
           <DialogDescription>
-            {space.row === "wall" ? "Alacena" : "Mueble bajo"} · hasta{" "}
+            {space.row === "wall" ? "Alacena" : space.row === "tall" ? "Columna alta" : "Mueble bajo"} · hasta{" "}
             {space.widthAvailable / 10} cm de ancho. Elige un modelo, sus
             puertas y su color.
           </DialogDescription>
@@ -110,6 +107,7 @@ export function KitchenBuilderDialog({
                   aria-pressed={selectedId === product.id}
                   onClick={() => {
                     setSelectedId(product.id);
+                    setInvalidMeasures([]);
                     setConfig({
                       ...fitted,
                       ...(config &&
@@ -123,13 +121,8 @@ export function KitchenBuilderDialog({
                     setError("");
                   }}
                 >
-                  <FrontIcon
-                    kind={
-                      fitted.doors === "none"
-                        ? "none"
-                        : (fitted.front ?? "melamine")
-                    }
-                  />
+                  <KitchenModelPreview product={product} config={fitted}
+                    color={settings.materials.find(material => material.id === fitted.finish)?.color} />
                   <strong>{product.name}</strong>
                   <small>
                     {fitted.width / 10} × {fitted.height / 10} ×{" "}
@@ -150,7 +143,29 @@ export function KitchenBuilderDialog({
           </section>
           {selected && config && (
             <section className="kitchen-build-details">
-              <h3>2. Tu estilo</h3>
+              <h3>2. Sus medidas y distribución</h3>
+              <div className="kitchen-build-selected-preview">
+                <KitchenModelPreview product={selected} config={config}
+                  color={settings.materials.find(material => material.id === config.finish)?.color} />
+                <p>Vista esquemática de tu módulo. La cocina completa se actualiza al confirmar.</p>
+              </div>
+              {limits && <div className="kitchen-measures three">
+                {(["width", "height", "depth"] as const).map(key => <KitchenDimensionInput
+                  key={`${selected.id}-${key}`} label={{ width: "Ancho", height: "Alto", depth: "Fondo" }[key]}
+                  value={config[key]} min={limits[key].min} max={limits[key].max}
+                  onCommit={value => update({ ...config, [key]: value })}
+                  onValidityChange={valid => setInvalidMeasures(previous => valid ? previous.filter(field => field !== key) : [...new Set([...previous, key])])} />)}
+              </div>}
+              <p className="kitchen-help">Escribe la medida exacta y pulsa Enter o sal del campo. El rango depende del modelo y del espacio disponible.</p>
+              <div className="kitchen-measures">
+                <label>Columnas<select value={config.modules} onChange={event => update({ ...config, modules: Number(event.target.value) })}>
+                  {getConstructionOptions(selected, config).modules.map(value => <option key={value}>{value}</option>)}
+                </select></label>
+                <label>Repisas por columna<select value={config.shelves} onChange={event => update({ ...config, shelves: Number(event.target.value) })}>
+                  {getConstructionOptions(selected, config).shelves.map(value => <option key={value}>{value}</option>)}
+                </select></label>
+              </div>
+              <h3>3. Puertas y acabado</h3>
               <DoorLayoutSelector
                 value={config.doors}
                 options={getConstructionOptions(selected, config).doors}
@@ -222,6 +237,7 @@ export function KitchenBuilderDialog({
                 )}
                 label="Melamina del módulo"
               />
+              <ExtraSelector product={selected} config={config} onChange={update} />
             </section>
           )}
         </div>
@@ -235,14 +251,14 @@ export function KitchenBuilderDialog({
                 : ""}
             </p>
           )}
-          {error && (
+          {(error || issue) && (
             <p role="alert" className="kitchen-build-error">
-              {error}
+              {error || issue}
             </p>
           )}
           <button
             className="button"
-            disabled={!selected || !config}
+            disabled={!selected || !config || !!issue || invalidMeasures.length > 0}
             onClick={() => {
               if (!selected || !config) return;
               try {
@@ -256,7 +272,7 @@ export function KitchenBuilderDialog({
               }
             }}
           >
-            <Plus size={17} /> Añadir este módulo <ArrowRight size={17} />
+            <Plus size={17} /> {replacingFurniture ? "Sustituir este módulo" : "Añadir este módulo"} <ArrowRight size={17} />
           </button>
           <small>El precio de tu cocina se actualiza al añadirlo.</small>
         </div>
