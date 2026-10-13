@@ -9,14 +9,14 @@ El desafío caduca a los cinco minutos y admite intentos limitados. El código d
 1. Abre [el panel de la web publicada](https://alrazz.pages.dev/admin), o pulsa seis veces seguidas el logotipo **El capo** del pie de página. Deja menos de cuatro segundos entre pulsaciones. Este gesto solo abre el acceso: siguen siendo obligatorios la contraseña y el segundo factor.
 2. Introduce el correo autorizado y la contraseña de producción. Pulsa **Continuar**.
 3. Abre la aplicación autenticadora vinculada, introduce su código vigente de seis dígitos y pulsa **Verificar y entrar**. Si está activado el correo, también puedes pulsar **Recibir un código por correo**, luego **Enviar código al correo autorizado**, consultar tu Gmail e introducir los seis dígitos. Revisa Spam si no aparece. El enlace permanece desactivado hasta configurar el envío; consulta la [activación con Gmail](correo-gmail.md).
-4. En **Catálogo**, pulsa el lápiz **Editar** del modelo. El editor reúne **General**, **Medidas y distribución**, **Acabados**, **Imagen y galería** y **Publicación**, junto a una vista 3D que muestra los cambios. Revisa la configuración y pulsa **Guardar cambios**.
-5. Usa **Ajustes del taller** para acabados, costos y contactos, y termina con **Guardar ajustes**. Pulsa **Cerrar sesión** al terminar en un equipo compartido.
+4. En **Catálogo**, pulsa el lápiz **Editar** del modelo. El editor reúne **General**, **Medidas y distribución**, **Opciones y acabados**, **Imagen y galería** y **Precio y publicación**, junto a una vista 3D que muestra los cambios. Revisa la configuración y pulsa **Guardar cambios**.
+5. Usa la pestaña **Acabados** para colores y marcas, y termina con **Guardar acabados**. Usa **Ajustes del taller** para los costos generales y contactos, y termina con **Guardar ajustes**. Ambos botones guardan conjuntamente los ajustes y los acabados pendientes; cambiar de pestaña conserva los datos. Pulsa **Cerrar sesión** al terminar en un equipo compartido.
 
 La contraseña de desarrollo local no abre el panel de producción. Las credenciales, el QR de vinculación y los códigos de recuperación se entregan por separado y nunca forman parte de esta guía pública.
 
 ## Añadir, editar o retirar un mueble
 
-1. En **Catálogo**, selecciona **Nuevo mueble** o duplica uno existente.
+1. Pulsa **Crear un mueble** en los accesos superiores del panel, o entra en **Catálogo → Nuevo mueble**. También puedes usar **Duplicar** en un modelo parecido; la copia empieza como borrador.
 2. Elige una de las seis estructuras de partida con su dibujo de referencia. El identificador se propone automáticamente al escribir el nombre; puedes personalizarlo en **Identificador del modelo** antes del primer guardado.
 3. Recorre **General**, **Medidas y distribución**, **Opciones y acabados**, **Imagen y galería** y **Precio y publicación**, usando las pestañas o **Anterior/Siguiente**. La vista 3D permite comprobar medidas y puertas. En móvil, pulsa **Ver modelo 3D** para desplegarla.
 4. Pulsa **Crear borrador**. El editor permanece abierto para seguir trabajando. Después puedes activar la visibilidad en **Precio y publicación** y pulsar **Guardar cambios**, o publicarlo desde su estado **Borrador** en el catálogo. **Guardar y cerrar** aplica la edición y regresa a la lista.
@@ -40,9 +40,9 @@ La [colección de cocinas, vitrinas y repisas](coleccion-cocinas-vitrinas.md) a�
 
 ## Frentes y tarifa de cada modelo
 
-En **Catálogo → Editar → Acabados**, marca los materiales de puerta que el cliente puede elegir y selecciona el frente inicial. El vidrio requiere jalador exterior; cada hoja admite hasta 1500 mm de alto en el piloto. La estructura y las repisas permanecen en melamina de 18 mm. Puedes deshabilitar un frente para un modelo concreto.
+En **Catálogo → Editar → Opciones y acabados**, marca los materiales de puerta que el cliente puede elegir y selecciona el frente inicial. El vidrio requiere jalador exterior; cada hoja admite hasta 1500 mm de alto en el piloto. La estructura y las repisas permanecen en melamina de 18 mm. Puedes deshabilitar un frente para un modelo concreto.
 
-En **Publicación**, abre **Forma de cotizar este modelo**:
+En **Precio y publicación**, abre **Forma de cotizar este modelo**:
 
 - **Por materiales y herrajes:** calcula las piezas reales, tapacantos, herrajes y **Mano de obra base · S/** con el margen del taller.
 - **Tarifa por unidad:** introduce **Precio base de venta · S/ por unidad**. Una unidad es un mueble completo, a cualquiera de sus medidas permitidas.
@@ -51,6 +51,20 @@ En **Publicación**, abre **Forma de cotizar este modelo**:
 Las tarifas por unidad o metro sustituyen el cálculo base del mueble y ya incluyen material, mano de obra y herrajes comunes. Los frentes especiales se suman con el margen del taller; instalación y transporte se añaden aparte. El total se redondea hacia arriba a múltiplos de S/10. Pulsa **Guardar cambios** para aplicar la tarifa a nuevas cotizaciones.
 
 En **Ajustes del taller → Costos adicionales de frentes especiales**, configura **Vidrio · forma de cobrar** por m² o por hoja, **Marco de aluminio · forma de cobrar** por metro de perímetro exterior o por marco completo, y **Herrajes para vidrio · costo S/ por puerta**. Son costos internos; el sistema aplica el margen antes de añadirlos a la venta. El juego de herrajes para vidrio sustituye los herrajes comunes de esa puerta. Pulsa **Guardar ajustes**. Consulta [Frentes y tarifas](frentes-y-tarifas.md) para ver el cálculo de áreas, perímetros y restricciones.
+
+## Acabados y complementos con tarifa propia
+
+Dentro de **Catálogo → Editar → Opciones y acabados**, busca **Acabados y complementos con tarifa propia** y pulsa **Añadir parámetro**. Introduce nombre, descripción, tarifa de venta, cantidad máxima y activa **Ofrecer al cliente**. Si debe venir seleccionado, activa **Seleccionado inicialmente** y escribe su cantidad inicial. Guarda el mueble para aplicar estos cambios.
+
+Cada parámetro pertenece a ese modelo y permite elegir:
+
+- **Unidad:** tarifa × cantidad seleccionada.
+- **Metro lineal:** selecciona ancho, alto o fondo del mueble. Cada tramo usa esa medida convertida a metros; el resultado se multiplica por la cantidad y la tarifa. Por ejemplo, dos tramos que siguen un ancho de 1200 mm equivalen a 2,4 metros.
+- **Metro cuadrado:** selecciona frente (ancho × alto), lateral (fondo × alto) o tapa (ancho × fondo). Se usa la superficie exterior completa, multiplicada por la cantidad; no descuenta huecos.
+
+Estas son tarifas finales de venta y no reciben otra vez el margen del taller. Se suman tanto a los modelos calculados por materiales como a los cobrados por unidad o metro lineal. El cliente elige las opciones disponibles y sus cantidades en el configurador y en cada módulo de cocina. Ocultar o quitar un parámetro conserva los diseños que ya se habían guardado con él.
+
+Los parámetros sirven para describir y cotizar complementos: no crean ni colocan piezas nuevas en el modelo 3D ni en el despiece. La melamina mantiene su cálculo por superficie real; las puertas de vidrio y los marcos de aluminio usan los controles específicos de frentes. Se admiten hasta 20 parámetros por modelo y 100 unidades de cada uno.
 
 ## Cocinas completas
 
@@ -72,15 +86,15 @@ En **Imagen y galería**, activa o desactiva la imagen ambientada, elige ambient
 
 ## Materiales, capacidad y costos
 
-En **Ajustes del taller** se pueden cambiar los dos contactos de WhatsApp, disponibilidad, plazo general, acabados y reglas de cotización. Los cambios se aplican al pulsar **Guardar ajustes**. Los costos internos se muestran únicamente en administración.
+La pestaña **Acabados** y el acceso superior **Gestionar acabados** abren el catálogo de colores. En **Ajustes del taller** se pueden cambiar los dos contactos de WhatsApp, disponibilidad, plazo general y reglas de cotización. Los cambios se aplican al pulsar **Guardar ajustes**. Los costos internos se muestran únicamente en administración.
 
 - **WhatsApp comercial 1 y 2:** código de país y teléfono, sin signos ni espacios. Cada número vacío queda oculto; dejar ambos vacíos desactiva el contacto comercial. Si ambos contienen el mismo número, se muestra una sola opción. El cliente elige a cuál escribir y abre WhatsApp con un mensaje preparado. No se envía automáticamente el mismo mensaje a ambos destinatarios.
 - **Facebook comercial:** enlace HTTPS de una página o perfil en Facebook. Dejarlo vacío oculta el enlace. Se guarda con los demás ajustes; no requiere editar componentes ni publicar código.
-- **Acabados:** añadir marca, nombre comercial, código del fabricante (opcional), tablero estándar o RH, identificador, color e índice de costo. Un índice de 100 equivale a la tarifa base por m²; 110 representa un costo 10 % mayor. Activa los que el taller ofrece. El código interno no es un SKU del fabricante.
-- **Identificadores de acabado:** conservarlos si ya se utilizan en modelos o configuraciones. La interfaz bloquea el cambio de los identificadores usados por el catálogo.
+- **Acabados:** en su pestaña, pulsa **Añadir acabado**. Introduce marca, nombre comercial, color, tablero estándar o RH e índice de costo. El código del fabricante es opcional. Un índice de 100 equivale a la tarifa base por m²; 110 representa un costo 10 % mayor. Activa **Visible en el configurador**, pulsa **Añadir al catálogo** y finalmente **Guardar acabados**. El acabado nuevo aparece al inicio y se limpian los filtros para poder verlo. Editar un acabado sigue el mismo proceso: **Editar → Aplicar cambios → Guardar acabados**.
+- **Identificadores de acabado:** se generan automáticamente sin repetir códigos y permanecen fijos al editar. No son un SKU del fabricante. El catálogo admite hasta 100 acabados y requiere al menos uno visible.
 - **Costos:** material, tapacanto, herrajes, barra de colgado por metro, soporte de barra por unidad, instalación, transporte y margen. El precio se calcula en servidor. Cada barra usa dos soportes; los costos de estos accesorios siguen siendo privados. La mano de obra se configura para cada mueble.
 
-**Añadir catálogo de marcas** incorpora las referencias faltantes de Hispano, Vesto y Pelikano como ocultas. Conserva precios, nombres y cambios de los IDs existentes. Revisa las referencias, establece tus costos, activa los acabados que ofreces y guarda. El filtro de marca facilita administrar la lista. Las fuentes están en [material-sources.md](material-sources.md); la selección no representa un ranking de ventas ni inventario confirmado en Cusco.
+**Acabados → Completar referencias** incorpora las referencias faltantes de Hispano, Vesto y Pelikano como ocultas. Conserva precios, nombres y cambios de los IDs existentes. Revisa las referencias, establece tus costos, activa los acabados que ofreces y guarda. El filtro de marca y la búsqueda por nombre, marca o código facilitan administrar la lista. Las fuentes están en [material-sources.md](material-sources.md); la selección no representa un ranking de ventas ni inventario confirmado en Cusco.
 
 Cada variante RH tiene un identificador y costo propios. Para añadir una combinación que compras a tu proveedor, crea un acabado nuevo, elige **RH**, escribe su marca y nombre comercial y configura su índice. No conviertas un acabado estándar en RH si necesitas ofrecer ambos. RH significa resistente a la humedad, no impermeable. Ocultar una variante no elimina su historial ni modifica diseños ya guardados.
 
@@ -110,6 +124,8 @@ La vista 3D incluye un ambiente de estudio y una persona de referencia de **1,70
 
 El CSV conserva **Tipo constructivo**, lado y ancho del módulo lateral, alto libre del maletero, columnas para colgar, alto y retranqueo del zócalo, y habilitación, ambiente y texto de la galería. Los tipos admitidos son `cabinet`, `open-shelf`, `desk`, `desk-storage`, `wardrobe` y `kitchen-base`. Los CSV antiguos siguen funcionando sin las columnas nuevas. Un tipo desconocido o un parámetro colocado en otra estructura genera un error, sin transformarse silenciosamente en una carcasa.
 
+También conserva **Opciones adicionales JSON** y **Opciones iniciales JSON**, con las definiciones y selecciones de los parámetros opcionales de cada modelo. Las columnas se pueden dejar vacías en los muebles sin complementos.
+
 También conserva **Frentes permitidos**, **Frente inicial**, **Base de cobro** y **Tarifa de venta S/**. Los frentes permitidos se separan con `|`, por ejemplo `melamine|glass|aluminum-glass`; las bases de cobro son `calculated`, `unit` y `linear-meter`. Una tarifa fija requiere base por unidad o metro; deja su importe vacío cuando uses cálculo por materiales. Los [doce modelos de cocina, vitrinas y repisas](../catalog/coleccion-cocinas-vitrinas.json) pueden importarse desde su JSON y permanecerán en borrador hasta que los publiques.
 
 La importación muestra una vista previa antes de escribir. Todos los modelos se crean como borradores. Si hay errores de estructura, identificadores duplicados o identificadores que ya existen, se debe corregir el archivo antes de confirmar. Importar no sobrescribe los modelos existentes; para actualizarlos, usa el editor. Máximo de archivo y datos preparados en la interfaz: 1 MB; máximo de 200 muebles por importación.
@@ -118,4 +134,4 @@ La importación muestra una vista previa antes de escribir. Todos los modelos se
 
 Si una escritura falla, el formulario conserva los datos introducidos. Si otra persona modificó el mismo registro, el servidor rechaza una versión antigua para evitar sobrescribirla. Copia tus cambios, recarga los datos actuales y vuelve a aplicarlos. Una pérdida de conexión se muestra como error; no se anuncia un guardado hasta recibir respuesta del servidor.
 
-Los ajustes pendientes bloquean el cierre de sesión para prevenir una pérdida accidental. El navegador solicita confirmación si se abandona la página con cambios pendientes. Cerrar un editor modificado también requiere confirmar el descarte.
+Los ajustes pendientes bloquean el cierre de sesión para prevenir una pérdida accidental. El navegador solicita confirmación si se abandona la página con cambios pendientes. Cerrar un editor de mueble o acabado modificado también requiere confirmar el descarte. En el formulario de acabado, un dato inválido muestra el error y enfoca el campo, incluso si estaba dentro de **Textura, ficha e identificador**. Los cambios preparados en acabados y ajustes permanecen al cambiar de pestaña; deben guardarse antes de cerrar sesión.

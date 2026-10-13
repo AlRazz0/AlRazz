@@ -86,6 +86,7 @@ export function buildAdminPreview(draft: Product, settings: Settings) {
     construction: draft.construction,
     basePrice: draft.basePrice,
     pricing: draft.pricing,
+    extras: draft.extras,
     frontOptions: draft.frontOptions,
     limits: draft.limits,
     defaults: draft.defaults,

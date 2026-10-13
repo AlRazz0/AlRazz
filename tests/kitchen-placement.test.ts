@@ -8,14 +8,18 @@ import {
   seedProducts,
   type Product,
 } from "../lib/furniture.ts";
-import { buildKitchen } from "../lib/kitchen.ts";
+import { buildKitchen, type KitchenPlan } from "../lib/kitchen.ts";
 import { publicGeometry } from "../lib/public-geometry.ts";
+import { publicProduct } from "../lib/public-product.ts";
+import { productTemplate } from "../lib/product-templates.ts";
 import { getKitchenTemplates } from "../src/kitchen-templates.ts";
-import { getKitchenSlots } from "../src/kitchen-slots.ts";
+import { getEmptyKitchenSlot, getKitchenReplacementSlot, getKitchenSlots } from "../src/kitchen-slots.ts";
 import {
   fitKitchenSlotProduct,
   insertKitchenModule,
+  kitchenConfigIssue,
 } from "../src/kitchen-placement.ts";
+import { hasKitchenFurniture, removeKitchenItem } from "../src/kitchen-planner-state.ts";
 import type { PublicProduct } from "../src/types.ts";
 
 const products: Product[] = [
@@ -48,6 +52,98 @@ const catalog: PublicProduct[] = products.map((product) => {
       geometry: publicGeometry(result.panels, result.fixtures),
     },
   };
+});
+
+function publicFixture(product: Product): PublicProduct {
+  const built = buildFurniture(product, product.defaults);
+  return { ...publicProduct(product, built.price), preview: { price: built.price, geometry: publicGeometry(built.panels, built.fixtures) } };
+}
+
+function singleModule(product: Product): KitchenPlan {
+  return {
+    layout: "straight", walls: { a: 3600, b: 3000 }, roomHeight: 2700,
+    wallElevation: 1500, install: false, transport: false,
+    items: [{ id: "editable", kind: "furniture", wall: "a", row: "base", productId: product.id, config: structuredClone(product.defaults) }],
+  };
+}
+
+test("replacement keeps identity and exact chosen dimensions, and rejects a stale module", () => {
+  const base = { ...productTemplate("kitchen-base"), active: true };
+  const alternative = { ...base, id: "alternative-base", name: "Base alternativa" };
+  const plan = singleModule(base);
+  const original = structuredClone(plan);
+  const slot = getKitchenReplacementSlot(plan, "editable")!;
+  const selected = publicFixture(alternative);
+  const config = { ...alternative.defaults, width: 500, height: 810, depth: 570, doors: "none" as const };
+  assert.equal(kitchenConfigIssue(selected, config, slot), "");
+  const next = insertKitchenModule(plan, slot, selected, config, () => "remainder");
+  assert.equal(next.selected, "editable");
+  assert.equal(next.plan.items[0].kind, "furniture");
+  if (next.plan.items[0].kind === "furniture") {
+    assert.equal(next.plan.items[0].productId, alternative.id);
+    assert.deepEqual(next.plan.items[0].config, config);
+  }
+  assert.ok(next.plan.items[1].kind === "space");
+  assert.equal(next.plan.items[1].width, 100);
+  assert.doesNotThrow(() => buildKitchen(next.plan, [base, alternative], defaultSettings));
+  assert.deepEqual(plan, original);
+
+  const changed = structuredClone(plan);
+  if (changed.items[0].kind === "furniture") changed.items[0].config.depth -= 10;
+  assert.throws(() => insertKitchenModule(changed, slot, selected, config, () => "unused"), /espacio cambió/i);
+  assert.throws(() => insertKitchenModule(plan, slot, selected, { ...config, width: 550 }, () => "unused"), /100 mm/i);
+  assert.throws(() => insertKitchenModule(plan, slot, selected, { ...config, width: 510, height: 811 }, () => "unused"), /pasos de 10/i);
+  assert.throws(() => insertKitchenModule(plan, slot, selected, { ...config, width: 700 }, () => "unused"), /ancho/i);
+});
+
+test("the last module can be removed and rebuilt without relaxing quote validation", () => {
+  const base = { ...productTemplate("kitchen-base"), active: true };
+  const plan = singleModule(base);
+  const blank = removeKitchenItem(plan, "editable");
+  assert.equal(blank.items.length, 0);
+  assert.equal(hasKitchenFurniture(blank), false);
+  assert.equal(plan.items.length, 1);
+  assert.equal(removeKitchenItem(blank, "missing"), blank);
+  assert.throws(() => buildKitchen(blank, [base], defaultSettings));
+  const slot = getEmptyKitchenSlot(blank)!;
+  const selected = publicFixture(base);
+  const config = fitKitchenSlotProduct(selected, slot)!;
+  const rebuilt = insertKitchenModule(blank, slot, selected, config, () => "rebuilt");
+  assert.equal(hasKitchenFurniture(rebuilt.plan), true);
+  assert.equal(getEmptyKitchenSlot(rebuilt.plan), undefined);
+  assert.doesNotThrow(() => buildKitchen(rebuilt.plan, [base], defaultSettings));
+});
+
+test("public options survive insertion and exact dimensions reach server pricing", () => {
+  const base: Product = {
+    ...productTemplate("kitchen-base"), active: true,
+    extras: [{ id: "strip", name: "Perfil", active: true, maxQuantity: 4, pricing: { basis: "linear-meter", dimension: "width", amount: 100 } }],
+  };
+  const blank = { ...singleModule(base), items: [] };
+  const slot = getEmptyKitchenSlot(blank)!;
+  const selected = publicFixture(base);
+  assert.equal("amount" in selected.extras![0].pricing, false);
+  const config = { ...fitKitchenSlotProduct(selected, slot)!, width: 700, modules: 2, extras: [{ id: "strip", quantity: 2 }] };
+  assert.equal(kitchenConfigIssue(selected, config, slot), "");
+  const added = insertKitchenModule(blank, slot, selected, config, () => "option-base");
+  const quote = buildKitchen(added.plan, [base], defaultSettings).result;
+  const without = structuredClone(added.plan);
+  if (without.items[0].kind === "furniture") delete without.items[0].config.extras;
+  assert.equal(quote.price - buildKitchen(without, [base], defaultSettings).result.price, 140);
+  assert.equal(kitchenConfigIssue(selected, { ...config, extras: [{ id: "other-product-option", quantity: 1 }] }, slot).includes("no está disponible"), true);
+  assert.equal(kitchenConfigIssue(selected, { ...config, extras: [{ id: "strip", quantity: 5 }] }, slot).includes("máximo"), true);
+});
+
+test("a long alignment reservation is split into schema-valid spaces", () => {
+  const base = { ...productTemplate("kitchen-base"), active: true };
+  const selected = publicFixture(base);
+  const blank = { ...singleModule(base), items: [] };
+  const slot = { ...getEmptyKitchenSlot(blank)!, widthAvailable: 1000, leadingSpace: 2050 };
+  let index = 0;
+  const added = insertKitchenModule(blank, slot, selected, base.defaults, () => `long-${index++}`);
+  assert.deepEqual(added.plan.items.flatMap(item => item.kind === "space" ? [item.width] : []), [1950, 100]);
+  assert.doesNotThrow(() => buildKitchen(added.plan, [base], defaultSettings));
+  assert.throws(() => insertKitchenModule(blank, { ...slot, leadingSpace: Infinity }, selected, base.defaults, () => "unused"), /margen/i);
 });
 
 test("each of the six templates offers a real placement that stays valid through the full kitchen engine", () => {

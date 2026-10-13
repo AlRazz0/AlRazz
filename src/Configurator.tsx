@@ -34,6 +34,7 @@ import {
   MaterialSwatch,
 } from "./MaterialSwatch";
 import { DoorLayoutSelector, FrontSelector } from "./FrontSelector";
+import { ExtraSelector } from "./ExtraSelector";
 import { constructionDescriptions } from "./construction-labels";
 import ModelShowcase from "./ModelShowcase";
 const searchText = (value: string) =>
@@ -664,6 +665,7 @@ export default function Configurator() {
               </p>
             </TabsContent>
           </Tabs>
+          <ExtraSelector product={product} config={config} onChange={change} />
           {quoteError && (
             <p className="error-box" role="alert">
               {quoteError}

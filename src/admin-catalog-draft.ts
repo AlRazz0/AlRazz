@@ -117,9 +117,9 @@ function sectionForPath(path: (string | number)[]): EditorSection {
   const [field, detail] = path;
   if (field === "gallery") return "gallery";
   if (field === "construction" || field === "limits") return "dimensions";
-  if (field === "frontOptions" || field === "materials") return "finishes";
+  if (field === "frontOptions" || field === "materials" || field === "extras") return "finishes";
   if (field === "defaults") {
-    if (["finish", "interior", "front", "handle"].includes(String(detail)))
+    if (["finish", "interior", "front", "handle", "extras"].includes(String(detail)))
       return "finishes";
     if (["install", "transport"].includes(String(detail))) return "publication";
     return "dimensions";
@@ -162,7 +162,7 @@ export function getEditorIssue(value: Product, settings: Settings): EditorIssue 
     }
     const message = productEditorError(error);
     const materialIssue = /material|color activo/i.test(message);
-    const frontIssue = /frente|jalador/i.test(message) && !/\bmm\b|alto|altura/i.test(message);
+    const frontIssue = /frente|jalador|complemento|opci[oó]n/i.test(message) && !/\bmm\b|alto|altura/i.test(message);
     return { section: materialIssue || frontIssue ? "finishes" : "dimensions", message };
   }
 }

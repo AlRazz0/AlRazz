@@ -1,4 +1,5 @@
 import { quoteCSVCell, type Result } from "../lib/furniture.ts";
+import { extraLedgerRows, EXTRA_LEDGER_COLUMNS } from "../lib/product-extras.ts";
 
 export function kitchenReferenceId(reference: string) {
   const value = reference.trim();
@@ -95,6 +96,27 @@ export function kitchenCutCSV(modules: ModuleCuts[]) {
         accessory.quantity,
         accessory.unit ?? "ud",
       ]);
+  }
+  if (modules.some((module) => module.result.extras?.length)) {
+    rows.push([], ["COMPLEMENTOS COTIZADOS — NO SON PIEZAS DE CORTE"],
+      ["Módulo", "Modelo", "Código", "Complemento", "Cantidad", "Medida por unidad", "Unidad de cobro", "Tarifa de venta S/", "Importe S/"]);
+    for (const module of modules) for (const extra of module.result.extras ?? []) {
+      rows.push([module.itemId, module.product.name, extra.id, extra.name,
+        extra.quantity, extra.measurement,
+        extra.basis === "unit" ? "ud" : extra.basis === "linear-meter" ? "m" : "m²",
+        extra.unitPrice, extra.amount]);
+    }
+  }
+  if (modules.some((module) => module.result.extras?.length)) {
+    rows.push(
+      [],
+      ["ACABADOS Y OPCIONES COBRADOS — NO REPRESENTAN PIEZAS NI INSTRUCCIONES DE FABRICACIÓN"],
+      ["Módulo", "Modelo", ...EXTRA_LEDGER_COLUMNS],
+    );
+    for (const module of modules) {
+      for (const row of extraLedgerRows(module.result.extras ?? []))
+        rows.push([module.itemId, module.product.name, ...row]);
+    }
   }
   return (
     "\ufeff" + rows.map((row) => row.map(quoteCSVCell).join(";")).join("\r\n")

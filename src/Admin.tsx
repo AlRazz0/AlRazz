@@ -17,6 +17,7 @@ import {
   LockKeyhole,
   LogOut,
   Package,
+  Palette,
   Pencil,
   Plus,
   Ruler,
@@ -76,10 +77,6 @@ import {
   importCatalogCSV,
 } from "../lib/catalog-csv";
 import "./admin.css";
-import { commercialMaterials } from "../lib/material-presets";
-import { mergeCommercialMaterials } from "../lib/material-catalog";
-import { materialLabel, materialBrands } from "./materials";
-import { MaterialSource, MaterialSwatch } from "./MaterialSwatch";
 import { Brand } from "./Brand";
 import { constructionTemplates } from "../lib/product-templates";
 import { constructionLabels } from "./construction-labels";
@@ -88,6 +85,8 @@ import { AdminTemplatePicker, ModelOutline } from "./AdminTemplatePicker";
 import { createCatalogDraft, duplicateCatalogDraft, getEditorIssue, uniqueProductId } from "./admin-catalog-draft";
 import { productEditorError } from "./admin-product-preview";
 import { KitchenAdmin } from "./KitchenAdmin";
+import { AdminMaterials } from "./AdminMaterials";
+import { AdminExtrasSummary } from "./AdminExtrasSummary";
 
 type AdminSnapshot = {
   admin: boolean;
@@ -263,6 +262,7 @@ export default function Admin() {
   const [savedSettings, setSavedSettings] = useState(
     JSON.stringify(defaultSettings),
   );
+  const [settingsError, setSettingsError] = useState("");
   const [settingsVersion, setSettingsVersion] = useState(1);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -271,8 +271,7 @@ export default function Admin() {
   const [filter, setFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [constructionFilter, setConstructionFilter] = useState("all");
-  const [materialFilter, setMaterialFilter] = useState("all");
-  const [materialSearch, setMaterialSearch] = useState("");
+  const [activeTab, setActiveTab] = useState("catalog");
   const [editor, setEditor] = useState<Product | null>(null);
   const [original, setOriginal] = useState<Product | null>(null);
   const [editorError, setEditorError] = useState("");
@@ -296,6 +295,7 @@ export default function Admin() {
   const emailInput = useRef<HTMLInputElement>(null);
   const codeInput = useRef<HTMLInputElement>(null);
   const restartLoginButton = useRef<HTMLButtonElement>(null);
+  const settingsErrorMessage = useRef<HTMLParagraphElement>(null);
   const challenge = !!session?.challenge && !session.admin;
   const secondsRemaining = challenge
     ? Math.max(0, (session?.challengeExpiresAt ?? 0) - now)
@@ -308,11 +308,6 @@ export default function Admin() {
     cutProducts.find((product) => product.id === cutProductId) ??
     cutProducts[0];
   const settingsDirty = JSON.stringify(settings) !== savedSettings;
-  const materialMatches = (material: Settings["materials"][number]) =>
-    (materialFilter === "all" || material.brand === materialFilter) &&
-    materialSearchText(
-      `${material.name} ${material.brand || ""} ${material.code || ""}`,
-    ).includes(materialSearchText(materialSearch.trim()));
   const editorDirty =
     !!editor &&
     (!original || JSON.stringify(editor) !== JSON.stringify(original));
@@ -364,6 +359,9 @@ export default function Admin() {
   useEffect(() => {
     if (challengeExpired) setCode("");
   }, [challengeExpired]);
+  useEffect(() => {
+    if (settingsError) settingsErrorMessage.current?.focus();
+  }, [settingsError, activeTab]);
   useEffect(() => {
     const prevent = (event: BeforeUnloadEvent) => {
       if (settingsDirty || editorDirty) {
@@ -649,10 +647,16 @@ export default function Admin() {
   }
   async function saveSettings(event: FormEvent) {
     event.preventDefault();
+    if (busy) return;
     setBusy("settings");
     setError("");
+    setSettingsError("");
     try {
-      settingsSchema.parse(settings);
+      const validated = settingsSchema.safeParse(settings);
+      if (!validated.success) {
+        setActiveTab(validated.error.issues[0]?.path[0] === "materials" ? "materials" : "settings");
+        throw validated.error;
+      }
       const result = await api("", {
         op: "settings",
         settings,
@@ -666,6 +670,7 @@ export default function Admin() {
         "Ajustes guardados. Las nuevas configuraciones usarán estos valores.",
       );
     } catch (cause) {
+      setSettingsError(errorMessage(cause));
       setError(errorMessage(cause));
     } finally {
       setBusy(null);
@@ -1210,11 +1215,20 @@ export default function Admin() {
             <small>Plazo general: {settings.leadWeeks} semanas</small>
           </div>
         </div>
-        <Tabs defaultValue="catalog" className="admin-tabs">
+        <div className="admin-quick-actions" aria-label="Acciones principales del catálogo">
+          <button onClick={() => openEditor()} disabled={!!busy}><Plus size={21} /><span><strong>Crear un mueble</strong><small>Elige una estructura y edita sus medidas, opciones y precio.</small></span></button>
+          <button onClick={() => setActiveTab("materials")}><Palette size={21} /><span><strong>Gestionar acabados</strong><small>Añade colores y marcas; revisa sus tarifas y visibilidad.</small></span></button>
+          <button onClick={() => { setActiveTab("catalog"); setCategoryFilter("Cocina"); setConstructionFilter("all"); setFilter("all"); setSearch(""); }}><SlidersHorizontal size={21} /><span><strong>Editar módulos de cocina</strong><small>Cambia medidas y opciones de los muebles que usará el cliente.</small></span></button>
+        </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="admin-tabs">
           <TabsList className="admin-tab-list">
             <TabsTrigger value="catalog">
               <Package size={17} />
               Catálogo
+            </TabsTrigger>
+            <TabsTrigger value="materials">
+              <Palette size={17} /> Acabados
+              {settingsDirty && <i className="admin-unsaved-dot" aria-label="Cambios sin guardar" />}
             </TabsTrigger>
             <TabsTrigger value="settings">
               <Settings2 size={17} />
@@ -1252,8 +1266,13 @@ export default function Admin() {
               <div className="admin-catalog-guide">
                 <Ruler size={18} />
                 <div>
-                  <strong>De tu plano al catálogo, paso a paso.</strong>
-                  <p>Elige una estructura o duplica un mueble parecido. Ajusta medidas, opciones y precio en la vista 3D; guarda un borrador y publícalo cuando esté listo.</p>
+                  <strong>¿Cómo agrego un mueble?</strong>
+                  <ol className="admin-catalog-steps">
+                    <li><b>1. Nuevo mueble</b><span>Elige una estructura. También puedes usar «Duplicar» en un modelo parecido.</span></li>
+                    <li><b>2. Personaliza y guarda</b><span>Define medidas, límites, puertas, acabados, imágenes y precio. Se guarda como borrador.</span></li>
+                    <li><b>3. Publícalo</b><span>En «Precio y publicación», activa la visibilidad y guarda. Aparecerá en la tienda.</span></li>
+                  </ol>
+                  <p>Para la cocina, usa la categoría «Cocina». Sus módulos publicados estarán disponibles en el planificador.</p>
                 </div>
               </div>
               <div className="admin-toolbar">
@@ -1462,6 +1481,17 @@ export default function Admin() {
               </p>
             </div>
           </TabsContent>
+          <TabsContent value="materials">
+            <form onSubmit={saveSettings} className="admin-settings-form">
+              <AdminMaterials materials={settings.materials} products={products} materialRate={settings.materialRate} change={(materials) => setSetting("materials", materials)} announce={announce} busy={!!busy} />
+              <div className="admin-save-bar">
+                <div><p>{settingsDirty ? "Tienes cambios pendientes en acabados o ajustes del taller. Este botón guarda ambos." : "Todos los acabados están guardados."}</p>{settingsError && <p ref={settingsErrorMessage} tabIndex={-1} role="alert" className="admin-inline-error">{settingsError}</p>}</div>
+                <button className="button rust" disabled={!!busy || !settingsDirty}>
+                  {busy === "settings" ? <Loader2 className="admin-spin" size={17} /> : <Check size={17} />} Guardar acabados
+                </button>
+              </div>
+            </form>
+          </TabsContent>
           <TabsContent value="settings">
             <form onSubmit={saveSettings} className="admin-settings-form">
               <section className="admin-panel">
@@ -1535,307 +1565,6 @@ export default function Admin() {
                     change={(value) => setSetting("leadWeeks", value)}
                     note="Cada mueble también tiene su propio plazo de fabricación."
                   />
-                </div>
-              </section>
-              <section className="admin-panel">
-                <div className="admin-panel-heading">
-                  <div>
-                    <h2>Materiales y acabados</h2>
-                    <p>
-                      Marcas, acabados y variantes RH de 18 mm. Todo editable
-                      aquí.
-                    </p>
-                  </div>
-                  <div className="admin-material-actions">
-                    <button
-                      type="button"
-                      className="button outline"
-                      onClick={() => {
-                        const merged = mergeCommercialMaterials(
-                          settings.materials,
-                          commercialMaterials,
-                        );
-                        if (merged.length > 100) {
-                          setNotice(
-                            "El catálogo admite 100 acabados. Añade las referencias que necesitas de forma individual.",
-                          );
-                          return;
-                        }
-                        const additions =
-                          merged.length - settings.materials.length;
-                        setSetting("materials", merged);
-                        setNotice(
-                          additions
-                            ? `${additions} acabados añadidos como ocultos y referencias oficiales completadas. Revisa precios y activa los que ofreces; guarda para publicar.`
-                            : "Referencias oficiales completadas donde faltaban. Se conservaron tus nombres, precios y visibilidad. Guarda los ajustes para publicar.",
-                        );
-                      }}
-                    >
-                      <Plus size={16} /> Añadir catálogo de marcas
-                    </button>
-                    <button
-                      type="button"
-                      className="button outline"
-                      onClick={() =>
-                        setSetting("materials", [
-                          ...settings.materials,
-                          {
-                            id: `acabado-${settings.materials.length + 1}`,
-                            name: "Nuevo acabado",
-                            color: "#c2a17c",
-                            price: 100,
-                            active: false,
-                            brand:
-                              materialFilter === "all"
-                                ? "Hispano"
-                                : materialFilter,
-                            code: "",
-                            board: "standard",
-                          },
-                        ])
-                      }
-                    >
-                      <Plus size={16} /> Añadir acabado
-                    </button>
-                  </div>
-                </div>
-                <div className="admin-material-list">
-                  <div className="admin-material-filter">
-                    <Field title="Filtrar por marca">
-                      <select
-                        value={materialFilter}
-                        onChange={(event) =>
-                          setMaterialFilter(event.target.value)
-                        }
-                      >
-                        <option value="all">Todas las marcas</option>
-                        {materialBrands(settings.materials).map((brand) => (
-                          <option key={brand}>{brand}</option>
-                        ))}
-                      </select>
-                    </Field>
-                    <label className="admin-field admin-material-search">
-                      <span>Buscar acabado</span>
-                      <input
-                        type="search"
-                        value={materialSearch}
-                        placeholder="Nombre comercial, marca o código"
-                        maxLength={100}
-                        onChange={(event) =>
-                          setMaterialSearch(event.target.value)
-                        }
-                      />
-                    </label>
-                    <p className="admin-help">
-                      {settings.materials.filter(materialMatches).length}{" "}
-                      acabados · Selección de catálogo; imágenes, tonos y costos
-                      referenciales. Verifica la muestra, disponibilidad y
-                      tarifa del proveedor.
-                    </p>
-                  </div>
-                  {settings.materials.map((material, index) => {
-                    if (!materialMatches(material)) return null;
-                    const preset = commercialMaterials.find(
-                      (item) =>
-                        item.id === material.id &&
-                        item.name === material.name &&
-                        item.brand === material.brand &&
-                        item.board === material.board,
-                    );
-                    const editMaterial = (
-                      patch: Partial<Settings["materials"][number]>,
-                    ) =>
-                      setSetting(
-                        "materials",
-                        settings.materials.map((item, itemIndex) =>
-                          itemIndex === index ? { ...item, ...patch } : item,
-                        ),
-                      );
-                    const used = products.some(
-                      (product) =>
-                        product.defaults.finish === material.id ||
-                        product.defaults.interior === material.id,
-                    );
-                    return (
-                      <div
-                        className="admin-material-row commercial-material-row"
-                        key={index}
-                      >
-                        <div className="admin-material-appearance">
-                          <MaterialSwatch
-                            material={material}
-                            title={materialLabel(material)}
-                          />
-                          <Field title="Color">
-                            <input
-                              type="color"
-                              value={material.color}
-                              aria-label={`Color de ${material.name}`}
-                              onChange={(event) =>
-                                editMaterial({
-                                  color: event.target.value,
-                                  swatch: "",
-                                })
-                              }
-                            />
-                          </Field>
-                        </div>
-                        <Field title="Nombre comercial">
-                          <input
-                            value={material.name}
-                            required
-                            maxLength={70}
-                            onChange={(event) =>
-                              editMaterial({ name: event.target.value })
-                            }
-                          />
-                        </Field>
-                        <Field title="Marca">
-                          <input
-                            value={material.brand || ""}
-                            list="material-brand-options"
-                            maxLength={60}
-                            placeholder="Hispano, Vesto, Pelikano…"
-                            onChange={(event) => {
-                              setMaterialFilter("all");
-                              editMaterial({ brand: event.target.value });
-                            }}
-                          />
-                        </Field>
-                        <Field title="Tablero · 18 mm">
-                          <select
-                            value={material.board || "standard"}
-                            onChange={(event) =>
-                              editMaterial({
-                                board: event.target.value as "standard" | "rh",
-                              })
-                            }
-                          >
-                            <option value="standard">Estándar</option>
-                            <option value="rh">
-                              RH · Resistente a la humedad
-                            </option>
-                          </select>
-                        </Field>
-                        <Field
-                          title="Código del fabricante"
-                          note="Opcional; no es el identificador interno."
-                        >
-                          <input
-                            value={material.code || ""}
-                            maxLength={60}
-                            placeholder="Código de catálogo"
-                            onChange={(event) =>
-                              editMaterial({ code: event.target.value })
-                            }
-                          />
-                        </Field>
-                        <Field
-                          title="Identificador"
-                          note={used ? "En uso por el catálogo" : undefined}
-                        >
-                          <input
-                            value={material.id}
-                            required
-                            pattern="[a-z0-9-]{2,60}"
-                            disabled={used}
-                            onChange={(event) =>
-                              editMaterial({
-                                id: event.target.value.toLowerCase(),
-                              })
-                            }
-                          />
-                        </Field>
-                        <NumberField
-                          title="Índice de costo"
-                          min={1}
-                          max={1000}
-                          step={0.1}
-                          value={material.price}
-                          change={(value) => editMaterial({ price: value })}
-                        />
-                        <div className="admin-material-metadata">
-                          <Field
-                            title="Textura"
-                            note="Opcional; usa la denominación de la ficha del fabricante."
-                          >
-                            <input
-                              value={material.texture || ""}
-                              maxLength={80}
-                              placeholder="Textura comercial"
-                              onChange={(event) =>
-                                editMaterial({ texture: event.target.value })
-                              }
-                            />
-                          </Field>
-                          <Field
-                            title="Ficha del fabricante"
-                            note="Enlace público al catálogo oficial, opcional."
-                          >
-                            <input
-                              type="url"
-                              value={material.sourceUrl || ""}
-                              maxLength={500}
-                              placeholder="https://…"
-                              onChange={(event) =>
-                                editMaterial({ sourceUrl: event.target.value })
-                              }
-                            />
-                          </Field>
-                          {preset?.swatch && (
-                            <label className="admin-switch-label">
-                              <Switch
-                                checked={material.swatch === preset.swatch}
-                                onCheckedChange={(checked) =>
-                                  editMaterial({
-                                    swatch: checked ? preset.swatch : "",
-                                    renderTexture: checked
-                                      ? preset.renderTexture
-                                      : false,
-                                  })
-                                }
-                                aria-label={`Usar muestra del fabricante para ${material.name}`}
-                              />
-                              <span>
-                                Usar muestra del fabricante. Al ajustar el color
-                                manualmente se usa tu tono.
-                              </span>
-                            </label>
-                          )}
-                          <MaterialSource material={material} />
-                        </div>
-                        <label className="admin-switch-label">
-                          <Switch
-                            checked={material.active}
-                            onCheckedChange={(active) =>
-                              editMaterial({ active })
-                            }
-                            aria-label={`${material.active ? "Desactivar" : "Activar"} acabado ${material.name}`}
-                          />
-                          <span>{material.active ? "Visible" : "Oculto"}</span>
-                        </label>
-                      </div>
-                    );
-                  })}
-                  <datalist id="material-brand-options">
-                    <option value="Hispano" />
-                    <option value="Vesto" />
-                    <option value="Pelikano" />
-                  </datalist>
-                  {!settings.materials.some(materialMatches) && (
-                    <p className="admin-help">
-                      No hay acabados con estos filtros. Prueba otro nombre o
-                      marca.
-                    </p>
-                  )}
-                  <p className="admin-help">
-                    El índice 100 equivale a la tarifa base por m². Un índice
-                    110 aumenta un 10 % el costo de ese acabado. Ocultar un
-                    acabado lo retira del configurador; los identificadores en
-                    uso se conservan. Crea un acabado separado para cada
-                    variante RH y su costo. RH no significa impermeable. La
-                    visibilidad no confirma stock del proveedor.
-                  </p>
                 </div>
               </section>
               <section className="admin-panel">
@@ -2021,11 +1750,11 @@ export default function Admin() {
                 </fieldset>
               </section>
               <div className="admin-save-bar">
-                <p>
+                <div><p>
                   {settingsDirty
-                    ? "Tienes cambios pendientes de guardar."
+                    ? "Tienes cambios pendientes en ajustes o acabados. Este botón guarda ambos."
                     : "Todos los ajustes están guardados."}
-                </p>
+                </p>{settingsError && <p ref={settingsErrorMessage} tabIndex={-1} role="alert" className="admin-inline-error">{settingsError}</p>}</div>
                 <button
                   className="button rust"
                   disabled={!!busy || !settingsDirty}
@@ -2202,6 +1931,7 @@ export default function Admin() {
                         ))}
                       </TableBody>
                     </Table>
+                    <AdminExtrasSummary extras={cutList.result.extras} />
                     <p className="admin-help admin-cut-export-note">
                       El CSV incluye material, veta y los cuatro bordes de cada
                       pieza. La compatibilidad con tu versión de CutMaster debe

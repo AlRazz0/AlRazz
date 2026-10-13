@@ -26,6 +26,7 @@ import {
   MaterialSwatch,
 } from "./MaterialSwatch";
 import { FrontSelector, frontLabels } from "./FrontSelector";
+import { AdminExtrasEditor } from "./AdminExtrasEditor";
 import { materialLabel } from "./materials";
 import Viewer, { type View } from "./Viewer";
 import "./admin-model-editor.css";
@@ -188,6 +189,7 @@ export function AdminProductEditor({
     value.basePrice,
     value.pricing,
     value.frontOptions,
+    value.extras,
     value.category,
     settings,
   ]);
@@ -829,6 +831,7 @@ export function AdminProductEditor({
               Los colores en pantalla son aproximados. Confirma la muestra
               física antes de fabricar.
             </p>
+            <AdminExtrasEditor product={value} onChange={change} />
           </section>
 
           <section

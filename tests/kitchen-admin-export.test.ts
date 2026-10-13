@@ -72,3 +72,17 @@ test("kitchen CSV separates 6 mm glass from 18 mm melamine and neutralizes formu
       ),
     );
 });
+
+test("kitchen CSV retains the optional sale ledger separately from manufacturing cuts", () => {
+  const product = structuredClone(seedProducts[0]);
+  product.extras = [{ id: "perfil", name: "=PERFIL()", active: true,
+    pricing: { basis: "linear-meter", dimension: "width", amount: 50 }, maxQuantity: 4 }];
+  const config = { ...product.defaults, extras: [{ id: "perfil", quantity: 2 }] };
+  const result = buildFurniture(product, config, defaultSettings);
+  const csv = kitchenCutCSV([{ itemId: "m1", product, result }]);
+  assert.match(csv, /COMPLEMENTOS COTIZADOS/);
+  assert.ok(csv.includes('"\'=PERFIL()"'));
+  assert.ok(csv.includes(`"${product.defaults.width / 1000}";"m";"50";"${product.defaults.width / 1000 * 100}"`));
+  assert.equal(csv.split("\r\n").filter(row => row.includes('"MELAMINA"')).length, result.panels.length);
+  assert.equal(kitchenCutCSV([{ itemId: "m1", product, result: buildFurniture(product, product.defaults) }]).includes("COMPLEMENTOS COTIZADOS"), false);
+});

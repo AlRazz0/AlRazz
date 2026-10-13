@@ -13,6 +13,7 @@ import {
 } from "./admin-auth.ts";
 import { z } from "zod";
 import { publicGeometry } from "../lib/public-geometry";
+import { publicProduct } from "../lib/public-product.ts";
 import {
   buildKitchen,
   kitchenPlanSchema,
@@ -234,15 +235,6 @@ function publicSettings(settings: Settings) {
     availability: settings.availability,
     leadWeeks: settings.leadWeeks,
     materials: publicMaterials(settings),
-  };
-}
-
-function publicProduct(product: Product, price: number) {
-  const { basePrice: _basePrice, pricing, ...safe } = product;
-  return {
-    ...safe,
-    ...(pricing ? { pricing: { basis: pricing.basis } } : {}),
-    publicPrice: price,
   };
 }
 

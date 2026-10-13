@@ -140,3 +140,13 @@ export function moveKitchenItem(
   [items[index], items[target]] = [items[target], items[index]];
   return { ...plan, items };
 }
+
+/** Empty drafts remain editable; only the quote/save boundary requires furniture. */
+export function removeKitchenItem(plan: KitchenPlan, id: string): KitchenPlan {
+  if (!plan.items.some(item => item.id === id)) return plan;
+  return { ...plan, items: plan.items.filter(item => item.id !== id) };
+}
+
+export function hasKitchenFurniture(plan: KitchenPlan): boolean {
+  return plan.items.some(item => item.kind === "furniture");
+}

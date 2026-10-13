@@ -7,14 +7,39 @@ export type PlacementSlot = {
 };
 export type KitchenSlot = PlacementSlot & {
   wall: "a" | "b";
-  row: "base" | "wall";
+  row: "base" | "wall" | "tall";
   widthAvailable: number;
   height: number;
   depth: number;
   offset: number;
   leadingSpace: number;
   replaceId?: string;
+  replaceKind?: "space" | "furniture";
+  replaceFingerprint?: string;
 };
+
+/** Replacement reserves the existing width, keeping the same lane order. */
+export function getKitchenReplacementSlot(plan: KitchenPlan, id: string): KitchenSlot | undefined {
+  const item = plan.items.find(value => value.id === id && value.kind === "furniture");
+  if (!item || item.kind !== "furniture") return;
+  return {
+    id: `replace-${id}`, position: [0, 0, 0], label: "Sustituir este mueble",
+    wall: item.wall, row: item.row, widthAvailable: item.config.width,
+    height: item.config.height, depth: item.config.depth, offset: 0, leadingSpace: 0,
+    replaceId: id, replaceKind: "furniture", replaceFingerprint: JSON.stringify(item),
+  };
+}
+
+/** A blank draft has no server quote yet, but can offer its first explicit placement. */
+export function getEmptyKitchenSlot(plan: KitchenPlan): KitchenSlot | undefined {
+  if (plan.items.length) return;
+  return {
+    id: "first-a-base", position: [0, 0, 0], label: "Añadir el primer mueble",
+    wall: "a", row: "base", widthAvailable: plan.walls.a,
+    height: Math.min(1100, plan.roomHeight ?? 2600), depth: 600,
+    offset: 0, leadingSpace: 0,
+  };
+}
 const lane = (row: string) => row === "wall" ? "wall" : "base";
 type Interval = [number, number];
 const intersects = (a: Interval, b: Interval) => Math.min(a[1], b[1]) - Math.max(a[0], b[0]) > 0.01;
@@ -25,6 +50,14 @@ export function getKitchenSlots(plan: KitchenPlan, quote: KitchenQuote): Kitchen
   // Ignore a stale quote while the next requested composition is being calculated.
   if (plan.items.some((item, index) => {
     const module = quote.modules[index];
+    const quotedItem = quote.plan.items[index];
+    if (item.kind === "furniture") {
+      if (quotedItem?.kind !== "furniture" || item.productId !== quotedItem.productId) return true;
+      const keys = Object.keys({ ...quotedItem.config, ...item.config }) as (keyof typeof item.config)[];
+      if (keys.some(key => key === "extras"
+        ? JSON.stringify(item.config.extras?.map(extra => [extra.id, extra.quantity])) !== JSON.stringify(quotedItem.config.extras?.map(extra => [extra.id, extra.quantity]))
+        : item.config[key] !== quotedItem.config[key])) return true;
+    }
     const measures = item.kind === "furniture" ? item.config : item;
     return module.id !== item.id || module.kind !== item.kind || module.wall !== item.wall || module.row !== item.row || module.size.some((size, axis) => size !== [measures.width, measures.height, measures.depth][axis]);
   })) return [];
@@ -54,14 +87,14 @@ export function getKitchenSlots(plan: KitchenPlan, quote: KitchenQuote): Kitchen
   const maximumNewDepthA = quote.modules.some(module => module.wall === "b")
     ? Math.max(corner, plan.walls.b - occupiedB - 50)
     : Infinity;
-  const blockers = (wall: "a" | "b", row: "base" | "wall", height: number, depth: number): Interval[] => {
+  const blockers = (wall: "a" | "b", row: KitchenSlot["row"], height: number, depth: number): Interval[] => {
     const elevation = row === "wall" ? plan.wallElevation : 0;
     const normal: Interval = wall === "a" ? [0, depth] : [plan.walls.a - depth, plan.walls.a];
     const normalAxis = wall === "a" ? 2 : 0, alongAxis = wall === "a" ? 0 : 2;
     return occupied.filter(box => intersects([box.min[1], box.max[1]], [elevation, elevation + height]) && intersects([box.min[normalAxis], box.max[normalAxis]], normal))
       .map(box => [box.min[alongAxis], box.max[alongAxis]] as Interval);
   };
-  const make = (wall: "a" | "b", row: "base" | "wall", offset: number, widthAvailable: number, height: number, depth: number, leadingSpace: number, replaceId?: string): KitchenSlot => {
+  const make = (wall: "a" | "b", row: KitchenSlot["row"], offset: number, widthAvailable: number, height: number, depth: number, leadingSpace: number, replaceId?: string): KitchenSlot => {
     const elevation = row === "wall" ? plan.wallElevation : 0;
     const width = Math.min(600, widthAvailable);
     const y = elevation + Math.min(height, row === "wall" ? 700 : 900) / 2;
@@ -69,15 +102,15 @@ export function getKitchenSlots(plan: KitchenPlan, quote: KitchenQuote): Kitchen
     return {
       id: replaceId ? `space-${replaceId}` : `end-${wall}-${row}-${offset}`,
       position: center.map((value, axis) => value - shift[axis]) as [number, number, number],
-      label: `Añadir ${row === "wall" ? "alacena" : "módulo bajo"} en pared ${wall.toUpperCase()}, espacio de ${widthAvailable / 10} cm`,
+      label: `Añadir ${row === "wall" ? "alacena" : row === "tall" ? "columna alta" : "módulo bajo"} en pared ${wall.toUpperCase()}, espacio de ${widthAvailable / 10} cm`,
       wall, row, widthAvailable, height, depth, offset, leadingSpace,
-      ...(replaceId ? { replaceId } : {}),
+      ...(replaceId ? { replaceId, replaceKind: "space" as const, replaceFingerprint: JSON.stringify(plan.items.find(item => item.id === replaceId)) } : {}),
     };
   };
   const slots: KitchenSlot[] = [];
   for (const { module, offset } of spaces) {
-    const row = lane(module.row);
-    const height = Math.min(module.size[1], row === "wall" ? 1200 : 1100, (plan.roomHeight ?? 2600) - (row === "wall" ? plan.wallElevation : 0));
+    const row = module.row;
+    const height = Math.min(module.size[1], row === "wall" ? 1200 : row === "base" ? 1100 : 3000, (plan.roomHeight ?? 2600) - (row === "wall" ? plan.wallElevation : 0));
     const depth = Math.min(module.size[2], row === "wall" ? 450 : 600, module.wall === "a" ? maximumNewDepthA : Infinity);
     if (module.size[0] < 300 || height < 100 || depth < 100) continue;
     if (blockers(module.wall, row, height, depth).some(block => intersects(block, [offset, offset + module.size[0]]))) continue;

@@ -1,6 +1,16 @@
 import { z } from "zod";
 import { commercialMaterials } from "./material-presets.ts";
 import { gallerySchema } from "./model-gallery.ts";
+import {
+  productExtrasSchema,
+  extraSelectionsSchema,
+  validateExtraSelections,
+  priceExtraSelections,
+  extraLedgerRows,
+  EXTRA_LEDGER_COLUMNS,
+  type ExtraPriceLine,
+} from "./product-extras.ts";
+export type { ProductExtra, PublicProductExtra, ExtraSelection } from "./product-extras.ts";
 
 /** Manufacturing invariant: catalog/configuration cannot override this. */
 export const THICKNESS = 18 as const;
@@ -121,6 +131,7 @@ export const configSchema = z
     handle: z.enum(["push", "exterior", "embutido"]),
     install: z.boolean(),
     transport: z.boolean(),
+    extras: extraSelectionsSchema.optional(),
   })
   .strict();
 export type Config = z.infer<typeof configSchema>;
@@ -221,6 +232,7 @@ export const productSchema = z
       )
       .optional(),
     pricing: pricingSchema.optional(),
+    extras: productExtrasSchema.optional(),
     description: z.string().trim().min(5).max(350),
     active: z.boolean(),
     version: z.number().int().min(1),
@@ -611,6 +623,7 @@ export type Result = {
     installation: number;
     delivery: number;
     fronts?: number;
+    extras?: number;
     sellingBase?: {
       basis: "unit" | "linear-meter";
       quantity: number;
@@ -618,6 +631,7 @@ export type Result = {
       amount: number;
     };
   };
+  extras?: ExtraPriceLine[];
   accessories: {
     name: string;
     quantity: number;
@@ -709,6 +723,7 @@ function activeMaterial(settings: Settings, materialId: string): Material {
 export function validateConfig(product: Product, config: Config): true {
   productSchema.parse(product);
   configSchema.parse(config);
+  validateExtraSelections(product.extras, config.extras);
   for (const key of ["width", "height", "depth"] as const) {
     const range = product.limits[key];
     if (config[key] < range.min || config[key] > range.max)
@@ -1421,7 +1436,9 @@ function buildWithSettings(
   const furniturePrice = sellingBase
     ? sellingBase.amount + frontCost / (1 - settings.margin)
     : cost / (1 - settings.margin);
-  const price = Math.ceil((furniturePrice + installation + delivery) / 10) * 10;
+  const extras = priceExtraSelections(product.extras, config);
+  const extrasPrice = extras.reduce((sum, line) => sum + line.amount, 0);
+  const price = Math.ceil((furniturePrice + extrasPrice + installation + delivery) / 10) * 10;
   return {
     panels,
     ...(fixtures.length ? { fixtures } : {}),
@@ -1429,6 +1446,7 @@ function buildWithSettings(
     edges,
     doors,
     price,
+    ...(extras.length ? { extras } : {}),
     breakdown: {
       materials,
       edges: edges * settings.edgeRate,
@@ -1437,6 +1455,7 @@ function buildWithSettings(
       installation,
       delivery,
       ...(fronts.length ? { fronts: frontCost } : {}),
+      ...(extras.length ? { extras: extrasPrice } : {}),
       ...(sellingBase ? { sellingBase } : {}),
     },
     accessories: [
@@ -1555,6 +1574,12 @@ export function cutCSV(result: Result): string {
           .map(quoteCSVCell)
           .join(";"),
       ),
+      ...(result.extras?.length ? [
+        "",
+        "Acabados y opciones cobrados — no representan piezas ni instrucciones de fabricación",
+        EXTRA_LEDGER_COLUMNS.map(quoteCSVCell).join(";"),
+        ...extraLedgerRows(result.extras).map((row) => row.map(quoteCSVCell).join(";")),
+      ] : []),
     ].join("\r\n")
   );
 }

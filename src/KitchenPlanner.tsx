@@ -15,6 +15,7 @@ import {
   Save,
   Undo2,
   Redo2,
+  RefreshCw,
   Square,
   Trash2,
   Waves,
@@ -34,11 +35,14 @@ import { FrontSelector, DoorLayoutSelector } from "./FrontSelector";
 import { MaterialDetails, MaterialSwatch } from "./MaterialSwatch";
 import { materialLabel } from "./materials";
 import { ContactLinks } from "./ContactLinks";
-import { moveKitchenItem, startingKitchen } from "./kitchen-planner-state";
+import { hasKitchenFurniture, moveKitchenItem, removeKitchenItem, startingKitchen } from "./kitchen-planner-state";
 import { KitchenTemplatePicker } from "./KitchenTemplatePicker";
 import { KitchenBuilderDialog } from "./KitchenBuilderDialog";
-import { getKitchenSlots, type KitchenSlot } from "./kitchen-slots";
+import { getEmptyKitchenSlot, getKitchenReplacementSlot, getKitchenSlots, type KitchenSlot } from "./kitchen-slots";
 import { insertKitchenModule } from "./kitchen-placement";
+import { KitchenDimensionInput } from "./KitchenDimensionInput";
+import { KitchenModelPreview } from "./KitchenModelPreview";
+import { ExtraSelector } from "./ExtraSelector";
 import "./kitchen-planner.css";
 
 type Item = KitchenPlan["items"][number];
@@ -73,6 +77,7 @@ export default function KitchenPlanner() {
   const [quote, setQuote] = useState<KitchenQuote>();
   const [quoteKey, setQuoteKey] = useState("");
   const [selected, setSelected] = useState("");
+  const [invalidMeasures, setInvalidMeasures] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
@@ -142,8 +147,17 @@ export default function KitchenPlanner() {
       .finally(() => setLoading(false));
   }
   useEffect(load, []);
+  useEffect(() => setInvalidMeasures([]), [selected]);
   useEffect(() => {
     if (!plan || snapshot) return;
+    if (!hasKitchenFurniture(plan)) {
+      request.current++;
+      setQuote(undefined);
+      setQuoteKey("");
+      setPending(false);
+      setError("");
+      return;
+    }
     const controller = new AbortController();
     const sequence = ++request.current;
     setPending(true);
@@ -237,6 +251,13 @@ export default function KitchenPlanner() {
         ...plan,
         items: plan.items.map((item) => (item.id === next.id ? next : item)),
       });
+  }
+  function remove(id: string) {
+    if (!plan) return;
+    const next = removeKitchenItem(plan, id);
+    change(next);
+    if (selected === id) setSelected(next.items[0]?.id ?? "");
+    setPlacement(undefined);
   }
   function configure(next: Config) {
     if (current?.kind === "furniture")
@@ -346,8 +367,9 @@ export default function KitchenPlanner() {
       ? products.find((item) => item.id === current.productId)
       : undefined;
   const currentQuote = Boolean(
-    quote && plan && quoteKey === JSON.stringify(plan) && !pending && !error,
+    quote && plan && hasKitchenFurniture(plan) && quoteKey === JSON.stringify(plan) && !pending && !error && !invalidMeasures.length,
   );
+  const visibleQuote = quote && plan && hasKitchenFurniture(plan) && quoteKey === JSON.stringify(plan) ? quote : undefined;
   const placementSlots = useMemo(
     () => (plan && quote && currentQuote ? getKitchenSlots(plan, quote) : []),
     [plan, quote, currentQuote],
@@ -372,7 +394,7 @@ export default function KitchenPlanner() {
         "Modelo guardado"
       : gapNames[item.kind];
   const kitchenProducts = products.filter(
-    (product) => product.category === "Cocina",
+    (product) => product.active && product.category === "Cocina",
   );
   if (loading)
     return (
@@ -452,11 +474,11 @@ export default function KitchenPlanner() {
               </span>
             </div>
             <div className="kitchen-canvas">
-              {quote ? (
+              {visibleQuote ? (
                 <Viewer
-                  panels={quote.geometry}
-                  materials={quote.materials}
-                  {...quote.envelope}
+                  panels={visibleQuote.geometry}
+                  materials={visibleQuote.materials}
+                  {...visibleQuote.envelope}
                   view={view}
                   open={open}
                   dimensions={dimensions}
@@ -470,14 +492,18 @@ export default function KitchenPlanner() {
               ) : (
                 <div className="kitchen-empty">
                   <LayoutPanelTop size={42} strokeWidth={1} />
-                  <p>Añade tus primeros módulos.</p>
+                  <p>{pending && hasKitchenFurniture(plan) ? "Preparando tu nueva distribución…" : error ? "Ajusta los parámetros para visualizar esta distribución." : "Tu espacio está listo. Empieza por un mueble."}</p>
+                  {!plan.items.length && <button className="button" onClick={() => setPlacement(getEmptyKitchenSlot(plan))}>
+                    <Plus size={17} /> Añadir el primer módulo
+                  </button>}
+                  {!hasKitchenFurniture(plan) && <small>Puedes diseñar libremente. Añade al menos un mueble para calcular y guardar.</small>}
                 </div>
               )}
-              {(pending || error) && (
+              {hasKitchenFurniture(plan) && (pending || error) && (
                 <span className="kitchen-scene-status" role="status">
                   {pending
                     ? "Actualizando tu distribución…"
-                    : "Vista de la última distribución válida"}
+                    : "Revisa las medidas o deshaz el último cambio"}
                 </span>
               )}
             </div>
@@ -768,8 +794,8 @@ export default function KitchenPlanner() {
               <h2>Una cocina, pieza a pieza.</h2>
             </div>
             <p>
-              Selecciona un módulo para editarlo. Cambia su orden con las
-              flechas.
+              Selecciona una pieza para cambiar sus medidas, sustituirla o
+              retirarla. Las flechas cambian su orden.
             </p>
           </div>
           {(["a", ...(plan.layout === "l" ? ["b"] : [])] as const).map(
@@ -796,6 +822,7 @@ export default function KitchenPlanner() {
                               : item.row !== "wall"),
                         )
                         .map((item) => {
+                          const itemProduct = item.kind === "furniture" ? products.find(product => product.id === item.productId) : undefined;
                           const Icon =
                             item.kind === "furniture"
                               ? LayoutPanelTop
@@ -816,14 +843,11 @@ export default function KitchenPlanner() {
                                   });
                                 }}
                               >
-                                <Icon size={27} strokeWidth={1.3} />
+                                {item.kind === "furniture" && itemProduct ? <KitchenModelPreview product={itemProduct} config={item.config}
+                                  color={settings.materials.find(material => material.id === item.config.finish)?.color} /> : <Icon size={27} strokeWidth={1.3} />}
                                 <strong>{modelName(item)}</strong>
                                 <small>
-                                  {mm(
-                                    item.kind === "furniture"
-                                      ? item.config.width
-                                      : item.width,
-                                  )}{" "}
+                                  {item.kind === "furniture" ? `${item.config.width / 10} × ${item.config.height / 10} × ${item.config.depth / 10} cm` : mm(item.width)}{" "}
                                   ·{" "}
                                   {item.kind === "furniture"
                                     ? "Mueble"
@@ -849,15 +873,7 @@ export default function KitchenPlanner() {
                                 </button>
                                 <button
                                   aria-label={`Retirar ${modelName(item)}`}
-                                  onClick={() => {
-                                    change({
-                                      ...plan,
-                                      items: plan.items.filter(
-                                        (value) => value.id !== item.id,
-                                      ),
-                                    });
-                                    if (selected === item.id) setSelected("");
-                                  }}
+                                  onClick={() => remove(item.id)}
                                 >
                                   <Trash2 size={15} />
                                 </button>
@@ -956,6 +972,17 @@ export default function KitchenPlanner() {
             {current ? (
               <>
                 <h2>{modelName(current)}</h2>
+                <div className="kitchen-editor-actions">
+                  {current.kind === "furniture" && <button type="button" onClick={() => setPlacement(getKitchenReplacementSlot(plan, current.id))}>
+                    <RefreshCw size={16} /> Cambiar modelo
+                  </button>}
+                  <button type="button" onClick={() => remove(current.id)}><Trash2 size={16} /> Retirar esta pieza</button>
+                </div>
+                {current.kind === "furniture" && product && <div className="kitchen-editor-preview">
+                  <KitchenModelPreview product={product} config={current.config}
+                    color={settings.materials.find(material => material.id === current.config.finish)?.color} />
+                  <p>Cambia las medidas de esta pieza. Para sustituirla se conserva su espacio; puedes ajustar sus dimensiones antes o después.</p>
+                </div>}
                 {current.kind === "space" && (
                   <button
                     className="button kitchen-fill-space"
@@ -1020,19 +1047,16 @@ export default function KitchenPlanner() {
                 </div>
                 <div className="kitchen-measures three">
                   {(["width", "height", "depth"] as const).map((key) => (
-                    <label key={key}>
-                      {names[key]} · mm
-                      <input
-                        type="number"
-                        step="10"
+                    <KitchenDimensionInput key={`${current.id}-${key}`} label={names[key]}
+                        onValidityChange={valid => setInvalidMeasures(previous => valid ? previous.filter(field => field !== key) : [...new Set([...previous, key])])}
                         min={
                           current.kind === "furniture"
-                            ? product?.limits[key].min
+                            ? (product?.limits[key].min ?? 100)
                             : 100
                         }
                         max={
                           current.kind === "furniture"
-                            ? product?.limits[key].max
+                            ? (product?.limits[key].max ?? 3000)
                             : { width: 2000, height: 2600, depth: 1000 }[key]
                         }
                         value={
@@ -1040,21 +1064,21 @@ export default function KitchenPlanner() {
                             ? current.config[key]
                             : current[key]
                         }
-                        onChange={(event) =>
+                        onCommit={(value) =>
                           current.kind === "furniture"
                             ? configure({
                                 ...current.config,
-                                [key]: Number(event.target.value),
+                                [key]: value,
                               })
                             : edit({
                                 ...current,
-                                [key]: Number(event.target.value),
+                                [key]: value,
                               })
                         }
                       />
-                    </label>
                   ))}
                 </div>
+                {!!invalidMeasures.length && <p className="kitchen-help" role="status">Corrige las medidas marcadas o pulsa Escape en el campo para conservar su medida anterior antes de guardar.</p>}
                 {current.kind === "furniture" && product ? (
                   <>
                     <div className="kitchen-measures">
@@ -1235,6 +1259,7 @@ export default function KitchenPlanner() {
                         label="Interior del módulo"
                       />
                     )}
+                    <ExtraSelector product={product} config={current.config} onChange={configure} />
                   </>
                 ) : current.kind === "furniture" ? (
                   <p>

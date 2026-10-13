@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { AdminExtrasSummary } from "./AdminExtrasSummary";
 import { ArrowUpRight, Download, Loader2, RefreshCw } from "lucide-react";
 import { api, download } from "../lib/api";
 import { money, type Config, type Result } from "../lib/furniture";
@@ -272,6 +273,7 @@ export function KitchenAdmin() {
                 </div>
               )}
               <h4>Accesorios</h4>
+              <AdminExtrasSummary extras={module.result.extras} />
               <ul className="admin-kitchen-accessories">
                 {module.result.accessories.map((accessory, i) => (
                   <li key={i}>
