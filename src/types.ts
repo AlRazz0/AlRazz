@@ -5,7 +5,7 @@ import type { PublicMaterial } from "../lib/furniture";
 export type { PublicMaterial } from "../lib/furniture";
 export type Quote = {
   geometry: VisualPanel[];
-  price: number;
+  price: number | null;
 };
 export type PublicProduct = PublicProductMetadata & {
   preview: Quote;
@@ -32,7 +32,7 @@ export type Design = {
   version: number;
   product: PublicProduct;
   config: Config;
-  price: number;
+  price: number | null;
   created: string;
   result: Quote;
   materials: PublicMaterial[];

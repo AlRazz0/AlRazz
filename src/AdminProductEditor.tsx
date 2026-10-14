@@ -187,6 +187,7 @@ export function AdminProductEditor({
     value.defaults,
     value.limits,
     value.basePrice,
+    value.showPrice,
     value.pricing,
     value.frontOptions,
     value.extras,
@@ -911,6 +912,23 @@ export function AdminProductEditor({
                 change={(next) => setProduct("order", next)}
                 note="Los números menores aparecen primero."
               />
+              <Field title="Precio en la web" note="Puedes publicar este modelo sin indicar un importe. El cliente verá un botón Cotizar plateado y podrá enviarte su diseño.">
+                <select value={value.showPrice === false ? "quote" : "price"} onChange={(event) => {
+                  const showPrice = event.target.value === "price";
+                  change({
+                    ...value,
+                    showPrice,
+                    basePrice: !showPrice && !Number.isFinite(value.basePrice) ? 0 : value.basePrice,
+                    pricing: !showPrice && value.pricing && value.pricing.basis !== "calculated" && !Number.isFinite(value.pricing.amount)
+                      ? { ...value.pricing, amount: 0 }
+                      : value.pricing,
+                  });
+                }}>
+                  <option value="price">Mostrar precio referencial</option>
+                  <option value="quote">Sin precio · botón Cotizar</option>
+                </select>
+              </Field>
+              {value.showPrice !== false && <>
               <NumberField
                 title="Mano de obra base · S/"
                 value={value.basePrice}
@@ -973,6 +991,7 @@ export function AdminProductEditor({
                   }
                 />
               )}
+              </>}
               <label className="admin-switch-label">
                 <Switch
                   checked={value.defaults.install}
@@ -1042,7 +1061,7 @@ export function AdminProductEditor({
           >
             <Box size={18} aria-hidden="true" />
             <span>{previewExpanded ? "Ocultar vista 3D" : "Ver modelo 3D"}</span>
-            {shown && <strong>{money(shown.result.price)}{preview.error ? " *" : ""}</strong>}
+            {shown && <strong>{value.showPrice === false ? "Por cotizar" : money(shown.result.price)}{preview.error ? " *" : ""}</strong>}
             <ChevronDown size={16} aria-hidden="true" />
           </button>
           <div className="admin-preview-content" id={sectionId("preview-content")}>
@@ -1053,8 +1072,10 @@ export function AdminProductEditor({
             </div>
             {shown ? (
               <div className="admin-preview-price">
-                <span>ESTIMADO{preview.error ? " ANTERIOR" : ""}</span>
-                <strong>{money(shown.result.price)}</strong>
+                <span>{value.showPrice === false ? "EN LA WEB" : `ESTIMADO${preview.error ? " ANTERIOR" : ""}`}</span>
+                {value.showPrice === false
+                  ? <span className="chrome-quote chrome-quote--compact">Cotizar <ArrowRight size={15} aria-hidden="true" /></span>
+                  : <strong>{money(shown.result.price)}</strong>}
               </div>
             ) : <Box size={21} aria-hidden="true" />}
           </div>

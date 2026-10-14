@@ -19,6 +19,7 @@ import type { FrontDoor, Product, Settings } from "../lib/furniture.ts";
 import { productTemplate } from "../lib/product-templates.ts";
 import { publicGeometry } from "../lib/public-geometry.ts";
 import { exportCatalogCSV, importCatalogCSV } from "../lib/catalog-csv.ts";
+import { publicFurnitureResult, publicPrice, publicProduct } from "../lib/public-product.ts";
 
 const approx = (actual: number, expected: number) =>
   assert.ok(Math.abs(actual - expected) < 1e-8, `${actual} != ${expected}`);
@@ -365,4 +366,64 @@ test("CSV preserves optional front and sale fields and rejects malformed rates o
     assert.equal(imported.products.length, 0, line);
     assert.equal(imported.errors.length, 1, line);
   }
+});
+
+test("quote-only products allow omitted tariffs without changing existing private calculations", () => {
+  const original = model();
+  const hidden = productSchema.parse({ ...original, showPrice: false });
+  assert.deepEqual(buildFurniture(hidden, hidden.defaults), buildFurniture(original, original.defaults));
+  const { basePrice: _basePrice, ...withoutPrice } = original;
+  for (const basis of ["unit", "linear-meter"] as const) {
+    const parsed = productSchema.parse({ ...withoutPrice, showPrice: false, pricing: { basis } });
+    assert.equal(parsed.basePrice, 0);
+    assert.deepEqual(parsed.pricing, { basis, amount: 0 });
+    assert.equal(validateProduct(parsed).showPrice, false);
+    assert.equal(publicFurnitureResult(buildFurniture(parsed, parsed.defaults), parsed).price, null);
+    assert.equal(productSchema.safeParse({ ...withoutPrice, showPrice: true, pricing: { basis } }).success, false);
+    assert.equal(productSchema.safeParse({ ...parsed, pricing: { basis, amount: -1 } }).success, false);
+  }
+  assert.equal(Object.hasOwn(productSchema.parse(original), "showPrice"), false);
+  assert.equal(productSchema.safeParse({ ...original, showPrice: "false" }).success, false);
+});
+
+test("public quote-only projections hide price and retain geometry without leaking internal rates", () => {
+  const product = { ...model(), showPrice: false, pricing: { basis: "unit" as const, amount: 8765 } };
+  const result = buildFurniture(product, product.defaults);
+  const projected = publicProduct(product, result.price);
+  const preview = publicFurnitureResult(result, product);
+  assert.equal(projected.publicPrice, null);
+  assert.equal(projected.showPrice, false);
+  assert.equal(preview.price, null);
+  assert.deepEqual(preview.geometry, publicGeometry(result.panels, result.fixtures));
+  const json = JSON.stringify({ projected, preview });
+  for (const forbidden of ['"amount"', '"basePrice"', '"breakdown"', '"panels"', "8765"])
+    assert.ok(!json.includes(forbidden), forbidden);
+  assert.equal(publicPrice(model(), 0), 0, "A published zero must not be treated as a hidden price.");
+});
+
+test("saved price disclosure respects both historical and current preferences without repricing", () => {
+  const original = model();
+  const result = buildFurniture(original, original.defaults);
+  const current = { ...original, basePrice: 40000, showPrice: false };
+  assert.equal(publicFurnitureResult(result, original, current).price, null);
+  assert.equal(publicProduct(original, result.price, current).publicPrice, null);
+  assert.equal(publicFurnitureResult(result, { ...original, showPrice: false }, { ...current, showPrice: true }).price, null);
+  assert.equal(publicFurnitureResult(result, original, { ...current, showPrice: true }).price, result.price);
+  assert.equal(publicProduct(original, result.price, current).showPrice, false);
+});
+
+test("CSV round-trips price disclosure and allows blank quote-only selling tariffs", () => {
+  for (const showPrice of [undefined, true, false]) {
+    const product = { ...model(), active: false, ...(showPrice === undefined ? {} : { showPrice }) };
+    for (const delimiter of [";", ","] as const) {
+      const imported = importCatalogCSV(exportCatalogCSV([product], delimiter), defaultSettings);
+      assert.deepEqual(imported.errors, []);
+      assert.deepEqual(imported.products, [product]);
+    }
+  }
+  const imported = importCatalogCSV("Código;Nombre;Mostrar precio;Base de cobro;Tarifa de venta S/\nx1;Modelo sin tarifa;No;unidad;", defaultSettings);
+  assert.deepEqual(imported.errors, []);
+  assert.equal(imported.products[0].showPrice, false);
+  assert.deepEqual(imported.products[0].pricing, { basis: "unit", amount: 0 });
+  assert.equal(importCatalogCSV("Código;Nombre;Mostrar precio\nx1;Modelo;desconocido", defaultSettings).errors.length, 1);
 });

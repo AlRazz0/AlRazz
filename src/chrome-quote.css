@@ -1,0 +1,44 @@
+/* A restrained metal finish with readable dark lettering and no looping motion. */
+.chrome-quote {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 13px 24px;
+  border: 1px solid #9da3ac;
+  border-radius: 8px;
+  color: #20252d;
+  background: linear-gradient(114deg, #bcc2ca 0%, #f9fafb 22%, #dce0e5 43%, #f9fafb 47%, #bfc5ce 52%, #e9ecf0 76%, #c7cdd5 100%);
+  box-shadow: inset 0 1px 0 #fff, inset 0 -1px 0 #aeb5bf, 0 4px 10px #20252d12;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-decoration: none;
+  text-shadow: 0 1px 0 #ffffffb3;
+  transition: box-shadow 180ms ease, transform 180ms ease, filter 180ms ease;
+}
+button.chrome-quote, a.chrome-quote { cursor: pointer; }
+.chrome-quote--compact { min-height: 36px; padding: 8px 13px; font-size: 12px; gap: 7px; }
+.product-title > .chrome-quote { color: #20252d; white-space: nowrap; }
+.chrome-quote:focus-visible { outline: 3px solid #6c3928; outline-offset: 4px; }
+.chrome-quote:disabled { cursor: wait; opacity: .65; }
+.admin-preview-price > .chrome-quote { color: #20252d; font-size: 12px; letter-spacing: 0; margin-top: 5px; }
+@media (hover: hover) {
+  .chrome-quote:not(:disabled):hover,
+  .product-card:is(:hover, :focus-visible) .chrome-quote {
+    filter: brightness(1.04);
+    transform: translateY(-1px);
+    box-shadow: inset 0 1px 0 #fff, inset 0 -1px 0 #aeb5bf, 0 7px 16px #20252d20;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chrome-quote { transition: none; }
+  .chrome-quote:not(:disabled):hover,
+  .product-card:is(:hover, :focus-visible) .chrome-quote { transform: none; }
+}
+@media (forced-colors: active) {
+  .chrome-quote { border: 1px solid ButtonText; color: ButtonText; background: ButtonFace; box-shadow: none; text-shadow: none; }
+}

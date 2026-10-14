@@ -37,6 +37,7 @@ import { DoorLayoutSelector, FrontSelector } from "./FrontSelector";
 import { ExtraSelector } from "./ExtraSelector";
 import { constructionDescriptions } from "./construction-labels";
 import ModelShowcase from "./ModelShowcase";
+import { ContactLinks } from "./ContactLinks";
 const searchText = (value: string) =>
   value
     .normalize("NFD")
@@ -57,6 +58,7 @@ export default function Configurator() {
   const [pending, setPending] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState<Design>();
+  const [quoteContacts, setQuoteContacts] = useState(false);
   const [snapshot, setSnapshot] = useState(false);
   const [past, setPast] = useState<Config[]>([]);
   const [future, setFuture] = useState<Config[]>([]);
@@ -140,6 +142,7 @@ export default function Configurator() {
     };
   }, [product, config, snapshot]);
   function change(next: Config) {
+    setQuoteContacts(false);
     if (liveSettings.current) setSettings(liveSettings.current);
     const live = products.find((p) => p.id === product?.id);
     if (live) setProduct(live);
@@ -150,6 +153,7 @@ export default function Configurator() {
     setSaved(undefined);
   }
   function pick(id: string) {
+    setQuoteContacts(false);
     const p = products.find((p) => p.id === id);
     if (!p) return;
     setProduct(p);
@@ -165,6 +169,7 @@ export default function Configurator() {
     history.replaceState(null, "", "/configurar?producto=" + id);
   }
   function undo() {
+    setQuoteContacts(false);
     if (!config || !past.length) return;
     setFuture([config, ...future]);
     setConfig(past[past.length - 1]);
@@ -173,6 +178,7 @@ export default function Configurator() {
     setSaved(undefined);
   }
   function redo() {
+    setQuoteContacts(false);
     if (!config || !future.length) return;
     setPast([...past, config]);
     setConfig(future[0]);
@@ -180,7 +186,7 @@ export default function Configurator() {
     setSnapshot(false);
     setSaved(undefined);
   }
-  async function save() {
+  async function save(requestQuote = false) {
     if (!product || !config || quoteError || pending) return;
     setSaving(true);
     try {
@@ -190,6 +196,7 @@ export default function Configurator() {
         config,
       });
       setSaved(d.design);
+      setQuoteContacts(requestQuote);
       toast.success("Tu diseño se guardó en Mis diseños.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "No se pudo guardar.");
@@ -228,6 +235,7 @@ export default function Configurator() {
       </>
     );
   const displayedConfig = renderConfig || config;
+  const consultation = product.showPrice === false || quote?.price === null;
   const construction = getConstruction(product);
   const distributionOptions = getConstructionOptions(product, config);
   const finish = settings.materials.find((m) => m.id === config.finish);
@@ -696,39 +704,43 @@ export default function Configurator() {
             </label>
           </div>
           <div className="price-area">
-            <div>
+            {!consultation && <div>
               <span>Tu precio referencial</span>
               <strong aria-live="polite">
                 {pending
                   ? "Calculando…"
                   : quoteError
                     ? "Revisa las medidas"
-                    : quote
+                    : quote && quote.price != null
                       ? money(quote.price)
                       : "—"}
               </strong>
-            </div>
+            </div>}
             <p>
               {settings.availability} · desde{" "}
               {Math.max(product.weeks, settings.leadWeeks)} semanas, por
               confirmar
             </p>
             <button
-              className="button rust full"
-              onClick={save}
+              className={`button full ${consultation ? "chrome-quote" : "rust"}`}
+              onClick={() => save(consultation)}
               disabled={saving || pending || !!quoteError || !quote}
             >
-              {saving ? "Guardando…" : "Guardar mi diseño"}
-              <Save size={18} />
+              {saving ? "Guardando…" : consultation ? "Cotizar" : "Guardar mi diseño"}
+              {consultation ? <ArrowUpRight size={18} /> : <Save size={18} />}
             </button>
+            {quoteContacts && saved && (
+              <ContactLinks settings={settings} message={`Hola, El capo. Quisiera cotizar mi diseño de ${product.name}, con las medidas y acabados que elegí: ${location.origin}/configurar?d=${saved.id}`} />
+            )}
             {saved && (
               <a className="saved-link" href="/carrito">
                 <Check size={17} /> Guardado. Ver mis diseños <ArrowRightIcon />
               </a>
             )}
             <p className="small-note">
-              El importe y la fecha se confirman después de la validación
-              técnica y comercial.
+              {consultation
+                ? "Guardaremos tu diseño para enviarlo por WhatsApp. Te confirmaremos el precio según tus medidas y acabados."
+                : "El importe y la fecha se confirman después de la validación técnica y comercial."}
             </p>
           </div>
           <div className="config-bottom">

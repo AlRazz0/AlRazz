@@ -36,6 +36,7 @@ type Column =
   | "front"
   | "pricingBasis"
   | "pricingAmount"
+  | "showPrice"
   | "extras"
   | "selectedExtras"
   | "description"
@@ -79,6 +80,7 @@ export const CATALOG_COLUMNS: ReadonlyArray<{ key: Column; label: string }> = [
   { key: "front", label: "Frente inicial" },
   { key: "pricingBasis", label: "Base de cobro" },
   { key: "pricingAmount", label: "Tarifa de venta S/" },
+  { key: "showPrice", label: "Mostrar precio" },
   { key: "extras", label: "Opciones adicionales JSON" },
   { key: "selectedExtras", label: "Opciones iniciales JSON" },
   { key: "description", label: "Descripción" },
@@ -434,7 +436,8 @@ function pricingCell(
     linear_meter: "linear-meter",
   };
   const basis = aliases[normalized(cells.pricingBasis)] ?? cells.pricingBasis;
-  if (basis !== "calculated" && !cells.pricingAmount)
+  const quoteOnly = cells.showPrice && !booleanCell(cells.showPrice, true, "Mostrar precio");
+  if (basis !== "calculated" && !cells.pricingAmount && !quoteOnly)
     throw new Error(
       "Indica la Tarifa de venta para cobro por unidad o metro lineal.",
     );
@@ -442,7 +445,7 @@ function pricingCell(
     basis,
     ...(cells.pricingAmount
       ? { amount: numberCell(cells.pricingAmount, 0, "Tarifa de venta S/") }
-      : {}),
+      : quoteOnly && basis !== "calculated" ? { amount: 0 } : {}),
   });
 }
 function errorMessage(error: unknown): string {
@@ -592,6 +595,7 @@ export function importCatalogCSV(
         ...(construction ? { construction } : {}),
         ...(gallery ? { gallery } : {}),
         ...(pricing ? { pricing } : {}),
+        ...(cells.showPrice ? { showPrice: booleanCell(cells.showPrice, true, "Mostrar precio") } : {}),
         ...(extras ? { extras } : {}),
         ...(frontOptions ? { frontOptions } : {}),
         description:
@@ -702,6 +706,7 @@ export function exportCatalogCSV(
         product.pricing && product.pricing.basis !== "calculated"
           ? product.pricing.amount
           : "",
+      showPrice: product.showPrice === undefined ? "" : product.showPrice ? "Sí" : "No",
       extras: product.extras ? JSON.stringify(product.extras) : "",
       selectedExtras: product.defaults.extras ? JSON.stringify(product.defaults.extras) : "",
       description: product.description,

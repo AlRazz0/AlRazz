@@ -17,6 +17,7 @@ import { ContactLinks } from "./ContactLinks";
 import { Brand } from "./Brand";
 import { useRevealMotion } from "./useRevealMotion";
 import { nextLogoTap } from "./footer-access";
+import "./chrome-quote.css";
 const Configurator = lazy(() => import("./Configurator"));
 const Cart = lazy(() => import("./Cart"));
 const Admin = lazy(() => import("./Admin"));
@@ -305,7 +306,9 @@ function Home() {
                 </div>
                 <div className="product-title">
                   <h3>{p.name}</h3>
-                  <span>Desde {money(p.publicPrice)}</span>
+                  {p.publicPrice == null ? (
+                    <span className="chrome-quote chrome-quote--compact">Cotizar <ArrowUpRight size={15} aria-hidden="true" /></span>
+                  ) : <span>Desde {money(p.publicPrice)}</span>}
                 </div>
                 <p>
                   {p.category} · {p.defaults.width / 10} ×{" "}
