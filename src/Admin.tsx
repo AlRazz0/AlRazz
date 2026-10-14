@@ -1384,7 +1384,9 @@ export default function Admin() {
                               }
                             </small>
                             <span className="admin-catalog-tariff">
-                              {product.pricing?.basis === "unit"
+                              {product.showPrice === false
+                                ? "Sin precio público · Cotizar"
+                                : product.pricing?.basis === "unit"
                                 ? `${money(product.pricing.amount!)} / unidad · tarifa base`
                                 : product.pricing?.basis === "linear-meter"
                                   ? `${money(product.pricing.amount!)} / metro lineal · tarifa base`

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildKitchen, kitchenPlanSchema, type KitchenPlan } from "../lib/kitchen.ts";
+import { buildKitchen, kitchenPlanSchema, publicKitchenQuote, type KitchenPlan } from "../lib/kitchen.ts";
 import { buildFurniture, defaultSettings, type Product } from "../lib/furniture.ts";
 import { productTemplate } from "../lib/product-templates.ts";
 
@@ -109,4 +109,34 @@ test("mixed kitchen doors retain the handle selected for each individual module"
   const doors = built.result.geometry.filter((panel) => panel.door);
   assert.deepEqual(doors.map((panel) => panel.handle), ["push", "exterior", "embutido"]);
   assert.ok(built.result.geometry.filter((panel) => !panel.door).every((panel) => panel.handle === undefined));
+});
+
+test("mixed quote-only kitchens hide all public amounts while preserving numeric private snapshots", () => {
+  const privateBase = { ...base, showPrice: false };
+  const input = plan([furniture("base1", privateBase), furniture("wall1", wall, "wall")]);
+  const snapshot = buildKitchen(input, [privateBase, wall], defaultSettings);
+  const before = JSON.stringify(snapshot);
+  const projected = publicKitchenQuote(snapshot);
+  assert.equal(projected.price, null);
+  assert.equal(projected.furniturePrice, null);
+  assert.equal(projected.servicesPrice, null);
+  assert.ok(projected.modules.every((module) => module.price === null));
+  assert.deepEqual(projected.geometry, snapshot.result.geometry);
+  assert.equal(JSON.stringify(snapshot), before);
+  assert.ok(snapshot.result.price > 0);
+  assert.ok(snapshot.modules.every((module) => module.result.price > 0));
+  assert.equal(publicKitchenQuote(snapshot, [{ ...base, showPrice: true }, wall]).price, null,
+    "Publishing current prices must not reveal a quote-only saved composition.");
+});
+
+test("current kitchen privacy suppresses old public quotes without changing their stored amount", () => {
+  const input = plan([furniture("base1", base), furniture("wall1", wall, "wall")]);
+  const snapshot = buildKitchen(input, products, defaultSettings);
+  const original = JSON.stringify(snapshot);
+  const current = [{ ...base, showPrice: false, basePrice: 20000 }, wall];
+  assert.equal(publicKitchenQuote(snapshot, current).price, null);
+  assert.ok(publicKitchenQuote(snapshot, current).modules.every((module) => module.price === null));
+  assert.deepEqual(publicKitchenQuote(snapshot), snapshot.result);
+  assert.deepEqual(publicKitchenQuote(snapshot, [{ ...current[0], showPrice: true }, wall]), snapshot.result);
+  assert.equal(JSON.stringify(snapshot), original);
 });

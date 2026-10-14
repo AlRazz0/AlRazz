@@ -97,6 +97,7 @@ export default function KitchenPlanner() {
   const [row, setRow] = useState<"base" | "wall" | "tall">("base");
   const [addProduct, setAddProduct] = useState("");
   const [copied, setCopied] = useState(false);
+  const [quoteContactOpen, setQuoteContactOpen] = useState(false);
   const [placement, setPlacement] = useState<KitchenSlot>();
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [pastPlans, setPastPlans] = useState<KitchenPlan[]>([]);
@@ -105,6 +106,7 @@ export default function KitchenPlanner() {
   const editRevision = useRef(0);
   const moduleEditor = useRef<HTMLDivElement>(null);
   const sceneElement = useRef<HTMLElement>(null);
+  const contactSection = useRef<HTMLElement>(null);
 
   function load() {
     setLoading(true);
@@ -147,6 +149,11 @@ export default function KitchenPlanner() {
       .finally(() => setLoading(false));
   }
   useEffect(load, []);
+  useEffect(() => {
+    if (!quoteContactOpen || !saved) return;
+    contactSection.current?.scrollIntoView({ block: "nearest" });
+    contactSection.current?.focus({ preventScroll: true });
+  }, [quoteContactOpen, saved?.id]);
   useEffect(() => setInvalidMeasures([]), [selected]);
   useEffect(() => {
     if (!plan || snapshot) return;
@@ -214,6 +221,7 @@ export default function KitchenPlanner() {
     setSaved(undefined);
     setSnapshot(false);
     setCopied(false);
+    setQuoteContactOpen(false);
     setActionError("");
     setSaveNotice("");
     history.replaceState(null, "", "/cocinas");
@@ -339,6 +347,7 @@ export default function KitchenPlanner() {
             "Tu cocina se guardó correctamente. No pudimos actualizar el resto de la lista de cocinas guardadas.",
           ),
         );
+      return submittedRevision === editRevision.current ? kitchen : undefined;
     } catch (cause) {
       setActionError(
         cause instanceof Error ? cause.message : "No se pudo guardar.",
@@ -346,6 +355,9 @@ export default function KitchenPlanner() {
     } finally {
       setSaving(false);
     }
+  }
+  async function requestKitchenQuote() {
+    if (saved || (await save())) setQuoteContactOpen(true);
   }
   async function copyLink() {
     if (!saved) return;
@@ -691,12 +703,27 @@ export default function KitchenPlanner() {
             <div className="kitchen-total">
               <span>Presupuesto referencial</span>
               <strong aria-live="polite">
-                {currentQuote && quote ? money(quote.price) : "Por calcular"}
+                {currentQuote && quote
+                  ? quote.price == null
+                    ? "Por cotizar"
+                    : money(quote.price)
+                  : "Por calcular"}
               </strong>
               <small>
                 {plan.items.filter((item) => item.kind === "furniture").length}{" "}
                 muebles · melamina de 18 mm
               </small>
+              {currentQuote && quote?.price == null && (
+                <button
+                  type="button"
+                  className="button chrome-quote full"
+                  disabled={saving}
+                  onClick={() => void requestKitchenQuote()}
+                >
+                  {saving ? "Guardando…" : "Cotizar mi cocina"}
+                  <ArrowUpRight size={18} />
+                </button>
+              )}
             </div>
             <div className="kitchen-services">
               <label>
@@ -750,7 +777,9 @@ export default function KitchenPlanner() {
             {saved && (
               <div className="kitchen-saved">
                 <Check size={16} />
-                <span>Diseño guardado. Conserva esta versión y su precio.</span>
+                <span>{saved.result.price == null
+                  ? "Diseño guardado. Listo para solicitar una cotización."
+                  : "Diseño guardado. Conserva esta versión y su precio."}</span>
                 <button onClick={copyLink}>
                   <Copy size={14} />
                   {copied ? "Copiado" : "Copiar enlace"}
@@ -1285,16 +1314,31 @@ export default function KitchenPlanner() {
           </div>
         </section>
         {saved && (
-          <section className="kitchen-contact">
+          <section className="kitchen-contact" ref={contactSection} tabIndex={-1}>
             <h2>De tu idea al taller.</h2>
             <p>
               Comparte esta cocina con nuestro equipo para revisar medidas,
               herrajes y acabados.
             </p>
-            <ContactLinks
-              settings={settings}
-              message={`Hola, El capo. Quiero revisar mi cocina ${name}: ${location.origin}/cocinas?cocina=${saved.id}. Presupuesto referencial ${money(saved.result.price)}.`}
-            />
+            {saved.result.price == null && (
+              <button
+                type="button"
+                className="button chrome-quote"
+                onClick={() => setQuoteContactOpen(!quoteContactOpen)}
+                aria-expanded={quoteContactOpen}
+                aria-controls="kitchen-contact-options"
+              >
+                Cotizar mi cocina <ArrowUpRight size={18} />
+              </button>
+            )}
+            {(saved.result.price != null || quoteContactOpen) && (
+              <div id="kitchen-contact-options">
+                <ContactLinks
+                  settings={settings}
+                  message={`Hola, El capo. Quiero cotizar mi cocina ${saved.name || "Mi cocina"}: ${location.origin}/cocinas?cocina=${saved.id}. ${saved.result.price == null ? "Precio por cotizar según las medidas y los módulos guardados." : `Presupuesto referencial ${money(saved.result.price)}.`}`}
+                />
+              </div>
+            )}
           </section>
         )}
         {(stored.length > 0 || historyError) && (

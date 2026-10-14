@@ -215,7 +215,7 @@ export type ResolvedConstruction =
     }
   | { kind: "wardrobe"; loftHeight: number; hangingModules: number }
   | { kind: "kitchen-base"; plinthHeight: number; plinthSetback: number };
-export const productSchema = z
+const storedProductSchema = z
   .object({
     id: z.string().regex(/^[a-z0-9-]{2,60}$/),
     name: z.string().trim().min(2).max(70),
@@ -232,6 +232,8 @@ export const productSchema = z
       )
       .optional(),
     pricing: pricingSchema.optional(),
+    // Absence preserves the display policy of existing products and snapshots.
+    showPrice: z.boolean().optional(),
     extras: productExtrasSchema.optional(),
     description: z.string().trim().min(5).max(350),
     active: z.boolean(),
@@ -243,6 +245,22 @@ export const productSchema = z
     defaults: configSchema,
   })
   .strict();
+export const productSchema = z.preprocess((input) => {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return input;
+  const product = input as Record<string, unknown>;
+  if (product.showPrice !== false) return input;
+  const pricing = product.pricing;
+  // Quote-only models need no selling tariff. Keep valid internal values intact.
+  return {
+    ...product,
+    ...(product.basePrice === undefined ? { basePrice: 0 } : {}),
+    ...(pricing && typeof pricing === "object" && !Array.isArray(pricing) &&
+      ("basis" in pricing && ["unit", "linear-meter"].includes(String(pricing.basis))) &&
+      !("amount" in pricing)
+      ? { pricing: { ...pricing, amount: 0 } }
+      : {}),
+  };
+}, storedProductSchema);
 export type Product = z.infer<typeof productSchema>;
 /** Optional fields remain absent in historical products, settings and snapshots. */
 export function getFrontOptions(

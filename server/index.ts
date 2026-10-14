@@ -12,11 +12,11 @@ import {
   type Database,
 } from "./admin-auth.ts";
 import { z } from "zod";
-import { publicGeometry } from "../lib/public-geometry";
-import { publicProduct } from "../lib/public-product.ts";
+import { publicFurnitureResult, publicPrice, publicProduct } from "../lib/public-product.ts";
 import {
   buildKitchen,
   kitchenPlanSchema,
+  publicKitchenQuote,
   type KitchenSnapshot,
   type KitchenDesign,
 } from "../lib/kitchen";
@@ -238,13 +238,6 @@ function publicSettings(settings: Settings) {
   };
 }
 
-function publicResult(result: ReturnType<typeof buildFurniture>) {
-  return {
-    geometry: publicGeometry(result.panels, result.fixtures),
-    price: result.price,
-  };
-}
-
 function validateDomain<T>(operation: () => T): T {
   try {
     return operation();
@@ -289,7 +282,7 @@ type KitchenRow = {
   created_at: string;
   snapshot: string;
 };
-function publicKitchen(row: KitchenRow): KitchenDesign {
+function publicKitchen(row: KitchenRow, currentProducts: readonly Product[] = []): KitchenDesign {
   const snapshot = JSON.parse(row.snapshot) as KitchenSnapshot;
   return {
     id: row.id,
@@ -297,7 +290,7 @@ function publicKitchen(row: KitchenRow): KitchenDesign {
     version: row.version,
     created: row.created_at,
     plan: snapshot.plan,
-    result: snapshot.result,
+    result: publicKitchenQuote(snapshot, currentProducts),
   };
 }
 async function saveKitchen(
@@ -489,8 +482,10 @@ async function cutList(db: Database, data: Record<string, unknown>) {
   });
 }
 
-function publicDesign(row: DesignRow) {
+function publicDesign(row: DesignRow, currentProducts: readonly Product[] = []) {
   const snapshot = JSON.parse(row.snapshot) as Snapshot;
+  const current = currentProducts.find((product) => product.id === snapshot.product.id);
+  const result = publicFurnitureResult(snapshot.result, snapshot.product, current);
   return {
     id: row.id,
     name: row.name,
@@ -498,12 +493,12 @@ function publicDesign(row: DesignRow) {
     version: row.version,
     created: row.created_at,
     product: {
-      ...publicProduct(snapshot.product, snapshot.result.price),
-      preview: publicResult(snapshot.result),
+      ...publicProduct(snapshot.product, snapshot.result.price, current),
+      preview: result,
     },
     config: snapshot.config,
-    price: snapshot.result.price,
-    result: publicResult(snapshot.result),
+    price: publicPrice(snapshot.product, snapshot.result.price, current),
+    result,
     materials: publicMaterials(snapshot.settings),
   };
 }
@@ -751,7 +746,7 @@ async function mutateDesign(
     .prepare("SELECT * FROM designs WHERE id=? AND owner_hash=?")
     .bind(id, identity.hash)
     .first<DesignRow>();
-  return json({ design: publicDesign(row!) });
+  return json({ design: publicDesign(row!, await readProducts(db, true)) });
 }
 
 async function get(request: Request, env: Env) {
@@ -786,7 +781,7 @@ async function get(request: Request, env: Env) {
       const build = createFurnitureBuilder(settings);
       return json({
         products: products.map((p) => {
-          const preview = publicResult(build(p, p.defaults));
+          const preview = publicFurnitureResult(build(p, p.defaults), p);
           return { ...publicProduct(p, preview.price), preview };
         }),
         settings: publicSettings(settings),
@@ -807,7 +802,7 @@ async function get(request: Request, env: Env) {
           "Este diseño ya no está disponible.",
           "DESIGN_UNAVAILABLE",
         );
-      return json({ design: publicDesign(row) });
+      return json({ design: publicDesign(row, await readProducts(env.DB, true)) });
     }
     case "designs": {
       const identity = await owner(request, true);
@@ -816,8 +811,9 @@ async function get(request: Request, env: Env) {
       )
         .bind(identity.hash)
         .all<DesignRow>();
+      const products = await readProducts(env.DB, true);
       return json(
-        { designs: results.map(publicDesign) },
+        { designs: results.map((row) => publicDesign(row, products)) },
         200,
         identity.header ? { "Set-Cookie": identity.header } : {},
       );
@@ -835,7 +831,7 @@ async function get(request: Request, env: Env) {
           "Esta cocina ya no está disponible.",
           "KITCHEN_UNAVAILABLE",
         );
-      return json({ kitchen: publicKitchen(row) });
+      return json({ kitchen: publicKitchen(row, await readProducts(env.DB, true)) });
     }
     case "kitchens": {
       const identity = await owner(request, true);
@@ -844,8 +840,9 @@ async function get(request: Request, env: Env) {
       )
         .bind(identity.hash)
         .all<KitchenRow>();
+      const products = await readProducts(env.DB, true);
       return json(
-        { kitchens: results.map(publicKitchen) },
+        { kitchens: results.map((row) => publicKitchen(row, products)) },
         200,
         identity.header ? { "Set-Cookie": identity.header } : {},
       );
@@ -881,10 +878,12 @@ async function post(
   if (op === "request-email-code") return requestEmailCode(request, env);
   if (op === "cancel-login") return cancelLogin(request, env);
   if (op === "logout") return logout(request, env);
-  if (op === "quote")
-    return json(publicResult((await calculate(env.DB, data)).result));
+  if (op === "quote") {
+    const { product, result } = await calculate(env.DB, data);
+    return json(publicFurnitureResult(result, product));
+  }
   if (op === "kitchen-quote")
-    return json((await calculateKitchen(env.DB, data)).result);
+    return json(publicKitchenQuote(await calculateKitchen(env.DB, data)));
   if (op === "save-kitchen") return saveKitchen(request, env.DB, data);
   if (op === "remove-kitchen") return removeKitchen(request, env.DB, data);
   if (op === "save-design") return saveDesign(request, env.DB, data);

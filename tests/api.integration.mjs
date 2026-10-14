@@ -457,6 +457,66 @@ test("API persistente: autorización, catálogo, concurrencia, cotización y dis
     } })).status, 400, "El administrador debe retirar una selección inicial antes de ocultar esa opción.");
   });
 
+  await t.test("precio opcional: catálogo, cotización y diseños nunca publican importes ocultos", async () => {
+    const hiddenId = "api-test-" + randomUUID();
+    fixtureProducts.push(hiddenId);
+    const draft = await staff.post({ op: "product", expectedVersion: 0, product: {
+      ...model, id: hiddenId, name: "Modelo sin precio de prueba", showPrice: false,
+      basePrice: undefined, pricing: { basis: "unit" },
+      defaults: { ...model.defaults, install: false, transport: false },
+    } });
+    assert.equal(draft.status, 201);
+    assert.equal(draft.data.product.basePrice, 0);
+    assert.deepEqual(draft.data.product.pricing, { basis: "unit", amount: 0 });
+    const published = await staff.post({ op: "product", expectedVersion: draft.data.product.version, product: { ...draft.data.product, active: true } });
+    assert.equal(published.status, 200);
+    let hidden = published.data.product;
+    const input = { productId: hiddenId, config: hidden.defaults };
+    const assertHidden = (design) => {
+      publicOnly(design);
+      assert.equal(design.price, null);
+      assert.equal(design.result.price, null);
+      assert.equal(design.product.publicPrice, null);
+      assert.equal(design.product.preview.price, null);
+      assert.equal(design.product.showPrice, false);
+    };
+    const listed = (await visitor.get("catalog")).data.products.find((item) => item.id === hiddenId);
+    publicOnly(listed);
+    assert.equal(listed.publicPrice, null);
+    assert.equal(listed.preview.price, null);
+    const quoted = await visitor.quote({ ...input, showPrice: true, price: 123 });
+    assert.equal(quoted.status, 200);
+    assert.equal(quoted.data.price, null);
+    assert.ok(quoted.data.geometry.length > 0);
+    publicOnly(quoted.data);
+    const savedHidden = await visitor.post({ op: "save-design", ...input });
+    assert.equal(savedHidden.status, 201);
+    fixtureDesigns.push(savedHidden.data.design.id);
+    assertHidden(savedHidden.data.design);
+    const originalCuts = await staff.post({ op: "cut-list", designId: savedHidden.data.design.id });
+    assert.equal(originalCuts.status, 200);
+    assert.equal(typeof originalCuts.data.result.price, "number");
+    const shown = await staff.post({ op: "product", expectedVersion: hidden.version, product: { ...hidden, showPrice: true, pricing: { basis: "unit", amount: 1200 } } });
+    assert.equal(shown.status, 200);
+    hidden = shown.data.product;
+    assertHidden((await stranger.get("design&id=" + savedHidden.data.design.id)).data.design);
+    assert.ok((await visitor.quote(input)).data.price >= 1200);
+    const savedVisible = await visitor.post({ op: "save-design", ...input });
+    assert.equal(savedVisible.status, 201);
+    fixtureDesigns.push(savedVisible.data.design.id);
+    assert.ok(savedVisible.data.design.price >= 1200);
+    const hiddenAgain = await staff.post({ op: "product", expectedVersion: hidden.version, product: { ...hidden, showPrice: false } });
+    assert.equal(hiddenAgain.status, 200);
+    assertHidden((await stranger.get("design&id=" + savedVisible.data.design.id)).data.design);
+    const owned = (await visitor.get("designs")).data.designs.filter((item) => item.product.id === hiddenId);
+    assert.equal(owned.length, 2);
+    owned.forEach(assertHidden);
+    const quantity = await visitor.post({ op: "set-quantity", id: savedVisible.data.design.id, version: 1, quantity: 2 });
+    assert.equal(quantity.status, 200);
+    assertHidden(quantity.data.design);
+    assert.deepEqual((await staff.post({ op: "cut-list", designId: savedHidden.data.design.id })).data.result, originalCuts.data.result);
+  });
+
   const saved = await visitor.post({
     op: "save-design",
     ...quoteInput,

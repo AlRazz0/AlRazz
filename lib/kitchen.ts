@@ -97,7 +97,7 @@ export type KitchenModule = {
   row: KitchenItem["row"];
   wall: KitchenItem["wall"];
   productId?: string;
-  price: number;
+  price: number | null;
   position: [number, number, number];
   size: [number, number, number];
   rotationY: number;
@@ -106,12 +106,19 @@ export type KitchenQuote = {
   plan: KitchenPlan;
   geometry: VisualPanel[];
   modules: KitchenModule[];
-  price: number;
-  furniturePrice: number;
-  servicesPrice: number;
+  price: number | null;
+  furniturePrice: number | null;
+  servicesPrice: number | null;
   envelope: { width: number; height: number; depth: number };
   warnings: string[];
   materials: PublicMaterial[];
+};
+/** Private calculation remains numeric for administration and immutable snapshots. */
+export type KitchenCalculation = Omit<KitchenQuote, "price" | "furniturePrice" | "servicesPrice" | "modules"> & {
+  price: number;
+  furniturePrice: number;
+  servicesPrice: number;
+  modules: (Omit<KitchenModule, "price"> & { price: number })[];
 };
 export type KitchenDesign = {
   id: string;
@@ -130,8 +137,23 @@ export type KitchenSnapshot = {
     config: Config;
     result: ReturnType<typeof buildFurniture>;
   }[];
-  result: KitchenQuote;
+  result: KitchenCalculation;
 };
+
+/** Mixed quote-only kitchens suppress every total and subtotal in the public response. */
+export function publicKitchenQuote(snapshot: KitchenSnapshot, currentProducts: readonly Product[] = []): KitchenQuote {
+  const current = new Map(currentProducts.map((product) => [product.id, product]));
+  const hidden = snapshot.modules.some(({ product }) =>
+    product.showPrice === false || current.get(product.id)?.showPrice === false,
+  );
+  return hidden ? {
+    ...snapshot.result,
+    price: null,
+    furniturePrice: null,
+    servicesPrice: null,
+    modules: snapshot.result.modules.map((module) => ({ ...module, price: null })),
+  } : snapshot.result;
+}
 const gapNames = {
   fridge: "Espacio para refrigeradora",
   cooker: "Espacio para cocina",
@@ -220,7 +242,7 @@ export function buildKitchen(
     a: { base: 0, wall: 0 },
     b: { base: cornerOffset, wall: cornerOffset },
   };
-  const placed: KitchenModule[] = [];
+  const placed: KitchenCalculation["modules"] = [];
   const geometry: VisualPanel[] = [];
   const boxes: Box[] = [];
   for (const part of prepared) {
@@ -253,7 +275,7 @@ export function buildKitchen(
             elevation + height / 2,
             offset + width / 2,
           ];
-    const module: KitchenModule = {
+    const module: KitchenCalculation["modules"][number] = {
       id: item.id,
       kind: item.kind,
       row: item.row,

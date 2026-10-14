@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowUpRight,
   Copy,
@@ -31,6 +31,13 @@ export default function Cart() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState("");
   const [remove, setRemove] = useState<Design>();
+  const [contactsOpen, setContactsOpen] = useState(false);
+  const contactSection = useRef<HTMLDivElement>(null);
+  function requestQuote() {
+    setContactsOpen(true);
+    contactSection.current?.scrollIntoView({ block: "nearest" });
+    contactSection.current?.focus({ preventScroll: true });
+  }
   function load() {
     setLoading(true);
     setError("");
@@ -64,7 +71,14 @@ export default function Cart() {
       setRemove(undefined);
     }
   }
-  const total = designs.reduce((n, d) => n + d.price * d.quantity, 0);
+  const total = designs.reduce<number | null>(
+    (sum, design) =>
+      sum === null || design.price == null
+        ? null
+        : sum + design.price * design.quantity,
+    0,
+  );
+  const needsQuote = total === null;
   const message = [
     "Hola, El capo. Quiero cotizar estos muebles:",
     ...designs.map((d) =>
@@ -78,11 +92,15 @@ export default function Cart() {
           " mm",
         d.materials.find((m) => m.id === d.config.finish)?.name ||
           d.config.finish,
-        "Referencia: " + money(d.price * d.quantity),
+        d.price == null
+          ? "Precio: por cotizar"
+          : "Referencia: " + money(d.price * d.quantity),
         location.origin + "/configurar?d=" + encodeURIComponent(d.id),
       ].join("\n"),
     ),
-    "Total referencial: " + money(total),
+    total === null
+      ? "Total: por cotizar. La solicitud incluye muebles sin precio publicado."
+      : "Total referencial: " + money(total),
     "Quedo pendiente de la validación técnica, precio final y disponibilidad.",
   ].join("\n\n");
   return (
@@ -134,9 +152,20 @@ export default function Cart() {
                       {d.config.depth / 10} cm ·{" "}
                       {d.materials.find((f) => f.id === d.config.finish)?.name}
                     </p>
-                    <strong>
-                      {money(d.price)} <small>por unidad</small>
-                    </strong>
+                    {d.price == null ? (
+                      <button
+                        type="button"
+                        className="button chrome-quote"
+                        onClick={requestQuote}
+                        aria-label={"Cotizar " + d.product.name}
+                      >
+                        Cotizar <ArrowUpRight size={17} />
+                      </button>
+                    ) : (
+                      <strong>
+                        {money(d.price)} <small>por unidad</small>
+                      </strong>
+                    )}
                     <div className="quantity">
                       <button
                         aria-label={"Quitar una unidad de " + d.product.name}
@@ -185,21 +214,38 @@ export default function Cart() {
                 <span>
                   {designs.reduce((n, d) => n + d.quantity, 0)} muebles
                 </span>
-                <b>{money(total)}</b>
+                <b>{total === null ? "Por cotizar" : money(total)}</b>
               </div>
               <p className="small-note">
-                Total referencial. Cada diseño conserva su versión y precio
-                guardados. El equipo confirmará las tarifas y condiciones
-                finales.
+                {needsQuote
+                  ? "Tu solicitud incluye muebles sin precio publicado. El equipo preparará la cotización completa con las medidas y cantidades guardadas."
+                  : "Total referencial. Cada diseño conserva su versión y precio guardados. El equipo confirmará las tarifas y condiciones finales."}
               </p>
-              {settings && (settings.whatsapp || settings.whatsappSecondary) ? (
-                <ContactLinks settings={settings} message={message} />
-              ) : (
-                <div className="info-box">
-                  El canal de WhatsApp aún está por confirmar. Puedes descargar
-                  tu solicitud o copiarla para enviarla a El capo.
-                </div>
-              )}
+              <div ref={contactSection} tabIndex={-1} id="cart-quote-contacts">
+                {needsQuote && (
+                  <button
+                    type="button"
+                    className="button chrome-quote full"
+                    onClick={() => setContactsOpen(!contactsOpen)}
+                    aria-expanded={contactsOpen}
+                    aria-controls="cart-contact-options"
+                  >
+                    Cotizar mis diseños <ArrowUpRight size={18} />
+                  </button>
+                )}
+                {(!needsQuote || contactsOpen) && (
+                  <div id="cart-contact-options">
+                    {settings && (settings.whatsapp || settings.whatsappSecondary) ? (
+                      <ContactLinks settings={settings} message={message} />
+                    ) : (
+                      <div className="info-box">
+                        El canal de WhatsApp aún está por confirmar. Puedes descargar
+                        tu solicitud o copiarla para enviarla a El capo.
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
               <button
                 className="button outline full"
                 onClick={() =>

@@ -42,7 +42,9 @@ La [colección de cocinas, vitrinas y repisas](coleccion-cocinas-vitrinas.md) a�
 
 En **Catálogo → Editar → Opciones y acabados**, marca los materiales de puerta que el cliente puede elegir y selecciona el frente inicial. El vidrio requiere jalador exterior; cada hoja admite hasta 1500 mm de alto en el piloto. La estructura y las repisas permanecen en melamina de 18 mm. Puedes deshabilitar un frente para un modelo concreto.
 
-En **Precio y publicación**, abre **Forma de cotizar este modelo**:
+En **Precio y publicación**, puedes elegir **Precio en la web → Sin precio · botón Cotizar**. No tienes que indicar una tarifa de venta: el catálogo muestra un botón cromado plateado y el configurador permite guardar y consultar el diseño por WhatsApp. Las tarifas válidas anteriores se conservan si después decides volver a mostrar un precio. Una cocina o carrito con algún modelo sin precio se presenta como **Por cotizar**, sin un total parcial que pueda confundirse con el precio completo. Los diseños anteriores mantienen sus medidas y tarifas guardadas; si ocultas el precio del modelo, dejan de mostrar el importe públicamente.
+
+Para mostrar un precio, selecciona **Mostrar precio referencial** y abre **Forma de cotizar este modelo**:
 
 - **Por materiales y herrajes:** calcula las piezas reales, tapacantos, herrajes y **Mano de obra base · S/** con el margen del taller.
 - **Tarifa por unidad:** introduce **Precio base de venta · S/ por unidad**. Una unidad es un mueble completo, a cualquiera de sus medidas permitidas.
