@@ -1,3 +1,4 @@
+import { listPasskeys, registrationOptions, registrationVerify, authenticationOptions, authenticationVerify, revokePasskey } from "./admin-passkeys.ts";
 import {
   admin,
   adminState,
@@ -758,6 +759,7 @@ async function get(request: Request, env: Env) {
     ) ||
     "catalog";
   switch (action) {
+    case "passkeys": return listPasskeys(request, env);
     case "admin": {
       const authenticated = await admin(request, env);
       if (!authenticated) return json(await adminState(request, env));
@@ -873,6 +875,11 @@ async function post(
 ) {
   const data = await bodyOf(request);
   const op = quote || z.string().parse(data.op);
+  if (op === "passkey-register-options") return registrationOptions(request, env, data);
+  if (op === "passkey-register-verify") return registrationVerify(request, env, data);
+  if (op === "passkey-auth-options") return authenticationOptions(request, env);
+  if (op === "passkey-auth-verify") return authenticationVerify(request, env, data);
+  if (op === "passkey-revoke") return revokePasskey(request, env, data);
   if (op === "login") return login(request, env, data);
   if (op === "verify-login") return verifyLogin(request, env, data);
   if (op === "request-email-code") return requestEmailCode(request, env);

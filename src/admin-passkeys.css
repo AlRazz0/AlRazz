@@ -1,0 +1,39 @@
+.admin-passkey-prompt {
+  background: #f4f0e7;
+  border: 1px solid #dcd3c4;
+  border-radius: 12px;
+  padding: 23px;
+  margin: 22px 0 8px;
+}
+.admin-passkey-prompt > svg { color: #91533c; margin-bottom: 13px; }
+.admin-passkey-prompt h3 { font-size: 20px; letter-spacing: -.025em; font-weight: 500; }
+.admin-passkey-prompt p { margin: 10px 0 0; color: #706657; font-size: 13px; line-height: 1.65; }
+.admin-passkey-prompt .admin-full { margin-top: 18px; }
+.admin-passkeys { padding: 28px; }
+.admin-passkeys-heading { display: flex; gap: 18px; align-items: flex-start; max-width: 760px; }
+.admin-passkeys-heading > svg { color: #9f4530; flex: 0 0 auto; margin-top: 3px; }
+.admin-passkeys-heading p { color: #776c5b; line-height: 1.65; margin-top: 8px; }
+.admin-passkeys-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(260px, 1fr); gap: 30px; margin-top: 28px; }
+.admin-passkeys-list { list-style: none; padding: 0; margin: 0; }
+.admin-passkeys-list li { display: flex; justify-content: space-between; align-items: center; gap: 18px; padding: 19px 0; border-bottom: 1px solid #e4dccf; }
+.admin-passkeys-list strong { display: block; font-weight: 600; overflow-wrap: anywhere; }
+.admin-passkeys-list small { display: block; color: #7d7363; line-height: 1.6; margin-top: 4px; }
+.admin-passkeys-list .admin-text-button { flex: 0 0 auto; color: #9f4530; }
+.admin-passkeys h3 { font-size: 16px; font-weight: 600; margin-bottom: 12px; }
+.admin-passkey-add { padding: 24px; border: 1px solid #e0d7c9; border-radius: 12px; background: #f8f5ee; align-self: start; }
+.admin-passkey-add .admin-field { margin-top: 16px; }
+.admin-passkeys-empty { color: #7d7363; border: 1px dashed #d6cbb9; border-radius: 10px; padding: 25px; line-height: 1.7; }
+.admin-passkeys-note { margin-top: 24px; font-size: 12px; color: #7d7363; line-height: 1.7; }
+.admin-passkeys .admin-message { margin-top: 20px; }
+.admin-passkey-revoke .admin-field { margin: 18px 0; }
+.admin-passkey-revoke-actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: flex-end; margin-top: 18px; }
+.admin-tab-list { max-width: 100%; overflow-x: auto; justify-content: flex-start !important; }
+.admin-tab-list [data-slot="tabs-trigger"] { flex: 0 0 auto; }
+@media (max-width: 850px) { .admin-passkeys-grid { grid-template-columns: 1fr; } }
+@media (max-width: 650px) {
+  .admin-passkeys { padding: 20px 17px; }
+  .admin-passkey-add { padding: 20px; }
+  .admin-passkeys-heading { gap: 12px; }
+  .admin-passkeys-list li { align-items: flex-start; }
+  .admin-passkey-prompt { padding: 20px; }
+}

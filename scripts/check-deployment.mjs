@@ -80,6 +80,13 @@ export function checkConfig(config) {
     ),
     "Las credenciales administrativas deben ser secretos de Cloudflare, no vars públicas en Git.",
   );
+  if (config.vars?.ADMIN_PASSKEYS_ENABLED === "1") {
+    assert(
+      config.vars.ADMIN_PASSKEY_RP_ID === "alrazz.pages.dev" &&
+        config.vars.ADMIN_PASSKEY_ORIGIN === "https://alrazz.pages.dev",
+      "Las llaves de producción deben usar el RP y origen oficiales de alrazz.pages.dev.",
+    );
+  }
   requireFreeCompatibleAuthentication(config);
   return db;
 }
@@ -143,6 +150,13 @@ async function preflight() {
   );
   await access(resolve(root, "dist/client/index.html"));
   await access(resolve(root, "dist/alrazz/index.js"));
+  assert(
+    publicBuildMatches(
+      await readFile(resolve(root, "dist/pages/index.html"), "utf8"),
+      await readFile(resolve(root, "dist/client/index.html"), "utf8"),
+    ),
+    "Prepara Pages desde el build actual antes de publicar: npm run prepare:pages.",
+  );
   const built = JSON.parse(
     await readFile(resolve(root, "dist/alrazz/wrangler.json"), "utf8"),
   );
@@ -225,12 +239,30 @@ export function isPublicPreview(preview) {
     );
 }
 
+// Vite hashes these public asset names. Matching them catches an old Pages
+// frontend even when its proxy already reaches the newly deployed Worker.
+export function publicBuildMatches(html, expectedHtml) {
+  const assets = (source) => {
+    if (typeof source !== "string") return [];
+    return [...new Set([...source.matchAll(/\b(?:src|href)=["']([^"']+)["']/g)]
+      .map((match) => match[1]).filter((path) => path.startsWith("/assets/")))].sort();
+  };
+  const actual = assets(html);
+  const expected = assets(expectedHtml);
+  return expected.length > 0 && actual.length === expected.length &&
+    expected.every((path, index) => path === actual[index]);
+}
+
 async function smoke() {
   const origin = publicOrigin(process.env.ALRAZZ_PUBLIC_URL);
   const html = await getPublic(origin, "/");
   assert(
     html.includes('id="root"') && html.includes("/assets/"),
     "La portada no contiene el build de AlRazz.",
+  );
+  assert(
+    publicBuildMatches(html, await readFile(resolve(root, "dist/client/index.html"), "utf8")),
+    "La interfaz pública no corresponde al build local. Publica Worker y Pages del mismo commit.",
   );
   const catalog = await getPublic(origin, "/api/store?action=catalog", true);
   assert(

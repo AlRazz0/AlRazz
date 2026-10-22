@@ -6,6 +6,11 @@
   "main": "server/index.ts",
   "compatibility_date": "2026-05-22",
   "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "ADMIN_PASSKEYS_ENABLED": "1",
+    "ADMIN_PASSKEY_RP_ID": "alrazz.pages.dev",
+    "ADMIN_PASSKEY_ORIGIN": "https://alrazz.pages.dev",
+  },
   "assets": {
     "directory": "./dist/client",
     "binding": "ASSETS",
