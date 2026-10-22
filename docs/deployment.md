@@ -49,6 +49,8 @@ node scripts/check-deployment.mjs smoke
 
 No iniciar la batería `test:api` contra producción: sus fixtures están limitados a la base local. La comprobación pública no inicia sesión, crea diseños ni envía correos.
 
+La preparación de Pages crea su propio marcador `.wrangler/deploy/config.json` dentro de `hosting/pages`, fuera de los archivos públicos. Así Wrangler no hereda la configuración generada por Vite para el Worker. La configuración de Pages omite `account_id`, que ese comando no admite; la cuenta se selecciona con la sesión autorizada o `CLOUDFLARE_ACCOUNT_ID` en CI.
+
 ## Habilitar la publicación desde GitHub
 
 Configurar el entorno `production` en GitHub Actions con los secretos `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID`. El workflow fija `ALRAZZ_PUBLIC_URL=https://alrazz.pages.dev` para verificar el sitio principal, donde funcionan las llaves. El token API debe ser dedicado a esta integración y limitarse a la cuenta con Workers Scripts: Edit, D1: Edit y Cloudflare Pages: Edit. No reutilizar el OAuth local. No se solicita permiso de facturación ni se llama a APIs que cambien suscripciones.

@@ -5,6 +5,7 @@ import {
   readdir,
   realpath,
   rm,
+  writeFile,
 } from "node:fs/promises";
 import { dirname, extname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -112,6 +113,14 @@ export async function preparePages(root = repository) {
   for (const file of ["_worker.js", "_routes.json"]) {
     await copyFile(join(base, "hosting", "pages", file), join(output, file));
   }
+  // Keep Pages configuration discovery separate from Vite's Worker redirect.
+  // This generated marker stays outside the published assets and Git.
+  const pagesRedirect = join(base, "hosting", "pages", ".wrangler", "deploy");
+  await mkdir(pagesRedirect, { recursive: true });
+  await writeFile(
+    join(pagesRedirect, "config.json"),
+    JSON.stringify({ configPath: "../../wrangler.jsonc" }) + "\n",
+  );
   return { output, assetCount: files.length };
 }
 
