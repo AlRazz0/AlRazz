@@ -18,18 +18,24 @@ La primera publicación (`6e8ce787-7d51-4694-984e-0f654c6f8187`) pasó la compro
 
 La entrega de cocinas añade `0003_kitchens.sql`, una tabla independiente de snapshots. Aplicar esta migración antes de desplegar las rutas nuevas. Publicar Worker y Pages del mismo commit y después importar los doce borradores de `catalog/coleccion-cocinas-vitrinas.json` por la API administrativa; activar únicamente esos IDs tras validarlos. No reemplazar registros anteriores ni ajustes del taller. Si ya existen IDs de la colección, revisar el estado antes de continuar en lugar de repetir la importación.
 
+La integración de llaves añade `0004_passkeys.sql`. Aplicarla antes del Worker nuevo incluso si `ADMIN_PASSKEYS_ENABLED` permanece apagado: las consultas de sesión requieren la columna `passkey_id`. Es una migración aditiva; conserva cuentas, contraseña, TOTP, recuperación, catálogo y sesiones anteriores. El código mantiene las llaves apagadas cuando falta su configuración; `wrangler.jsonc` ya prepara su habilitación en producción exclusivamente para el RP `alrazz.pages.dev` y su origen HTTPS, según la [guía de llaves](admin-security.md#llaves-de-acceso-webauthn). Estas variables son públicas y no contienen credenciales. Publicar no registra ninguna llave del propietario. La preparación local y los tests no aplican esta migración a la D1 real ni registran dispositivos.
+
 El flujo manual de GitHub Actions está preparado, pero falta su token API dedicado. La publicación inicial utilizó OAuth local de Wrangler; ese token temporal no se copia a GitHub.
 
 ## Publicación desde el equipo autorizado
 
 Con los cambios revisados, las pruebas de la sección **Verificar** del README aprobadas y la cuenta todavía en Workers Free:
 
+Antes de aplicar migraciones, guardar un respaldo de la D1 existente con `npx wrangler d1 export alrazz-db --remote --output <ruta-privada-fuera-del-repositorio.sql>` y comprobar que la exportación terminó correctamente. Conservarlo fuera de Git y de los archivos públicos: contiene catálogo, diseños y estado de autenticación. Guardar también la salida de Wrangler en un registro privado fuera de CI; puede incluir una URL de descarga temporal firmada que no debe pegarse en chats ni publicarse en logs. También guardar el identificador de la versión actual del Worker y de Pages para diagnosticar o revertir código si falla la entrega; no restaurar automáticamente la base ni recrearla. Este paso requiere la autorización de publicación y no forma parte de las pruebas locales.
+
 ```sh
 npx wrangler login
 node scripts/check-deployment.mjs config
 npm run build
+npm run prepare:pages
 npm run db:remote -- --config wrangler.jsonc
 npm run deploy
+npm run deploy:pages
 ```
 
 Conservar la vinculación y migración SQLite del verificador. Los secretos permanecen en Cloudflare: `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, `ADMIN_TOTP_SECRET`, `ADMIN_RECOVERY_HASHES` y `SESSION_SECRET`. El Durable Object hereda los secretos del mismo Worker. No recrear la base ni sobrescribir credenciales en cada publicación; para una rotación explícita, seguir la [guía de seguridad](admin-security.md). Nunca usar `VITE_*` ni guardar valores privados en Git.
@@ -37,7 +43,7 @@ Conservar la vinculación y migración SQLite del verificador. Los secretos perm
 Después del despliegue, ejecutar en PowerShell la comprobación pública de solo lectura:
 
 ```powershell
-$env:ALRAZZ_PUBLIC_URL = 'https://alrazz.alrazz-cusco.workers.dev'
+$env:ALRAZZ_PUBLIC_URL = 'https://alrazz.pages.dev'
 node scripts/check-deployment.mjs smoke
 ```
 
@@ -45,7 +51,7 @@ No iniciar la batería `test:api` contra producción: sus fixtures están limita
 
 ## Habilitar la publicación desde GitHub
 
-Configurar el entorno `production` en GitHub Actions con los secretos `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID`, y la variable `ALRAZZ_PUBLIC_URL` con el origen HTTPS anterior. El token API debe ser dedicado a esta integración y limitarse a la cuenta con Workers Scripts: Edit y D1: Edit. No reutilizar el OAuth local. No se solicita permiso de facturación ni se llama a APIs que cambien suscripciones.
+Configurar el entorno `production` en GitHub Actions con los secretos `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID`. El workflow fija `ALRAZZ_PUBLIC_URL=https://alrazz.pages.dev` para verificar el sitio principal, donde funcionan las llaves. El token API debe ser dedicado a esta integración y limitarse a la cuenta con Workers Scripts: Edit, D1: Edit y Cloudflare Pages: Edit. No reutilizar el OAuth local. No se solicita permiso de facturación ni se llama a APIs que cambien suscripciones.
 
 El listado de secretos de Cloudflare permite comprobar sus nombres, no sus valores. La prueba final comprueba que la aplicación reconoce una configuración administrativa válida. El aprovisionamiento inicial del Worker y sus secretos se realiza antes del primer flujo; un Worker inexistente o sin secretos hace fallar la comprobación previa y no se publica a medias.
 
@@ -57,16 +63,17 @@ Los códigos enviados por correo admiten dos transportes: [Google Apps Script co
 
 Secuencia:
 
-1. Instalar las dependencias fijadas y ejecutar TypeScript, pruebas, build y pruebas aisladas de autenticación.
+1. Instalar las dependencias fijadas y ejecutar TypeScript, pruebas, build y pruebas aisladas de autenticación. Preparar Pages desde ese mismo build; no se copian archivos privados del servidor.
 2. Comprobar el verificador SQLite, configuración D1 real, URL, build, existencia de la base y nombres de secretos. Los accesos de esta fase son de lectura. El plan Free se verifica en el panel durante el aprovisionamiento; el flujo no consulta facturación ni puede certificar el plan contratado.
-3. Aplicar solo las migraciones pendientes a D1 y publicar el Worker y los archivos web.
-4. Consultar portada, catálogo y estado anónimo del administrador. No iniciar sesión, enviar correo, modificar productos ni crear diseños de prueba.
+3. Con el respaldo privado ya comprobado, aplicar solo las migraciones pendientes a D1 y publicar el Worker.
+4. Publicar Pages desde el mismo checkout y build, asociándolo al mismo commit. Ambos despliegues son secuenciales; no son una operación atómica.
+5. Consultar el sitio principal en Pages y comparar sus archivos con los del build local para detectar una interfaz anterior. Verificar también catálogo y estado anónimo del administrador. No iniciar sesión, enviar correo, modificar productos ni crear diseños de prueba.
 
 La primera consulta al catálogo puede cargar los datos iniciales mediante el mecanismo de inicialización de la aplicación. Si D1 ya está inicializada, no reemplaza sus datos, no reactiva muebles ocultos y no modifica precios del administrador.
 
-Si falla una comprobación anterior al despliegue, no se ejecutan migraciones ni publicación. Si falla la comprobación final, el despliegue ya ocurrió: el flujo queda en rojo y requiere diagnóstico. No revierte automáticamente D1 ni borra datos. Antes de añadir futuras migraciones incompatibles hay que preparar un plan de recuperación; volver a un Worker anterior no deshace una migración.
+Si falla una comprobación anterior al despliegue, no se ejecutan migraciones ni publicación. Si falla Pages después del Worker, queda una entrega parcial: corregir la causa y completar Pages desde el mismo commit. Si falla la comprobación final, el despliegue ya ocurrió: el flujo queda en rojo y requiere diagnóstico. No revierte automáticamente D1 ni borra datos. Antes de añadir futuras migraciones incompatibles hay que preparar un plan de recuperación; volver a un Worker anterior no deshace una migración.
 
-Para revisar la configuración sin red: `node scripts/check-deployment.mjs config`. Para comprobar una publicación existente: definir `ALRAZZ_PUBLIC_URL` y ejecutar `node scripts/check-deployment.mjs smoke`. El segundo comando consulta exclusivamente la URL proporcionada y no necesita contraseñas ni tokens de Cloudflare.
+Para revisar la configuración sin red: `node scripts/check-deployment.mjs config`. Para comprobar una publicación existente: definir `ALRAZZ_PUBLIC_URL` y ejecutar `node scripts/check-deployment.mjs smoke`. El segundo comando consulta exclusivamente la URL proporcionada y compara la interfaz con `dist/client/index.html`, que debe corresponder a la versión que se pretende verificar. No necesita contraseñas ni tokens de Cloudflare.
 
 ## Referencias
 

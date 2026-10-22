@@ -7,6 +7,7 @@ import {
   checkConfig,
   isPublicPreview,
   publicOrigin,
+  publicBuildMatches,
   requireFreeCompatibleAuthentication,
 } from "../scripts/check-deployment.mjs";
 
@@ -136,4 +137,33 @@ test("public smoke checks require an HTTPS origin without credentials or extra p
   ]) {
     assert.throws(() => publicOrigin(value));
   }
+});
+
+test("production passkeys reject preview or Worker origins while allowing feature rollback", () => {
+  for (const [key, value] of [
+    ["ADMIN_PASSKEY_RP_ID", "preview.alrazz.pages.dev"],
+    ["ADMIN_PASSKEY_ORIGIN", "https://alrazz.example.workers.dev"],
+  ]) {
+    const config = provisionedConfig();
+    config.vars = { ADMIN_PASSKEYS_ENABLED: "1", ADMIN_PASSKEY_RP_ID: "alrazz.pages.dev", ADMIN_PASSKEY_ORIGIN: "https://alrazz.pages.dev", [key]: value };
+    assert.throws(() => checkConfig(config), /RP y origen oficiales/);
+  }
+  const disabled = provisionedConfig();
+  disabled.vars = { ADMIN_PASSKEYS_ENABLED: "0" };
+  assert.doesNotThrow(() => checkConfig(disabled));
+});
+
+test("public smoke distinguishes the released frontend from an older Pages deployment", () => {
+  const expected = '<script type="module" src="/assets/app-current.js"></script><link rel="stylesheet" href="/assets/app-current.css">';
+  const same = '<link href="/assets/app-current.css" rel="stylesheet"><script src="/assets/app-current.js" type="module"></script><img src="/logo.svg">';
+  assert.equal(publicBuildMatches(same, expected), true);
+  for (const actual of [
+    expected.replaceAll("current", "previous"),
+    expected.replace('/assets/app-current.css', '/assets/app-previous.css'),
+    '<script src="/assets/app-current.js"></script>',
+    expected + '<script src="/assets/old-extra.js"></script>',
+    '<div id="root"></div>',
+    null,
+  ]) assert.equal(publicBuildMatches(actual, expected), false);
+  assert.equal(publicBuildMatches('<div id="root"></div>', '<div id="root"></div>'), false);
 });

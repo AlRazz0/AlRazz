@@ -12,3 +12,8 @@ ADMIN_EMAIL_RELAY_URL=""
 ADMIN_EMAIL_RELAY_SECRET=""
 RESEND_API_KEY=""
 ADMIN_EMAIL_FROM=""
+
+# Llaves de acceso: activar sólo después de migrar 0004 y verificar el dominio.
+ADMIN_PASSKEYS_ENABLED="0"
+ADMIN_PASSKEY_RP_ID="alrazz.pages.dev"
+ADMIN_PASSKEY_ORIGIN="https://alrazz.pages.dev"

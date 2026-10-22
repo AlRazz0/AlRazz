@@ -57,7 +57,8 @@ import {
   TableHeader,
   TableRow,
 } from "../components/ui/table";
-import { api, download } from "../lib/api";
+import { api, ApiError, download } from "../lib/api";
+import { createPasskey, passkeyError, passkeysSupported, usePasskey } from "../lib/passkey-browser";
 import {
   defaultSettings,
   getConstruction,
@@ -77,6 +78,7 @@ import {
   importCatalogCSV,
 } from "../lib/catalog-csv";
 import "./admin.css";
+import "./admin-passkeys.css";
 import { Brand } from "./Brand";
 import { constructionTemplates } from "../lib/product-templates";
 import { constructionLabels } from "./construction-labels";
@@ -94,6 +96,7 @@ type AdminSnapshot = {
   challenge?: boolean;
   challengeExpiresAt?: number;
   emailAvailable?: boolean;
+  passkeysAvailable?: boolean;
   products?: Product[];
   settings?: Settings;
   settingsVersion?: number;
@@ -245,6 +248,119 @@ function Status({ active }: { active: boolean }) {
   );
 }
 
+type PasskeyDevice = {
+  id: string;
+  label: string;
+  createdAt: number | string;
+  lastUsedAt: number | string | null;
+  revokedAt: number | string | null;
+};
+type PasskeyList = { configured: boolean; devices: PasskeyDevice[]; rpId: string | null };
+type PasskeyCeremony<T> = { options: T; ceremonyId: string };
+
+function passkeyDate(value: number | string | null) {
+  if (!value) return "Sin uso todavía";
+  const date = new Date(typeof value === "number" && value < 1e12 ? value * 1000 : value);
+  return Number.isNaN(date.getTime()) ? "Fecha no disponible" : date.toLocaleDateString("es", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function AdminPasskeys({ onSessionExpired }: { onSessionExpired: () => Promise<void> }) {
+  const [snapshot, setSnapshot] = useState<PasskeyList | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [label, setLabel] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [removing, setRemoving] = useState<PasskeyDevice | null>(null);
+  const [revokePassword, setRevokePassword] = useState("");
+  const supported = passkeysSupported();
+  const active = snapshot?.devices.filter((device) => !device.revokedAt) ?? [];
+  async function refresh() {
+    setLoading(true);
+    try { setSnapshot(await api<PasskeyList>("action=passkeys")); }
+    finally { setLoading(false); }
+  }
+  useEffect(() => {
+    let mounted = true;
+    api<PasskeyList>("action=passkeys").then((data) => { if (mounted) setSnapshot(data); })
+      .catch((cause) => { if (mounted) setError(errorMessage(cause)); })
+      .finally(() => { if (mounted) setLoading(false); });
+    return () => { mounted = false; };
+  }, []);
+  async function add(event: FormEvent) {
+    event.preventDefault();
+    if (busy || !supported || !snapshot?.configured) return;
+    setBusy(true); setError(""); setNotice("");
+    try {
+      const ceremony = await api<PasskeyCeremony<PublicKeyCredentialCreationOptionsJSON>>("", {
+        op: "passkey-register-options", password, label: label.trim(),
+      });
+      setPassword("");
+      const credential = await createPasskey(ceremony.options);
+      const result = await api<{ registered: boolean }>("", { op: "passkey-register-verify", ceremonyId: ceremony.ceremonyId, credential });
+      if (!result.registered) throw Error("No se pudo guardar la llave. Vuelve a intentarlo.");
+      setLabel(""); setNotice("Llave registrada. Ya puedes usarla como segundo paso al entrar.");
+      await refresh();
+    } catch (cause) { setError(passkeyError(cause)); }
+    finally { setPassword(""); setBusy(false); }
+  }
+  async function revoke(event: FormEvent) {
+    event.preventDefault();
+    if (busy || !removing) return;
+    setBusy(true); setError(""); setNotice("");
+    try {
+      const result = await api<{ revoked: boolean }>("", { op: "passkey-revoke", id: removing.id, password: revokePassword });
+      if (!result.revoked) throw Error("No se pudo retirar la llave. Vuelve a intentarlo.");
+      setRemoving(null); setNotice("Llave retirada. Los accesos vinculados a ella dejan de funcionar.");
+      try { await refresh(); }
+      catch (cause) {
+        if (cause instanceof ApiError && cause.status === 401) await onSessionExpired();
+        else throw cause;
+      }
+    } catch (cause) { setError(errorMessage(cause)); }
+    finally { setRevokePassword(""); setBusy(false); }
+  }
+  return <section className="admin-panel admin-passkeys" aria-busy={loading || busy}>
+    <div className="admin-passkeys-heading">
+      <LockKeyhole size={27} strokeWidth={1.5} />
+      <div><h2>Llaves de acceso</h2><p>Confirma tu identidad con Windows Hello, el bloqueo de tu dispositivo o una llave de seguridad. No necesitas recibir un correo para usar una llave registrada.</p></div>
+    </div>
+    {error && <div className="admin-message is-error" role="alert">{error}</div>}
+    {notice && <div className="admin-message" role="status">{notice}</div>}
+    {loading ? <p className="admin-passkeys-note" role="status">Cargando tus llaves…</p> : !snapshot ?
+      <button type="button" className="button outline" onClick={() => { setError(""); void refresh().catch((cause) => setError(errorMessage(cause))); }}>Volver a cargar</button> :
+      !snapshot.configured ? <p className="admin-passkeys-empty">Las llaves de acceso todavía no están habilitadas en esta dirección. Tus métodos actuales de verificación siguen disponibles.</p> :
+      <div className="admin-passkeys-grid">
+        <div><h3>Tus llaves · {active.length}</h3>
+          {active.length ? <ul className="admin-passkeys-list">{active.map((device) => <li key={device.id}>
+            <div><strong>{device.label}</strong><small>Creada el {passkeyDate(device.createdAt)}<br />Último uso: {passkeyDate(device.lastUsedAt)}</small></div>
+            <button type="button" className="admin-text-button" disabled={busy} onClick={() => { setError(""); setRemoving(device); setRevokePassword(""); }} aria-label={`Retirar llave ${device.label}`}>Retirar</button>
+          </li>)}</ul> : <p className="admin-passkeys-empty">Todavía no tienes llaves. Añade la primera desde un dispositivo propio que uses para administrar el taller.</p>}
+          <p className="admin-passkeys-note">Cada sitio guarda sus propias llaves. Tu navegador o gestor puede sincronizarlas entre dispositivos; el nombre sirve para reconocerlas. Conserva tus métodos de recuperación.</p>
+        </div>
+        <form className="admin-passkey-add" onSubmit={add}>
+          <h3>Añadir una llave</h3>
+          {!supported && <p className="admin-verification-help">Este navegador no permite registrar llaves aquí. Abre el panel en un navegador actualizado desde su dirección segura.</p>}
+          <Field title="Nombre para reconocerla"><input name="passkey-label" maxLength={64} value={label} onChange={(event) => setLabel(event.target.value)} placeholder="Por ejemplo: mi PC de oficina" autoComplete="off" disabled={busy || !supported} required /></Field>
+          <Field title="Tu contraseña actual"><input name="passkey-password" type="password" autoComplete="current-password" maxLength={512} value={password} onChange={(event) => setPassword(event.target.value)} disabled={busy || !supported} required /></Field>
+          <button className="button rust admin-full" disabled={busy || !supported || !label.trim() || !password}>{busy && !removing ? "Comprobando tu llave…" : "Crear llave de acceso"}<Plus size={17} /></button>
+          <p className="admin-passkeys-note">El dispositivo te pedirá su PIN, huella u otro desbloqueo. Ese dato se introduce en la ventana del sistema y no se envía al taller.</p>
+        </form>
+      </div>}
+    <Dialog open={!!removing} onOpenChange={(open) => { if (!open && !busy) { setRemoving(null); setRevokePassword(""); } }}>
+      <DialogContent className="admin-dialog admin-passkey-revoke" showCloseButton={!busy}>
+        <DialogHeader><DialogTitle>Retirar {removing?.label}</DialogTitle><DialogDescription>Esta llave dejará de abrir el panel y sus sesiones se cerrarán. Podrás seguir entrando con tus otras llaves o métodos de verificación.</DialogDescription></DialogHeader>
+        <form onSubmit={revoke} aria-busy={busy}>
+          {error && <p className="admin-message is-error" role="alert">{error}</p>}
+          <Field title="Confirma tu contraseña actual"><input type="password" name="revoke-passkey-password" autoComplete="current-password" maxLength={512} value={revokePassword} onChange={(event) => setRevokePassword(event.target.value)} disabled={busy} required /></Field>
+          <div className="admin-passkey-revoke-actions"><button type="button" className="button outline" disabled={busy} onClick={() => { setRemoving(null); setRevokePassword(""); }}>Conservar llave</button><button className="button rust" disabled={busy || !revokePassword}>{busy ? "Retirando…" : "Retirar llave"}</button></div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  </section>;
+}
+
 export default function Admin() {
   const [session, setSession] = useState<AdminSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
@@ -252,7 +368,7 @@ export default function Admin() {
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
   const [verificationMethod, setVerificationMethod] = useState<
-    "totp" | "email" | "recovery"
+    "passkey" | "totp" | "email" | "recovery"
   >("totp");
   const [emailCodeSent, setEmailCodeSent] = useState(false);
   const [emailRetryAt, setEmailRetryAt] = useState(0);
@@ -294,6 +410,7 @@ export default function Admin() {
   const fileInput = useRef<HTMLInputElement>(null);
   const emailInput = useRef<HTMLInputElement>(null);
   const codeInput = useRef<HTMLInputElement>(null);
+  const passkeyLoginButton = useRef<HTMLButtonElement>(null);
   const restartLoginButton = useRef<HTMLButtonElement>(null);
   const settingsErrorMessage = useRef<HTMLParagraphElement>(null);
   const challenge = !!session?.challenge && !session.admin;
@@ -319,6 +436,7 @@ export default function Admin() {
       const data: AdminSnapshot = await api("action=admin");
       setNow(Math.floor(Date.now() / 1000));
       setSession(data);
+      if (data.challenge) setVerificationMethod(data.passkeysAvailable ? "passkey" : "totp");
       if (data.admin && data.products && data.settings) {
         setProducts(data.products);
         setSettings(clone(data.settings));
@@ -345,6 +463,7 @@ export default function Admin() {
   useEffect(() => {
     if (loading || busy || session?.admin || !session?.configured) return;
     if (challengeExpired) restartLoginButton.current?.focus();
+    else if (challenge && verificationMethod === "passkey") passkeyLoginButton.current?.focus();
     else if (challenge) codeInput.current?.focus();
     else emailInput.current?.focus();
   }, [
@@ -418,7 +537,7 @@ export default function Admin() {
       if (!result.challenge || !result.challengeExpiresAt)
         throw Error("No se pudo iniciar la verificación. Vuelve a intentarlo.");
       setNow(Math.floor(Date.now() / 1000));
-      setVerificationMethod("totp");
+      setVerificationMethod(result.passkeysAvailable ? "passkey" : "totp");
       setEmailCodeSent(false);
       setEmailRetryAt(0);
       setCode("");
@@ -432,7 +551,7 @@ export default function Admin() {
   }
   async function verifyLogin(event: FormEvent) {
     event.preventDefault();
-    if (busy || challengeExpired) return;
+    if (busy || challengeExpired || verificationMethod === "passkey") return;
     setBusy("verify-login");
     setError("");
     try {
@@ -455,6 +574,18 @@ export default function Admin() {
       setBusy(null);
     }
   }
+  async function verifyPasskey() {
+    if (busy || challengeExpired || !session?.passkeysAvailable || !passkeysSupported()) return;
+    setBusy("verify-passkey"); setError("");
+    try {
+      const ceremony = await api<PasskeyCeremony<PublicKeyCredentialRequestOptionsJSON>>("", { op: "passkey-auth-options" });
+      const credential = await usePasskey(ceremony.options);
+      const result = await api<{ admin: boolean }>("", { op: "passkey-auth-verify", ceremonyId: ceremony.ceremonyId, credential });
+      if (!result.admin) throw Error("No se pudo verificar la llave. Vuelve a intentarlo.");
+      setCode(""); setEmail(""); await load();
+    } catch (cause) { setError(passkeyError(cause)); }
+    finally { setBusy(null); }
+  }
   async function cancelLogin() {
     if (busy) return;
     setBusy("cancel-login");
@@ -473,7 +604,7 @@ export default function Admin() {
       setBusy(null);
     }
   }
-  function changeVerificationMethod(method: "totp" | "email" | "recovery") {
+  function changeVerificationMethod(method: "passkey" | "totp" | "email" | "recovery") {
     setCode("");
     setError("");
     setVerificationMethod(method);
@@ -892,7 +1023,7 @@ export default function Admin() {
             <p>
               {challenge
                 ? "Completa el segundo paso para acceder a la administración."
-                : "Ingresa con tu correo y contraseña. Después verificaremos tu acceso con un segundo código."}
+                : "Ingresa con tu correo y contraseña. Después confirmarás tu identidad con tu llave o un código de seguridad."}
             </p>
             {session?.configured && (
               <ol
@@ -947,6 +1078,17 @@ export default function Admin() {
                   </div>
                 ) : (
                   <>
+                    {verificationMethod === "passkey" ? (
+                      <div className="admin-passkey-prompt">
+                        <LockKeyhole size={28} strokeWidth={1.5} />
+                        <h3>Confirma con tu llave de acceso</h3>
+                        <p>Usa Windows Hello, el bloqueo de tu dispositivo o una llave de seguridad que ya hayas registrado.</p>
+                        <button ref={passkeyLoginButton} type="button" className="button rust admin-full" onClick={verifyPasskey} disabled={!!busy || !passkeysSupported()}>
+                          {busy === "verify-passkey" ? "Esperando tu confirmación…" : "Usar mi llave de acceso"}<ArrowUpRight size={18} />
+                        </button>
+                        {!passkeysSupported() && <p>Este navegador no puede usar llaves en esta dirección. Puedes elegir otro método de abajo.</p>}
+                      </div>
+                    ) : <>
                     {verificationMethod === "email" && (
                       <div className="admin-email-code">
                         <button
@@ -1026,6 +1168,7 @@ export default function Admin() {
                           ? "Ingresa los 6 dígitos del último código que recibiste en el correo de administración."
                           : "Usa uno de los códigos que guardaste al configurar tu acceso. Cada código sirve una sola vez."}
                     </p>
+                    </>}
                     <p
                       className="admin-verification-timer"
                       role="timer"
@@ -1035,7 +1178,7 @@ export default function Admin() {
                       {Math.floor(secondsRemaining / 60)}:
                       {(secondsRemaining % 60).toString().padStart(2, "0")}
                     </p>
-                    <button
+                    {verificationMethod !== "passkey" && <button
                       className="button rust admin-full"
                       disabled={
                         !!busy ||
@@ -1047,7 +1190,12 @@ export default function Admin() {
                         ? "Verificando…"
                         : "Verificar y entrar"}
                       <ArrowUpRight size={18} />
-                    </button>
+                    </button>}
+                    {session?.passkeysAvailable && verificationMethod !== "passkey" && (
+                      <button className="admin-login-link" type="button" disabled={!!busy} onClick={() => changeVerificationMethod("passkey")}>
+                        Usar mi llave de acceso
+                      </button>
+                    )}
                     {verificationMethod !== "totp" && (
                       <button
                         className="admin-login-link"
@@ -1246,6 +1394,9 @@ export default function Admin() {
             </TabsTrigger>
             <TabsTrigger value="kitchens">
               <SlidersHorizontal size={17} /> Cocinas
+            </TabsTrigger>
+            <TabsTrigger value="access">
+              <LockKeyhole size={17} /> Llaves de acceso
             </TabsTrigger>
           </TabsList>
           <TabsContent value="catalog">
@@ -1946,6 +2097,9 @@ export default function Admin() {
           </TabsContent>
           <TabsContent value="kitchens">
             <KitchenAdmin />
+          </TabsContent>
+          <TabsContent value="access">
+            <AdminPasskeys onSessionExpired={load} />
           </TabsContent>
         </Tabs>
       </main>

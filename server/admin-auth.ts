@@ -1,3 +1,4 @@
+import { passkeyConfig, passkeysAvailable } from "./passkey-config.ts";
 import {
   decodeBase32,
   equalStrings,
@@ -29,6 +30,9 @@ export interface Database {
 }
 export interface AdminAuthEnv extends MailEnv {
   DB: Database;
+  ADMIN_PASSKEYS_ENABLED?: string;
+  ADMIN_PASSKEY_RP_ID?: string;
+  ADMIN_PASSKEY_ORIGIN?: string;
   ADMIN_EMAIL?: string;
   ADMIN_PASSWORD_HASH?: string;
   ADMIN_PASSWORD_VERIFIER?: DurableObjectNamespace<AdminPasswordVerifier>;
@@ -133,7 +137,7 @@ function configuration(env: AdminAuthEnv): AuthConfig | null {
   }
 }
 
-function requireConfiguration(env: AdminAuthEnv): AuthConfig {
+export function requireConfiguration(env: AdminAuthEnv): AuthConfig {
   const config = configuration(env);
   if (!config)
     throw new AuthError(
@@ -144,7 +148,7 @@ function requireConfiguration(env: AdminAuthEnv): AuthConfig {
   return config;
 }
 
-function requireSecureTransport(request: Request) {
+export function requireSecureTransport(request: Request) {
   const url = new URL(request.url);
   if (
     url.protocol !== "https:" &&
@@ -161,7 +165,7 @@ function requireSecureTransport(request: Request) {
   }
 }
 
-function cookieToken(request: Request, name: string): string | null {
+export function cookieToken(request: Request, name: string): string | null {
   const value = (request.headers.get("cookie") || "")
     .split(";")
     .map((part) => part.trim())
@@ -170,7 +174,7 @@ function cookieToken(request: Request, name: string): string | null {
   return value && TOKEN.test(value) ? value : null;
 }
 
-function cookie(
+export function cookie(
   request: Request,
   name: string,
   value: string,
@@ -179,7 +183,7 @@ function cookie(
   return `${name}=${value}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${seconds}${new URL(request.url).protocol === "https:" ? "; Secure" : ""}`;
 }
 
-function reply(data: unknown, cookies: string[] = []): Response {
+export function reply(data: unknown, cookies: string[] = []): Response {
   const headers = new Headers({
     "Content-Type": "application/json; charset=utf-8",
     "Cache-Control": "no-store",
@@ -190,7 +194,7 @@ function reply(data: unknown, cookies: string[] = []): Response {
   return new Response(JSON.stringify(data), { status: 200, headers });
 }
 
-async function challenge(
+export async function challenge(
   request: Request,
   env: AdminAuthEnv,
   config: AuthConfig,
@@ -213,10 +217,11 @@ export async function admin(
   const config = configuration(env);
   const token = cookieToken(request, SESSION_COOKIE);
   if (!config || !token) return false;
+  const passkey = passkeyConfig(env);
   const row = await env.DB.prepare(
-    "SELECT token_hash FROM admin_auth_sessions WHERE token_hash=? AND credential_hash=? AND expires_at>?",
+    "SELECT token_hash FROM admin_auth_sessions WHERE token_hash=? AND credential_hash=? AND expires_at>? AND (passkey_id IS NULL OR EXISTS(SELECT 1 FROM admin_passkeys k WHERE k.id=passkey_id AND k.revoked_at IS NULL AND k.owner_id=? AND k.rp_id=? AND k.origin=?))",
   )
-    .bind(sha256(token), config.fingerprint, Math.floor(Date.now() / 1000))
+    .bind(sha256(token), config.fingerprint, Math.floor(Date.now() / 1000), passkey?.owner || "", passkey?.rpID || "", passkey?.origin || "")
     .first();
   return !!row;
 }
@@ -242,6 +247,7 @@ export async function adminState(request: Request, env: AdminAuthEnv) {
     configured: true,
     challenge: !!pending,
     emailAvailable: emailAvailable(env),
+    passkeysAvailable: await passkeysAvailable(request, env),
     ...(pending ? { challengeExpiresAt: pending.expires_at } : {}),
   };
 }
@@ -260,7 +266,7 @@ export async function requireAdmin(
     );
 }
 
-async function throttle(
+export async function throttle(
   env: AdminAuthEnv,
   buckets: { key: string; max: number }[],
   now: number,
@@ -294,7 +300,7 @@ async function throttle(
     );
 }
 
-function ipIdentity(request: Request): string {
+export function ipIdentity(request: Request): string {
   // Cloudflare overwrites this header at its edge. X-Forwarded-For is not trusted.
   return request.headers.get("cf-connecting-ip") || "unknown-or-local";
 }
@@ -384,6 +390,7 @@ export async function login(
       challenge: true,
       challengeExpiresAt: now + CHALLENGE_SECONDS,
       emailAvailable: emailAvailable(env),
+      passkeysAvailable: await passkeysAvailable(request, env),
     },
     [
       cookie(request, CHALLENGE_COOKIE, token, CHALLENGE_SECONDS),

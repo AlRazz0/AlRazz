@@ -1,6 +1,6 @@
 # Administrar El capo
 
-El panel se abre en `/admin`. Introduce el correo autorizado y la contraseña; después completa el segundo paso con tu aplicación autenticadora, un código enviado al correo (si el servicio está activado) o un código de recuperación de un solo uso. Sin ese segundo paso no se abre el catálogo privado. No hay registro público. En desarrollo local, las credenciales y la vinculación están en archivos privados generados por `npm run setup:local`, nunca en la terminal ni en Git. Consulta la [guía de seguridad](admin-security.md).
+El panel se abre en `/admin`. Introduce el correo autorizado y la contraseña; después completa el segundo paso con una llave de acceso ya vinculada (por ejemplo, Windows Hello en tu PC), tu aplicación autenticadora, un código enviado al correo (si el servicio está activado) o un código de recuperación de un solo uso. Sin ese segundo paso no se abre el catálogo privado. No hay registro público. En desarrollo local, las credenciales y la vinculación están en archivos privados generados por `npm run setup:local`, nunca en la terminal ni en Git. Consulta la [guía de seguridad](admin-security.md).
 
 El desafío caduca a los cinco minutos y admite intentos limitados. El código de correo se solicita expresamente y el panel indica cuándo se puede reenviar. Recargar permite continuar un desafío vigente. Cerrar sesión revoca el acceso también en el servidor. El catálogo se carga desde la API: no depende de `localStorage`.
 
@@ -137,3 +137,10 @@ La importación muestra una vista previa antes de escribir. Todos los modelos se
 Si una escritura falla, el formulario conserva los datos introducidos. Si otra persona modificó el mismo registro, el servidor rechaza una versión antigua para evitar sobrescribirla. Copia tus cambios, recarga los datos actuales y vuelve a aplicarlos. Una pérdida de conexión se muestra como error; no se anuncia un guardado hasta recibir respuesta del servidor.
 
 Los ajustes pendientes bloquean el cierre de sesión para prevenir una pérdida accidental. El navegador solicita confirmación si se abandona la página con cambios pendientes. Cerrar un editor de mueble o acabado modificado también requiere confirmar el descarte. En el formulario de acabado, un dato inválido muestra el error y enfoca el campo, incluso si estaba dentro de **Textura, ficha e identificador**. Los cambios preparados en acabados y ajustes permanecen al cambiar de pestaña; deben guardarse antes de cerrar sesión.
+
+
+## Llaves de acceso del propietario
+
+En **Llaves de acceso**, elige un nombre reconocible, confirma tu contraseña y pulsa **Registrar llave**. La ventana segura del navegador te permitirá usar Windows Hello con el PIN o la biometría del equipo, o un gestor de llaves compatible. No escribas el PIN de Windows en el panel. La opción aparece operativa cuando el servidor tiene habilitado el dominio oficial.
+
+Para entrar después, introduce correo y contraseña y selecciona **Usar mi llave de acceso**. Puedes elegir otro método si ese dispositivo no dispone de la llave. Para retirar una llave, usa **Revocar** y confirma la contraseña: sus sesiones se cierran; las demás siguen disponibles. Si revocas la llave con la que estás trabajando, volverás al acceso. Una llave sincronizada puede estar disponible en varios dispositivos de tu gestor; no compartas la cuenta del gestor ni el perfil de Windows.

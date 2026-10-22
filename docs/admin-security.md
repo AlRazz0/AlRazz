@@ -41,8 +41,35 @@ El Worker aplica primero los límites de intentos persistentes en D1 y después 
 
 Workers Free y Durable Objects Free tienen cuotas. Según los [precios oficiales](https://developers.cloudflare.com/durable-objects/platform/pricing/), agotar una cuota gratuita de Durable Objects provoca errores hasta su restablecimiento. La aplicación y el flujo de publicación no contratan ni cambian planes. Antes de publicar, comprobar que la cuenta usa Workers Free y medir el acceso completo en ese entorno: Miniflare verifica el comportamiento, pero no reproduce la aplicación de los límites de CPU del servicio. El resto del código del Worker también debe caber en el presupuesto gratuito. Ver [publicación en Cloudflare](deployment.md).
 
-Aplica ambas migraciones con `npm run db:remote`. Comprueba HTTPS, acceso sin segundo factor denegado, códigos repetidos rechazados, recuperación de un solo uso y revocación al salir. No hay restablecimiento automático de contraseña por correo ni cuentas de empleados: una recuperación administrativa requiere intervención del propietario en los secretos del servidor. Conservar un código de recuperación no sustituye conocer la contraseña.
+Aplica las migraciones pendientes con `npm run db:remote`. Comprueba HTTPS, acceso sin segundo factor denegado, códigos repetidos rechazados, recuperación de un solo uso y revocación al salir. No hay restablecimiento automático de contraseña por correo ni cuentas de empleados: una recuperación administrativa requiere intervención del propietario en los secretos del servidor. Conservar un código de recuperación no sustituye conocer la contraseña.
 
 ## Pruebas
 
 `npm test` valida criptografía y motor. Después de `npm run build`, `npm run test:auth-api` verifica la autenticación contra un Worker y D1 aislados, con correo simulado y red externa bloqueada. No usa datos del propietario ni envía mensajes. Con la muestra local encendida, `npm run test:api` comprueba el catálogo real con fixtures temporales, autentica mediante TOTP y preserva sus datos; no consume códigos de recuperación personales.
+
+
+## Llaves de acceso (WebAuthn)
+
+El propietario único conserva la cuenta definida en `ADMIN_EMAIL`. No se crean cuentas de INOX ni se comparten llaves entre sitios. La pestaña **Llaves de acceso** permite registrar y revocar credenciales individuales: exige una sesión con ambos factores ya completados y confirmar la contraseña actual. Windows Hello puede verificar al propietario mediante el PIN o la biometría de esta PC, sin teléfono. Esos datos y la clave privada permanecen en el autenticador; el servidor almacena únicamente la clave pública y metadatos.
+
+Una vez registrada una llave, el panel ofrece contraseña + llave como segundo paso principal. Se mantienen los métodos TOTP, correo solicitado y recuperación ya existentes. No se envían correos al abrir ni cancelar el diálogo de la llave. Algunas plataformas sincronizan llaves entre dispositivos: el nombre elegido es una etiqueta administrativa y no una garantía de vinculación física a un único equipo. La verificación local del usuario es obligatoria (`userVerification: required`).
+
+El verificador es `@simplewebauthn/server` 14.0.0, con Web Crypto y algoritmos ES256/RS256. Los retos duran como máximo tres minutos, están vinculados a la sesión, propietario, huella de credenciales, origen y RP, y D1 los consume con una operación condicional de un solo uso antes de verificar la firma. Los intentos fallidos también consumen el reto. El registro exige coincidencia entre ID del navegador e ID atestado, presencia y verificación de usuario. La autenticación comprueba firma, contador, `userHandle` cuando existe y credenciales permitidas. No se admite contexto cruzado ni un RP derivado libremente del encabezado de la petición.
+
+Revocar una llave la conserva como registro inactivo e invalida todas las sesiones creadas con esa credencial. Conserva las sesiones iniciadas con otras llaves o factores. La API vuelve a comprobar la revocación en cada petición protegida y antes de finalizar un reto. Cerrar la sesión que inició un registro impide finalizarlo; rotar las credenciales administrativas también invalida las sesiones y retos pendientes.
+
+### Publicación y habilitación
+
+Esta entrega no registra un dispositivo del propietario ni activa secretos. Antes de desplegar el código, aplicar la migración aditiva `0004_passkeys.sql` a la D1 correcta, después del respaldo y revisión habituales. Es necesaria incluso con la función apagada porque las consultas de sesión usan la nueva columna `passkey_id`. No recrear D1 ni ejecutar preparadores de acceso.
+
+Las variables públicas de `wrangler.jsonc` preparan la habilitación en el próximo despliegue revisado; no reemplazan ningún secreto ni registran dispositivos. En el Worker de ALRAZZ se conservan todas las credenciales existentes:
+
+- `ADMIN_PASSKEYS_ENABLED=1` para habilitar la función revisada en producción; usar `0` para desactivarla.
+- `ADMIN_PASSKEY_RP_ID=alrazz.pages.dev`.
+- `ADMIN_PASSKEY_ORIGIN=https://alrazz.pages.dev`.
+
+Las llaves se registran y usan desde esa dirección HTTPS estable. El proxy de Pages conserva el origen original; una URL alternativa del Worker o una vista previa no ofrece las llaves de este RP. Cambiar de dominio exige un proceso deliberado de nueva vinculación usando los factores existentes. El ejemplo `.dev.vars.example` mantiene las llaves apagadas en local. Para una prueba local explícita, usar RP `localhost` y origen `http://localhost:<puerto>`; una llave local no sirve para producción. Desactivar el indicador impide registrar y usar llaves, oculta su listado e invalida temporalmente sus sesiones; conserva la vía de acceso anterior.
+
+Después de publicar, el propietario entra por un factor existente, abre **Llaves de acceso**, asigna un nombre y confirma la contraseña; el navegador muestra la inscripción personal en Windows Hello o su gestor de llaves. Debe comprobar un nuevo acceso con la llave y mantener un método de recuperación antes de retirar cualquier factor anterior. La inscripción real, cuotas y CPU en Workers Free requieren comprobación en el entorno público; las pruebas locales no certifican esos límites.
+
+`npm run test:auth-api` incluye firmas ES256/RS256 reales con autenticadores sintéticos, D1 aislada y red externa bloqueada; cubre reutilización, caducidad, vinculación de sesión, origen/RP, UV, revocación y carreras. No usa llaves, contraseñas ni correos del propietario. Referencia: [SimpleWebAuthn Server](https://simplewebauthn.dev/docs/packages/server).
