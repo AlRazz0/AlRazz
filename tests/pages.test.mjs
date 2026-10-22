@@ -146,6 +146,7 @@ test("Pages invokes Functions only for API routes and binds to the existing Work
   ).config;
   assert.equal(config.pages_build_output_dir, "../../dist/pages");
   assert.deepEqual(config.services, [{ binding: "ALRAZZ", service: "alrazz" }]);
+  assert.equal(config.account_id, undefined);
   assert.equal(config.d1_databases, undefined);
   assert.equal(config.durable_objects, undefined);
   assert.equal(config.vars, undefined);
@@ -178,6 +179,7 @@ test("Pages preparation copies only public client output and removes stale gener
     }
     const result = await preparePages(root);
     assert.equal(result.assetCount, 2);
+    assert.deepEqual(JSON.parse(await readFile(join(root, "hosting", "pages", ".wrangler", "deploy", "config.json"), "utf8")), { configPath: "../../wrangler.jsonc" });
     assert.deepEqual((await readdir(result.output)).sort(), [
       "_routes.json",
       "_worker.js",
