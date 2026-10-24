@@ -34,6 +34,8 @@ La [colección de taller](coleccion-taller.md) añade 16 propuestas adaptadas de
 
 La [ampliación de almacenaje con puertas](coleccion-taller-ampliada.md) aporta otras 12 propuestas con el mismo editor. El catálogo usa miniaturas ligeras de la geometría del modelo, con las puertas cerradas. Al abrir el configurador se carga el visor 3D, donde se pueden abrir las puertas. Las miniaturas no cambian medidas, precios ni despieces.
 
+Las hojas contiguas se abren por parejas hacia lados opuestos: bisagras en los extremos exteriores y jaladores junto a la junta central. Una hoja impar queda individual. El mismo criterio visual se usa en melamina, vidrio, marcos, renders y módulos de cocina; no altera las piezas ni el precio guardado. La fabricación y los herrajes concretos siguen requiriendo revisión del taller.
+
 **Desde un plano** abre el asistente para añadir una imagen de referencia o importar medidas exportadas de SketchUp, revisar estructura y dimensiones y continuar en el editor 3D. El mueble empieza como borrador y sin precio público. Consulta la [guía de planos y SketchUp](sketchup-import.md); el archivo original permanece en el navegador y no se adjunta al catálogo.
 
 La [colección de cocinas y roperos](coleccion-cocinas-roperos.md) añade ocho propuestas con barras, maleteros, zócalos y alacenas. Cada registro se edita desde el mismo panel. Las familias constructivas, sus límites y las adaptaciones de los planos se detallan en esa guía.

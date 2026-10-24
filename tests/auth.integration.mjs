@@ -326,12 +326,13 @@ function assertPublicGeometryOnly(value) {
           assert.deepEqual(
             Object.keys(panel).sort(),
             "door" in panel
-              ? ["door", "material", "position", "size"]
+              ? ["door", "hinge", "material", "position", "size"]
               : ["material", "position", "size"],
           );
           assert.equal(panel.size.length, 3);
           assert.equal(panel.position.length, 3);
           assert.ok([...panel.size, ...panel.position].every(Number.isFinite));
+          if (panel.door) assert.ok(["left", "right"].includes(panel.hinge));
         }
       }
       visit(item);

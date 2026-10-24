@@ -1,26 +1,31 @@
 import * as THREE from "three";
 import type { VisualPanel } from "../lib/public-geometry";
+import { doorLatchDirection } from "../lib/door-hinges.ts";
 
-/** Shared door assembly; all elements rotate around the same left hinge. */
+/** Keep the exact closed mesh while moving its pivot to the chosen outer edge. */
+export function createDoorPivot(panel: VisualPanel, leaf: THREE.Object3D) {
+  const offset = -doorLatchDirection(panel) * panel.size[0] / 2000;
+  const rotation = panel.rotationY ?? 0;
+  const hinge = new THREE.Group();
+  hinge.position.fromArray(panel.position.map(value => value / 1000));
+  hinge.position.add(new THREE.Vector3(offset, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), rotation));
+  hinge.rotation.y = rotation;
+  hinge.userData.closedRotationY = rotation;
+  hinge.userData.hinge = panel.hinge ?? "left";
+  leaf.position.set(-offset, 0, 0);
+  leaf.rotation.y = 0;
+  hinge.add(leaf);
+  return hinge;
+}
+
+/** Shared glass/frame assembly; every element follows the same physical hinge. */
 export function createTransparentFront(panel: VisualPanel, handle: string) {
   const [width, height, depth] = panel.size.map((value) => value / 1000);
   const framed = panel.surface === "aluminum-glass";
   const frameWidth = framed ? 0.02 : 0;
-  const hinge = new THREE.Group();
-  hinge.position.fromArray(panel.position.map((value) => value / 1000));
-  const rotation = panel.rotationY ?? 0;
-  hinge.position.add(
-    new THREE.Vector3(-width / 2, 0, 0).applyAxisAngle(
-      new THREE.Vector3(0, 1, 0),
-      rotation,
-    ),
-  );
-  hinge.rotation.y = rotation;
-  hinge.userData.closedRotationY = rotation;
-  hinge.name = "transparent-front-hinge";
   const assembly = new THREE.Group();
-  assembly.position.x = width / 2;
-  hinge.add(assembly);
+  const hinge = createDoorPivot(panel, assembly);
+  hinge.name = "transparent-front-hinge";
   const pane = new THREE.Mesh(
     new THREE.BoxGeometry(
       width - frameWidth * 2,
@@ -98,7 +103,7 @@ export function createTransparentFront(panel: VisualPanel, handle: string) {
       }),
     );
     grip.name = "front-handle";
-    grip.position.set(width / 2 - 0.03, 0, depth / 2 + 0.0125);
+    grip.position.set(doorLatchDirection(panel) * (width / 2 - 0.03), 0, depth / 2 + 0.0125);
     grip.castShadow = true;
     assembly.add(grip);
   }

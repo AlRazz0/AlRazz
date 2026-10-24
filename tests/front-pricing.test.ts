@@ -136,6 +136,7 @@ test("glass and aluminum fronts replace melamine doors with actual separate fitt
     for (const panel of geometry) {
       assert.deepEqual(Object.keys(panel).sort(), [
         "door",
+        "hinge",
         "material",
         "position",
         "size",

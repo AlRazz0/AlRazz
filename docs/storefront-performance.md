@@ -12,8 +12,8 @@ Comparación con el build conservado antes de esta mejora:
 
 | Recurso | Anterior | Actual |
 | --- | ---: | ---: |
-| Entrada JavaScript de portada | 977.296 bytes | 261.497 bytes |
-| Entrada comprimida con gzip local | aproximadamente 261.920 bytes | 80.998 bytes |
+| Entrada JavaScript de portada | 977.296 bytes | 262.269 bytes |
+| Entrada comprimida con gzip local | aproximadamente 261.920 bytes | 81.307 bytes |
 | Imagen principal | PNG de 2.004.015 bytes | WebP de 77.428 bytes |
 | Imagen para pantallas pequeñas | mismo PNG | WebP de 27.168 bytes |
 

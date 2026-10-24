@@ -1,4 +1,5 @@
 import type { Config, Fixture, Panel } from "./furniture";
+import { withDoorHinges, type DoorHinge } from "./door-hinges.ts";
 
 // Only the data needed to render a board in the public 3D viewer.
 // Visible geometry still permits measurements to be inferred; manufacturing
@@ -8,6 +9,7 @@ export type VisualPanel = {
   position: [number, number, number];
   material: string;
   door?: boolean;
+  hinge?: DoorHinge;
   shape?: "cylinder";
   surface?: "glass" | "aluminum-glass" | "placeholder";
   rotationY?: number;
@@ -18,7 +20,7 @@ export function publicGeometry(
   panels: readonly Panel[],
   fixtures: readonly Fixture[] = [],
 ): VisualPanel[] {
-  return [
+  return withDoorHinges([
     ...panels.map((panel): VisualPanel => ({
       size: [...panel.size],
       position: [...panel.position],
@@ -41,5 +43,5 @@ export function publicGeometry(
             shape: "cylinder",
           },
     ),
-  ];
+  ]);
 }

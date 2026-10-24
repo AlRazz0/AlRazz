@@ -7,8 +7,9 @@ import { SSAOPass } from "three/addons/postprocessing/SSAOPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { createSwatchTextures } from "./swatch-textures.ts";
 import { createStudio, disposeObjects, fitCamera } from "./viewer-scene.ts";
-import { DOOR_OPEN_ANGLE } from "./door-preview.ts";
-import { createPlaceholder, createTransparentFront } from "./front-mesh.ts";
+import { doorRotation } from "./door-preview.ts";
+import { createDoorPivot, createPlaceholder, createTransparentFront } from "./front-mesh.ts";
+import { withDoorHinges, doorLatchDirection } from "../lib/door-hinges.ts";
 import type { VisualPanel } from "../lib/public-geometry";
 import type { PublicMaterial } from "./types";
 import type { Gallery } from "../lib/model-gallery";
@@ -25,7 +26,7 @@ export function createShowcaseModel(
   const doors: THREE.Group[] = [];
   const finishes: { material: THREE.MeshStandardMaterial; swatch?: string }[] =
     [];
-  for (const panel of geometry) {
+  for (const panel of withDoorHinges(geometry)) {
     const doorHandle = panel.handle ?? handle;
     if (panel.surface === "placeholder") {
       group.add(createPlaceholder(panel));
@@ -71,21 +72,7 @@ export function createShowcaseModel(
         swatch: finish?.renderTexture === false ? undefined : finish?.swatch,
       });
     if (panel.door) {
-      const pivot = new THREE.Group();
-      const closedRotationY = panel.rotationY ?? 0;
-      pivot.position
-        .copy(mesh.position)
-        .add(
-          new THREE.Vector3(-w / 2, 0, 0).applyAxisAngle(
-            new THREE.Vector3(0, 1, 0),
-            closedRotationY,
-          ),
-        );
-      pivot.rotation.y = closedRotationY;
-      pivot.userData.closedRotationY = closedRotationY;
-      mesh.position.set(w / 2, 0, 0);
-      mesh.rotation.y = 0;
-      pivot.add(mesh);
+      const pivot = createDoorPivot(panel, mesh);
       if (doorHandle !== "push") {
         const grip = new THREE.Mesh(
           new RoundedBoxGeometry(0.009, 0.09, 0.025, 2, 0.003),
@@ -96,7 +83,7 @@ export function createShowcaseModel(
           }),
         );
         grip.name = "front-handle";
-        grip.position.set(w / 2 - 0.045, 0, 0.02);
+        grip.position.set(doorLatchDirection(panel) * (w / 2 - 0.045), 0, 0.02);
         grip.castShadow = true;
         mesh.add(grip);
       }
@@ -344,9 +331,7 @@ async function renderShowcaseNow(
     for (const view of views) {
       if (signal.aborted) return [];
       model.doors.forEach((door) => {
-        door.rotation.y =
-          (door.userData.closedRotationY ?? 0) +
-          (view.open ? DOOR_OPEN_ANGLE : 0);
+        door.rotation.y = doorRotation(door, view.open ? 1 : 0);
       });
       const frame = new THREE.Box3().setFromObject(model.group);
       const fit = fitCamera(camera, frame, view.direction.normalize());

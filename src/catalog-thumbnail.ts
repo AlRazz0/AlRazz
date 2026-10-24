@@ -1,6 +1,7 @@
 import type { Config } from "../lib/furniture";
 import type { VisualPanel } from "../lib/public-geometry";
 import type { PublicMaterial } from "./types";
+import { withDoorHinges, doorLatchDirection } from "../lib/door-hinges.ts";
 
 type Vector = [number, number, number];
 export type ThumbnailPoint = { x: number; y: number };
@@ -117,7 +118,7 @@ export function buildCatalogThumbnail(
 ): CatalogProjection | null {
   const colors = new Map(materials.map((material) => [material.id, material.color]));
   const faces: RawFace[] = [];
-  geometry.forEach((panel, source) => {
+  withDoorHinges(geometry).forEach((panel, source) => {
     const angle = panel.rotationY ?? 0;
     if (!Number.isFinite(angle) || panel.size.some((n) => !Number.isFinite(n) || n <= 0 || n > 1e7)
       || panel.position.some((n) => !Number.isFinite(n) || Math.abs(n) > 1e7)) return;
@@ -143,7 +144,7 @@ export function buildCatalogThumbnail(
       const transparent = surface === "glass" || surface === "aluminum-glass";
       const factor = Math.max(.68, Math.min(1.1, .96 + facing[1] * .14 + facing[2] * .02 - facing[0] * .15));
       const handle = panel.door && front && (panel.handle ?? defaultHandle) !== "push"
-        ? [-Math.min(45, height * .14), Math.min(45, height * .14)].map((y) => project(world([width / 2 - Math.min(45, width * .12), y, depth / 2 + .5]))) as [ProjectedPoint, ProjectedPoint]
+        ? [-Math.min(45, height * .14), Math.min(45, height * .14)].map((y) => project(world([doorLatchDirection(panel) * (width / 2 - Math.min(45, width * .12)), y, depth / 2 + .5]))) as [ProjectedPoint, ProjectedPoint]
         : undefined;
       faces.push({
         key: `${source}-${name}`, source, points, handle,
