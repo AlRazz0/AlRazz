@@ -1,0 +1,44 @@
+.admin-plan-dialog { width: min(1080px, calc(100vw - 28px)); max-width: 1080px; padding-bottom: 0; }
+.admin-plan-dialog .admin-plan-form { min-height: 0; overflow-y: auto; }
+.admin-plan-layout { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 32px; padding: 8px 0 24px; }
+.admin-plan-source { padding: 22px; border-radius: 10px; background: #f3eee5; }
+.admin-plan-review { display: flex; flex-direction: column; gap: 18px; padding: 22px 0; min-width: 0; }
+.admin-plan-step { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.admin-plan-step > span { display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid #baaea0; border-radius: 50%; font-size: 11px; }
+.admin-plan-step h3 { font-size: 20px; letter-spacing: -.5px; }
+.admin-plan-upload { display: flex; position: relative; flex-direction: column; align-items: center; gap: 10px; padding: 25px 16px; text-align: center; border: 1px dashed #aa9580; border-radius: 8px; background: #fffcf7; cursor: pointer; }
+.admin-plan-upload input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.admin-plan-upload:focus-within { outline: 3px solid #315d70; outline-offset: 3px; }
+.admin-plan-upload strong { font-size: 14px; }
+.admin-plan-upload small { color: #65594e; font-size: 12px; line-height: 1.6; }
+.admin-plan-empty { padding: 30px 10px; text-align: center; color: #746959; font-size: 13px; }
+.admin-plan-empty svg { margin: 0 auto 12px; }
+.plan-reference-preview { margin: 18px 0 0; border: 1px solid #d8cfc3; border-radius: 6px; overflow: hidden; background: white; }
+.plan-reference-preview img { display: block; width: 100%; max-height: 330px; object-fit: contain; }
+.plan-reference-preview figcaption { padding: 10px 12px; font-size: 12px; overflow-wrap: anywhere; color: #423a32; }
+.plan-reference-preview figcaption span { display: block; margin-top: 4px; font-size: 10px; color: #6c6052; }
+.admin-plan-text-button { margin-top: 8px; font-size: 12px; text-decoration: underline; background: transparent; border: 0; color: #754331; }
+.admin-plan-sketchup { margin-top: 24px; padding-top: 18px; border-top: 1px solid #d6cbbb; color: #514737; font-size: 12px; }
+.admin-plan-sketchup summary { cursor: pointer; font-size: 14px; font-weight: 600; }
+.admin-plan-sketchup ol { padding-left: 20px; line-height: 1.65; }
+.admin-plan-sketchup li { margin: 9px 0; }
+.admin-plan-sketchup a, .admin-plan-sketchup button { display: flex; align-items: center; gap: 7px; padding: 8px 0; color: #824632; font-size: 12px; background: transparent; border: 0; text-align: left; text-decoration: underline; }
+.admin-plan-sketchup p { margin-top: 12px; line-height: 1.65; }
+.admin-plan-dimensions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.admin-plan-dimensions.is-distribution { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.admin-plan-note, .admin-plan-adjustment { display: flex; align-items: start; gap: 10px; padding: 13px 14px; font-size: 12px; line-height: 1.65; border: 1px solid #e1d7c7; border-radius: 6px; background: #f8f5ef; color: #5f5143; }
+.admin-plan-note svg, .admin-plan-adjustment svg { flex-shrink: 0; margin-top: 2px; }
+.admin-plan-note p { margin: 0; }
+.admin-plan-confirm { display: flex; align-items: start; gap: 10px; font-size: 12px; line-height: 1.6; cursor: pointer; }
+.admin-plan-confirm input { width: 18px; height: 18px; flex-shrink: 0; margin-top: 2px; accent-color: #a14f34; }
+.admin-plan-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0; border-top: 1px solid #e4dccc; position: sticky; bottom: 0; background: #fffdf8; }
+.admin-plan-footer > span { display: flex; align-items: center; gap: 7px; font-size: 11px; color: #685b4c; }
+.admin-plan-editor-reference { margin-bottom: 22px; padding: 16px; background: #f3eee5; border: 1px solid #e0d6c7; border-radius: 8px; }
+.admin-plan-editor-reference summary { cursor: pointer; font-size: 13px; font-weight: 600; }
+.admin-plan-editor-reference .plan-reference-preview img { max-height: 420px; }
+.admin-plan-editor-reference p { font-size: 12px; color: #6c6052; margin-top: 10px; }
+.admin-plan-catalog-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.admin-shell .admin-quick-actions { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 1100px) { .admin-shell .admin-quick-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .admin-plan-layout { grid-template-columns: 1fr; gap: 4px; } .admin-plan-source { padding: 16px; } .admin-plan-review { padding-top: 16px; } .admin-plan-step { margin-bottom: 12px; } .admin-plan-empty { padding: 18px 8px; } .admin-plan-footer { flex-direction: column; align-items: stretch; } .admin-plan-footer .button { width: 100%; } .admin-plan-dialog { padding-inline: 18px; } }
+@media (max-width: 430px) { .admin-plan-dimensions { gap: 7px; } .admin-plan-dimensions .admin-field > span { font-size: 11px; } }

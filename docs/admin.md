@@ -32,7 +32,9 @@ En un **ropero**, ajusta **Altura del altillo** (altura libre del maletero) y **
 
 La [colección de taller](coleccion-taller.md) añade 16 propuestas adaptadas de planos locales. El archivo JSON es una importación opcional; no reemplaza productos anteriores ni se carga de nuevo al iniciar. Las propuestas y su despiece requieren revisión de fabricación.
 
-La [ampliación de almacenaje con puertas](coleccion-taller-ampliada.md) aporta otras 12 propuestas con el mismo editor. La animación de la miniatura sigue las puertas de la configuración inicial: también se aplica a un mueble que crees o edites después. No cambia medidas, precios ni despieces. En dispositivos táctiles, tocar la tarjeta abre directamente su configurador.
+La [ampliación de almacenaje con puertas](coleccion-taller-ampliada.md) aporta otras 12 propuestas con el mismo editor. El catálogo usa miniaturas ligeras de la geometría del modelo, con las puertas cerradas. Al abrir el configurador se carga el visor 3D, donde se pueden abrir las puertas. Las miniaturas no cambian medidas, precios ni despieces.
+
+**Desde un plano** abre el asistente para añadir una imagen de referencia o importar medidas exportadas de SketchUp, revisar estructura y dimensiones y continuar en el editor 3D. El mueble empieza como borrador y sin precio público. Consulta la [guía de planos y SketchUp](sketchup-import.md); el archivo original permanece en el navegador y no se adjunta al catálogo.
 
 La [colección de cocinas y roperos](coleccion-cocinas-roperos.md) añade ocho propuestas con barras, maleteros, zócalos y alacenas. Cada registro se edita desde el mismo panel. Las familias constructivas, sus límites y las adaptaciones de los planos se detallan en esa guía.
 

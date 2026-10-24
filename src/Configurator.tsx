@@ -38,6 +38,7 @@ import { ExtraSelector } from "./ExtraSelector";
 import { constructionDescriptions } from "./construction-labels";
 import ModelShowcase from "./ModelShowcase";
 import { ContactLinks } from "./ContactLinks";
+import "./design-studio.css";
 const searchText = (value: string) =>
   value
     .normalize("NFD")
@@ -70,6 +71,7 @@ export default function Configurator() {
   const [brandFilter, setBrandFilter] = useState("all");
   const [boardFilter, setBoardFilter] = useState("all");
   const [finishSearch, setFinishSearch] = useState("");
+  const [dimensionUnit, setDimensionUnit] = useState<"cm" | "mm">("cm");
   const viewer = useRef<ViewerHandle>(null);
   function load() {
     setLoading(true);
@@ -97,8 +99,12 @@ export default function Configurator() {
               (p: PublicProduct) => p.id === params.get("producto"),
             ) || d.products[0];
           if (p) {
+            const requestedFinish = params.get("acabado");
+            const initialConfig = requestedFinish && d.settings.materials.some((material: PublicSettings["materials"][number]) => material.active && material.id === requestedFinish)
+              ? { ...p.defaults, finish: requestedFinish }
+              : p.defaults;
             setProduct(p);
-            setConfig(p.defaults);
+            setConfig(initialConfig);
             setRenderConfig(p.defaults);
             setQuote(p.preview);
           } else
@@ -265,8 +271,8 @@ export default function Configurator() {
           Mis diseños <ArrowUpRight size={16} />
         </a>
       </div>
-      <main className="config-layout">
-        <section className="stage">
+      <main id="main-content" tabIndex={-1} className="config-layout design-studio">
+        <section className="stage" aria-label="Vista previa de tu mueble">
           <div className="stage-title">
             <span>COLECCIÓN MODULAR</span>
             <span>Melamina · 18 mm</span>
@@ -365,10 +371,10 @@ export default function Configurator() {
             </label>
           </div>
         </section>
-        <aside className="custom-panel">
-          <p className="eyebrow">DISEÑADO POR TI</p>
+        <aside className="custom-panel" aria-label="Personalizar tu mueble">
+          <p className="eyebrow">ESTUDIO DE DISEÑO</p>
           <div className="config-heading">
-            <h1>{product.name}</h1>
+            <h1 id="opciones-diseno" tabIndex={-1}>{product.name}</h1>
             <div>
               <button
                 className="icon-button"
@@ -409,13 +415,20 @@ export default function Configurator() {
             onChange={pick}
           />
           <Tabs defaultValue="medidas" className="config-tabs">
-            <TabsList variant="line">
-              <TabsTrigger value="medidas">Medidas</TabsTrigger>
-              <TabsTrigger value="distribucion">Distribución</TabsTrigger>
-              <TabsTrigger value="acabados">Acabados</TabsTrigger>
+            <TabsList variant="line" aria-label="Pasos para personalizar tu mueble">
+              <TabsTrigger value="medidas"><span className="studio-step" aria-hidden="true">01</span> Medidas</TabsTrigger>
+              <TabsTrigger value="distribucion"><span className="studio-step" aria-hidden="true">02</span> Distribución</TabsTrigger>
+              <TabsTrigger value="acabados"><span className="studio-step" aria-hidden="true">03</span> Acabados</TabsTrigger>
             </TabsList>
             <TabsContent value="medidas">
-              <p className="tab-intro">Cada centímetro tiene su lugar.</p>
+              <div className="studio-dimension-heading">
+                <p className="tab-intro">Empecemos por tu espacio.</p>
+                <div className="studio-unit-switch" role="group" aria-label="Unidad de las medidas">
+                  {(["cm", "mm"] as const).map((unit) => (
+                    <button key={unit} type="button" aria-pressed={dimensionUnit === unit} onClick={() => setDimensionUnit(unit)}>{unit}</button>
+                  ))}
+                </div>
+              </div>
               {(["width", "height", "depth"] as const).map((k) => (
                 <div className="dimension-field" key={k}>
                   <div>
@@ -423,21 +436,23 @@ export default function Configurator() {
                     <span>
                       <input
                         id={k}
-                        aria-label={dimensionLabels[k] + " en milímetros"}
+                        aria-label={dimensionLabels[k] + (dimensionUnit === "cm" ? " en centímetros" : " en milímetros")}
                         type="number"
-                        min={product.limits[k].min}
-                        max={product.limits[k].max}
-                        step={10}
-                        value={config[k]}
+                        inputMode="decimal"
+                        min={product.limits[k].min / (dimensionUnit === "cm" ? 10 : 1)}
+                        max={product.limits[k].max / (dimensionUnit === "cm" ? 10 : 1)}
+                        step={dimensionUnit === "cm" ? 1 : 10}
+                        value={config[k] / (dimensionUnit === "cm" ? 10 : 1)}
                         onChange={(e) =>
-                          change({ ...config, [k]: Number(e.target.value) })
+                          change({ ...config, [k]: Number(e.target.value) * (dimensionUnit === "cm" ? 10 : 1) })
                         }
                       />{" "}
-                      mm
+                      {dimensionUnit}
                     </span>
                   </div>
                   <Slider
                     aria-label={dimensionLabels[k]}
+                    aria-valuetext={`${config[k] / 10} centímetros`}
                     min={product.limits[k].min}
                     max={product.limits[k].max}
                     step={10}
@@ -703,7 +718,7 @@ export default function Configurator() {
               Incluir transporte
             </label>
           </div>
-          <div className="price-area">
+          <div className="price-area" id="resumen-diseno" tabIndex={-1}>
             {!consultation && <div>
               <span>Tu precio referencial</span>
               <strong aria-live="polite">
@@ -756,6 +771,13 @@ export default function Configurator() {
           </div>
         </aside>
       </main>
+      <div className="studio-mobile-summary" aria-label="Resumen de tu diseño">
+        <div>
+          <span>{product.name}</span>
+          <strong>{pending ? "Actualizando…" : quoteError ? "Revisa las medidas" : consultation ? "Por cotizar" : quote?.price != null ? money(quote.price) : "Tu diseño"}</strong>
+        </div>
+        <a href="#resumen-diseno" onClick={() => document.getElementById("resumen-diseno")?.focus({ preventScroll: true })}>Ver resumen <ArrowUpRight size={17} aria-hidden="true" /></a>
+      </div>
       <ModelShowcase
         product={product}
         geometry={quote?.geometry ?? []}
