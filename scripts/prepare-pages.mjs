@@ -11,6 +11,9 @@ import { dirname, extname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repository = fileURLToPath(new URL("../", import.meta.url));
+// This reviewed, downloadable SketchUp helper is a public product asset.
+// Keep the exception path-specific: other Ruby/source files remain excluded.
+const publicSourceFiles = new Set(["tools/alrazz-sketchup-export.rb"]);
 const publicExtensions = new Set([
   ".html",
   ".js",
@@ -60,7 +63,8 @@ async function publicFiles(directory, prefix = "") {
       files.push(...(await publicFiles(join(directory, entry.name), path)));
     } else if (
       entry.isFile() &&
-      publicExtensions.has(extname(entry.name).toLowerCase())
+      (publicExtensions.has(extname(entry.name).toLowerCase()) ||
+        publicSourceFiles.has(path.split(sep).join("/")))
     ) {
       files.push(path);
     }

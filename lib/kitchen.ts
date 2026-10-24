@@ -140,19 +140,69 @@ export type KitchenSnapshot = {
   result: KitchenCalculation;
 };
 
+/** Add visual hinge metadata to old compositions, without rebuilding any saved part. */
+function historicalKitchenGeometry(snapshot: KitchenSnapshot): VisualPanel[] {
+  const geometry = snapshot.result.geometry;
+  if (!Array.isArray(geometry) || !geometry.some((panel) => panel?.door && panel.hinge === undefined))
+    return geometry;
+  try {
+    if (!Array.isArray(snapshot.modules) || !Array.isArray(snapshot.result.modules)) return geometry;
+    const sources = new Map(snapshot.modules.map((module) => [module.itemId, module]));
+    if (sources.size !== snapshot.modules.length) return geometry;
+    let cursor = 0;
+    let decorated: VisualPanel[] | undefined;
+    for (const placement of snapshot.result.modules) {
+      if (placement.kind === "space") continue;
+      if (placement.kind !== "furniture") {
+        if (!["fridge", "cooker", "sink-gap"].includes(placement.kind)
+          || geometry[cursor]?.surface !== "placeholder" || geometry[cursor]?.door) return geometry;
+        cursor++;
+        continue;
+      }
+      const source = sources.get(placement.id);
+      if (!source || !Array.isArray(source.result?.panels)
+        || (source.result.fixtures !== undefined && !Array.isArray(source.result.fixtures))) return geometry;
+      sources.delete(placement.id);
+      // Project the ORIGINAL local pieces only to identify each leaf's hinge.
+      // The saved world positions, rotations, handles and amounts remain authoritative.
+      const local = publicGeometry(source.result.panels, source.result.fixtures);
+      if (!local.length || cursor + local.length > geometry.length) return geometry;
+      for (let index = 0; index < local.length; index++) {
+        const original = geometry[cursor + index], projected = local[index];
+        if (!original || !Array.isArray(original.size) || original.size.length !== 3
+          || !original.size.every((n, axis) => Number.isFinite(n) && n === projected.size[axis])
+          || !Array.isArray(original.position) || original.position.length !== 3 || !original.position.every(Number.isFinite)
+          || original.material !== projected.material || !!original.door !== !!projected.door
+          || original.shape !== projected.shape || original.surface !== projected.surface) return geometry;
+        if (original.door && original.hinge === undefined && projected.hinge !== undefined) {
+          decorated ??= geometry.slice();
+          decorated[cursor + index] = { ...original, hinge: projected.hinge };
+        }
+      }
+      cursor += local.length;
+    }
+    // A historical shape we do not recognize must retain its entire saved geometry.
+    return cursor === geometry.length && sources.size === 0 ? decorated ?? geometry : geometry;
+  } catch {
+    return geometry;
+  }
+}
+
 /** Mixed quote-only kitchens suppress every total and subtotal in the public response. */
 export function publicKitchenQuote(snapshot: KitchenSnapshot, currentProducts: readonly Product[] = []): KitchenQuote {
   const current = new Map(currentProducts.map((product) => [product.id, product]));
   const hidden = snapshot.modules.some(({ product }) =>
     product.showPrice === false || current.get(product.id)?.showPrice === false,
   );
+  const geometry = historicalKitchenGeometry(snapshot);
+  const result = geometry === snapshot.result.geometry ? snapshot.result : { ...snapshot.result, geometry };
   return hidden ? {
-    ...snapshot.result,
+    ...result,
     price: null,
     furniturePrice: null,
     servicesPrice: null,
     modules: snapshot.result.modules.map((module) => ({ ...module, price: null })),
-  } : snapshot.result;
+  } : result;
 }
 const gapNames = {
   fridge: "Espacio para refrigeradora",

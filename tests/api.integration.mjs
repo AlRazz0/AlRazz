@@ -164,6 +164,11 @@ function publicOnly(value) {
             assert.equal(typeof panel.door, "boolean");
             keys.push("door");
           }
+          if ("hinge" in panel) {
+            assert.equal(panel.door, true);
+            assert.ok(["left", "right"].includes(panel.hinge));
+            keys.push("hinge");
+          }
           if ("shape" in panel) {
             assert.equal(panel.shape, "cylinder");
             assert.equal(panel.door, undefined);

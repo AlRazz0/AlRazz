@@ -35,24 +35,7 @@ export default function ModelShowcase({
   const [error, setError] = useState(false);
   const [retry, setRetry] = useState(0);
   const gallery = resolveGallery(product.gallery);
-  useEffect(() => {
-    if (!container.current || !gallery.enabled) return;
-    if (!("IntersectionObserver" in window)) {
-      setVisible(true);
-      return;
-    }
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "160px" },
-    );
-    observer.observe(container.current);
-    return () => observer.disconnect();
-  }, [gallery.enabled]);
+  // Ambient renders are optional: scrolling must not start several extra 3D renders.
   useEffect(() => {
     if (!visible || !gallery.enabled || pending || !geometry.length) return;
     const controller = new AbortController();
@@ -114,7 +97,7 @@ export default function ModelShowcase({
     renderedFor.handle === config.handle &&
     renderedFor.scene === gallery.scene;
   const availableImages = matches ? images : [];
-  const updating = rendering || pending || (visible && !matches && !error);
+  const updating = visible && (rendering || pending || (!matches && !error));
   const current = availableImages[selected];
   return (
     <section
@@ -148,11 +131,16 @@ export default function ModelShowcase({
         {!current && (
           <div className="showcase-placeholder">
             <ImageIcon size={36} strokeWidth={1} />
-            <span>
+            {!visible ? <>
+              <span>Tu diseño, con otra luz.</span>
+              <button type="button" className="button outline" onClick={() => setVisible(true)} disabled={pending}>
+                Ver mi mueble en un ambiente
+              </button>
+            </> : <span>
               {error
                 ? "No se pudo generar esta imagen."
                 : "Preparando la luz, los materiales y tu mueble…"}
-            </span>
+            </span>}
           </div>
         )}
         {updating && (

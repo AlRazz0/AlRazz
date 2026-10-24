@@ -2,6 +2,11 @@ import * as THREE from "three";
 
 export const DOOR_OPEN_ANGLE = -Math.PI * 0.58;
 
+export function doorRotation(door: THREE.Group, amount: number): number {
+  return (door.userData.closedRotationY ?? 0) +
+    DOOR_OPEN_ANGLE * (door.userData.hinge === "right" ? -1 : 1) * amount;
+}
+
 /** One stable visual envelope for closed, open and intermediate door positions. */
 export function doorPreviewBounds(
   root: THREE.Group,
@@ -30,9 +35,7 @@ export function doorPreviewBounds(
     }
     for (let step = 0; step <= steps; step++) {
       doors.forEach((door) => {
-        door.rotation.y =
-          (door.userData.closedRotationY ?? 0) +
-          (DOOR_OPEN_ANGLE * step) / steps;
+        door.rotation.y = doorRotation(door, step / steps);
       });
       bounds.union(new THREE.Box3().setFromObject(root));
     }

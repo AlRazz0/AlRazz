@@ -156,12 +156,19 @@ test("Pages preparation copies only public client output and removes stale gener
   const root = await mkdtemp(join(tmpdir(), "alrazz-pages-test-"));
   try {
     await mkdir(join(root, "dist", "client", "assets"), { recursive: true });
+    await mkdir(join(root, "dist", "client", "tools"), { recursive: true });
     await mkdir(join(root, "dist", "alrazz"), { recursive: true });
     await mkdir(join(root, "dist", "pages"), { recursive: true });
     await mkdir(join(root, "hosting", "pages"), { recursive: true });
     for (const [file, value] of [
       ["dist/client/index.html", "<html>public SPA</html>"],
       ["dist/client/assets/app.js", "public script"],
+      ["dist/client/tools/alrazz-sketchup-export.rb", "# public SketchUp dimensions exporter"],
+      ["dist/client/tools/other-export.rb", "PRIVATE_RUBY_FIXTURE"],
+      ["dist/client/tools/.admin-export.rb", "PRIVATE_RUBY_FIXTURE"],
+      ["dist/client/alrazz-sketchup-export.rb", "PRIVATE_RUBY_FIXTURE"],
+      ["dist/client/tools/server.py", "PRIVATE_SOURCE_FIXTURE"],
+      ["dist/client/tools/.dev.vars", "PRIVATE_FIXTURE"],
       ["dist/client/.env", "PRIVATE_FIXTURE"],
       ["dist/client/.dev.vars", "PRIVATE_FIXTURE"],
       ["dist/client/wrangler.json", "PRIVATE_FIXTURE"],
@@ -178,15 +185,21 @@ test("Pages preparation copies only public client output and removes stale gener
       );
     }
     const result = await preparePages(root);
-    assert.equal(result.assetCount, 2);
+    assert.equal(result.assetCount, 3);
     assert.deepEqual(JSON.parse(await readFile(join(root, "hosting", "pages", ".wrangler", "deploy", "config.json"), "utf8")), { configPath: "../../wrangler.jsonc" });
     assert.deepEqual((await readdir(result.output)).sort(), [
       "_routes.json",
       "_worker.js",
       "assets",
       "index.html",
+      "tools",
     ]);
     assert.deepEqual(await readdir(join(result.output, "assets")), ["app.js"]);
+    assert.deepEqual(await readdir(join(result.output, "tools")), ["alrazz-sketchup-export.rb"]);
+    assert.equal(
+      await readFile(join(result.output, "tools", "alrazz-sketchup-export.rb"), "utf8"),
+      "# public SketchUp dimensions exporter",
+    );
     assert.equal(
       await readFile(join(result.output, "index.html"), "utf8"),
       "<html>public SPA</html>",

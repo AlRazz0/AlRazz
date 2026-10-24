@@ -89,6 +89,7 @@ import { productEditorError } from "./admin-product-preview";
 import { KitchenAdmin } from "./KitchenAdmin";
 import { AdminMaterials } from "./AdminMaterials";
 import { AdminExtrasSummary } from "./AdminExtrasSummary";
+import { AdminPlanImport } from "./AdminPlanImport";
 
 type AdminSnapshot = {
   admin: boolean;
@@ -392,6 +393,8 @@ export default function Admin() {
   const [original, setOriginal] = useState<Product | null>(null);
   const [editorError, setEditorError] = useState("");
   const [templatePicker, setTemplatePicker] = useState(false);
+  const [planImport, setPlanImport] = useState(false);
+  const [planReferenceFile, setPlanReferenceFile] = useState<File | null>(null);
   const [editorSession, setEditorSession] = useState(0);
   const [validationAttempt, setValidationAttempt] = useState(0);
   const [autoId, setAutoId] = useState(true);
@@ -661,6 +664,7 @@ export default function Admin() {
     }
   }
   function openEditor(product?: Product, duplicate = false) {
+    setPlanReferenceFile(null);
     if (!product) {
       setTemplatePicker(true);
       return;
@@ -679,6 +683,7 @@ export default function Admin() {
     setOriginal(null);
   }
   function startFromTemplate(template: Product) {
+    setPlanReferenceFile(null);
     setTemplatePicker(false);
     setEditor(createCatalogDraft(template, products, settings));
     setOriginal(null);
@@ -686,6 +691,17 @@ export default function Admin() {
     setEditorFeedback("");
     setValidationAttempt(0);
     setEditorSession((current) => current + 1);
+    setAutoId(true);
+  }
+  function startFromPlan(draft: Product, reference: File | null) {
+    setPlanImport(false);
+    setEditor(draft);
+    setOriginal(null);
+    setPlanReferenceFile(reference);
+    setEditorError("");
+    setEditorFeedback("");
+    setValidationAttempt(0);
+    setEditorSession(current => current + 1);
     setAutoId(true);
   }
   function changeEditor(next: Product) {
@@ -1365,6 +1381,7 @@ export default function Admin() {
         </div>
         <div className="admin-quick-actions" aria-label="Acciones principales del catálogo">
           <button onClick={() => openEditor()} disabled={!!busy}><Plus size={21} /><span><strong>Crear un mueble</strong><small>Elige una estructura y edita sus medidas, opciones y precio.</small></span></button>
+          <button onClick={() => setPlanImport(true)} disabled={!!busy}><FileUp size={21} /><span><strong>Desde un plano</strong><small>Trae una imagen o medidas de SketchUp y revísalas en el editor 3D.</small></span></button>
           <button onClick={() => setActiveTab("materials")}><Palette size={21} /><span><strong>Gestionar acabados</strong><small>Añade colores y marcas; revisa sus tarifas y visibilidad.</small></span></button>
           <button onClick={() => { setActiveTab("catalog"); setCategoryFilter("Cocina"); setConstructionFilter("all"); setFilter("all"); setSearch(""); }}><SlidersHorizontal size={21} /><span><strong>Editar módulos de cocina</strong><small>Cambia medidas y opciones de los muebles que usará el cliente.</small></span></button>
         </div>
@@ -1406,13 +1423,10 @@ export default function Admin() {
                   <h2>Muebles de melamina</h2>
                   <p>Añade, duplica o retira modelos desde aquí.</p>
                 </div>
-                <button
-                  className="button rust"
-                  onClick={() => openEditor()}
-                  disabled={!!busy}
-                >
-                  <Plus size={17} /> Nuevo mueble
-                </button>
+                <div className="admin-plan-catalog-actions">
+                  <button className="button outline" onClick={() => setPlanImport(true)} disabled={!!busy}><FileUp size={17} /> Desde un plano</button>
+                  <button className="button rust" onClick={() => openEditor()} disabled={!!busy}><Plus size={17} /> Nuevo mueble</button>
+                </div>
               </div>
               <div className="admin-catalog-guide">
                 <Ruler size={18} />
@@ -2105,6 +2119,7 @@ export default function Admin() {
       </main>
 
       <AdminTemplatePicker open={templatePicker} onOpenChange={setTemplatePicker} onSelect={startFromTemplate} />
+      {planImport && <AdminPlanImport open={planImport} onOpenChange={setPlanImport} products={products} settings={settings} onCreate={startFromPlan} />}
       <Dialog
         open={!!editor}
         onOpenChange={(open) => {
@@ -2155,6 +2170,7 @@ export default function Admin() {
                     change={changeEditor}
                     validationAttempt={validationAttempt}
                     existingIds={products.filter((item) => item.id !== original?.id).map((item) => item.id)}
+                    referenceFile={planReferenceFile}
                   />
                 </fieldset>
               </div>

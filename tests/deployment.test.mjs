@@ -46,7 +46,7 @@ test("public smoke still rejects manufacturing details and internal costs", () =
 test("public smoke rejects malformed visual previews without throwing", () => {
   for (const value of [null, [], {}, { price: 100, geometry: [null] }, { price: "100", geometry: [] }])
     assert.equal(isPublicPreview(value), false);
-  for (const patch of [{ shape: "private-description" }, { surface: "placeholder" }, { size: [18, 500] }, { position: [0, Infinity, 0] }, { door: "yes" }]) {
+  for (const patch of [{ shape: "private-description" }, { surface: "placeholder" }, { size: [18, 500] }, { position: [0, Infinity, 0] }, { door: "yes" }, { hinge: "right" }, { door: true, hinge: "other" }]) {
     const preview = visualPreview();
     Object.assign(preview.geometry[0], patch);
     assert.equal(isPublicPreview(preview), false);

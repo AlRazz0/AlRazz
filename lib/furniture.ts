@@ -1552,13 +1552,7 @@ function buildWithSettings(
     ].filter((accessory) => accessory.quantity > 0),
   };
 }
-export function money(value: number): string {
-  return new Intl.NumberFormat("es-PE", {
-    style: "currency",
-    currency: "PEN",
-    maximumFractionDigits: 0,
-  }).format(value);
-}
+export { money } from "./format-price.ts";
 /** Quoting alone does not stop spreadsheet formulas. Escape executable-looking text too. */
 export function quoteCSVCell(value: unknown): string {
   const raw = String(value ?? "");

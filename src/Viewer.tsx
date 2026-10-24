@@ -15,8 +15,9 @@ import {
 } from "./camera-motion";
 import { createSwatchTextures } from "./swatch-textures";
 import { createDimensionOverlay } from "./viewer-dimensions";
-import { DOOR_OPEN_ANGLE, doorPreviewBounds } from "./door-preview";
-import { createPlaceholder, createTransparentFront } from "./front-mesh";
+import { doorRotation, doorPreviewBounds } from "./door-preview";
+import { createDoorPivot, createPlaceholder, createTransparentFront } from "./front-mesh";
+import { withDoorHinges, doorLatchDirection } from "../lib/door-hinges";
 import { createPlacementOverlay, placementBounds } from "./viewer-placement";
 import type { PlacementSlot } from "./kitchen-slots";
 import "./viewer-placement.css";
@@ -275,9 +276,7 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
       // actual animated pose so closing returns to the closed composition.
       const rotations = r.doors.map((hinge) => hinge.rotation.y);
       r.doors.forEach((hinge) => {
-        hinge.rotation.y =
-          (hinge.userData.closedRotationY ?? 0) +
-          DOOR_OPEN_ANGLE * r.doorTarget;
+        hinge.rotation.y = doorRotation(hinge, r.doorTarget);
       });
       const bounds =
         small && r.previewBounds
@@ -409,7 +408,7 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
       r.render,
       r.renderer.capabilities.getMaxAnisotropy(),
     );
-    panels.forEach((panel) => {
+    withDoorHinges(panels).forEach((panel) => {
       const doorHandle = panel.handle ?? handle;
       if (panel.surface === "placeholder") {
         r.group.add(createPlaceholder(panel));
@@ -420,7 +419,7 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
         (panel.surface === "glass" || panel.surface === "aluminum-glass")
       ) {
         const hinge = createTransparentFront(panel, doorHandle);
-        hinge.rotation.y += DOOR_OPEN_ANGLE * r.doorAmount;
+        hinge.rotation.y = doorRotation(hinge, r.doorAmount);
         r.doors.push(hinge);
         r.group.add(hinge);
         return;
@@ -476,21 +475,8 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
       );
       mesh.add(lines);
       if (panel.door) {
-        const hinge = new THREE.Group();
-        const closedRotationY = panel.rotationY ?? 0;
-        hinge.position
-          .copy(mesh.position)
-          .add(
-            new THREE.Vector3(-panel.size[0] / 2000, 0, 0).applyAxisAngle(
-              new THREE.Vector3(0, 1, 0),
-              closedRotationY,
-            ),
-          );
-        mesh.position.set(panel.size[0] / 2000, 0, 0);
-        mesh.rotation.y = 0;
-        hinge.add(mesh);
-        hinge.userData.closedRotationY = closedRotationY;
-        hinge.rotation.y = closedRotationY + DOOR_OPEN_ANGLE * r.doorAmount;
+        const hinge = createDoorPivot(panel, mesh);
+        hinge.rotation.y = doorRotation(hinge, r.doorAmount);
         r.doors.push(hinge);
         if (doorHandle !== "push") {
           const h = new THREE.Mesh(
@@ -502,7 +488,7 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
             }),
           );
           h.name = "front-handle";
-          h.position.set(panel.size[0] / 2000 - 0.045, 0, 0.02);
+          h.position.set(doorLatchDirection(panel) * (panel.size[0] / 2000 - 0.045), 0, 0.02);
           mesh.add(h);
         }
         r.group.add(hinge);
@@ -535,9 +521,7 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
       (progress) => {
         r.doorAmount = THREE.MathUtils.lerp(start, target, progress);
         r.doors.forEach((hinge) => {
-          hinge.rotation.y =
-            (hinge.userData.closedRotationY ?? 0) +
-            DOOR_OPEN_ANGLE * r.doorAmount;
+          hinge.rotation.y = doorRotation(hinge, r.doorAmount);
         });
       },
       Math.abs(start - target) < 0.000001 ? 0 : 540,

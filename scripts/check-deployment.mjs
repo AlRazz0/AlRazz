@@ -223,7 +223,7 @@ export function isPublicPreview(preview) {
   const vector = (value) => Array.isArray(value) && value.length === 3 && value.every(Number.isFinite);
   // Match publicGeometry: rails and glass fronts need these visual fields,
   // while manufacturing labels, cut details and internal costs remain forbidden.
-  const visualKeys = new Set(["size", "position", "material", "door", "shape", "surface"]);
+  const visualKeys = new Set(["size", "position", "material", "door", "hinge", "shape", "surface"]);
   return record(preview) &&
     Object.keys(preview).every((key) => ["geometry", "price"].includes(key)) &&
     Number.isFinite(preview.price) &&
@@ -234,6 +234,7 @@ export function isPublicPreview(preview) {
       vector(panel.size) && vector(panel.position) &&
       typeof panel.material === "string" &&
       (!("door" in panel) || typeof panel.door === "boolean") &&
+      (!("hinge" in panel) || (panel.door === true && ["left", "right"].includes(panel.hinge))) &&
       (!("shape" in panel) || panel.shape === "cylinder") &&
       (!("surface" in panel) || ["glass", "aluminum-glass"].includes(panel.surface)),
     );

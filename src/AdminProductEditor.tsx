@@ -30,6 +30,7 @@ import { AdminExtrasEditor } from "./AdminExtrasEditor";
 import { materialLabel } from "./materials";
 import Viewer, { type View } from "./Viewer";
 import "./admin-model-editor.css";
+import { PlanReferencePreview } from "./AdminPlanImport";
 
 const dimensions = [
   { key: "width", name: "Ancho" },
@@ -106,6 +107,7 @@ export function AdminProductEditor({
   validationAttempt = 0,
   existingIds = [],
   change,
+  referenceFile,
 }: {
   value: Product;
   settings: Settings;
@@ -114,6 +116,7 @@ export function AdminProductEditor({
   validationAttempt?: number;
   existingIds?: string[];
   change: (value: Product) => void;
+  referenceFile?: File | null;
 }) {
   const prefix = useId();
   const [view, setView] = useState<View>("iso");
@@ -299,6 +302,7 @@ export function AdminProductEditor({
       </nav>
       <div className="admin-model-layout">
         <div className="admin-model-fields">
+          {referenceFile && <details className="admin-plan-editor-reference" open><summary>Tu plano de referencia</summary><PlanReferencePreview file={referenceFile} /><p>Compara el plano con las medidas del editor. Esta imagen solo permanece en esta sesión; no se publica ni forma parte del despiece.</p></details>}
           {issue && (validationAttempt > 0 || (issue.section !== "general" && issue.section === activeSection)) && (
             <div className="admin-section-warning" role="status">
               <AlertCircle size={18} aria-hidden="true" />
