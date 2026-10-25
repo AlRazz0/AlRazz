@@ -6,6 +6,8 @@ La identidad visible es **El capo**, con la firma **Muebles en melamina Marlon**
 
 ## Qué funciona
 
+- [Asistente de diseño y CRM de cotizaciones](docs/quote-crm.md): propuestas compatibles con medidas y presupuesto, solicitudes con versión guardada y seguimiento comercial privado. Requiere la nueva migración al publicar.
+
 - Catálogo conectado a una base de datos D1: crear, duplicar, editar, activar y ocultar modelos.
 - Editor guiado con seis estructuras visuales, identificadores automáticos, vista 3D, validación por sección y guardado que permite seguir editando. Consulta la [guía del panel](docs/admin.md).
 - Colección adicional de [16 modelos de taller](docs/coleccion-taller.md), con tipo constructivo administrable y búsqueda por nombre/categoría. El catálogo muestra miniaturas SVG de la geometría real, sin cargar Three ni crear contextos WebGL; la vista 3D interactiva se abre al personalizar un modelo.

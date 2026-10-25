@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import {
+  ClipboardList,
   ArrowLeft,
   ArrowUpRight,
   Check,
@@ -90,6 +91,7 @@ import { KitchenAdmin } from "./KitchenAdmin";
 import { AdminMaterials } from "./AdminMaterials";
 import { AdminExtrasSummary } from "./AdminExtrasSummary";
 import { AdminPlanImport } from "./AdminPlanImport";
+import AdminCRM from "./AdminCRM";
 
 type AdminSnapshot = {
   admin: boolean;
@@ -388,7 +390,8 @@ export default function Admin() {
   const [filter, setFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [constructionFilter, setConstructionFilter] = useState("all");
-  const [activeTab, setActiveTab] = useState("catalog");
+  const [activeTab, setActiveTab] = useState(new URLSearchParams(location.search).get("tab") === "crm" ? "crm" : "catalog");
+  const [crmVisited,setCrmVisited] = useState(new URLSearchParams(location.search).get("tab") === "crm");
   const [editor, setEditor] = useState<Product | null>(null);
   const [original, setOriginal] = useState<Product | null>(null);
   const [editorError, setEditorError] = useState("");
@@ -1016,12 +1019,12 @@ export default function Admin() {
           <section className="admin-login-story">
             <p className="admin-eyebrow">El capo / ADMINISTRACIÓN</p>
             <h1>
-              Tu catálogo.
+              Tu taller.
               <br />
               Bajo tu control.
             </h1>
             <p>
-              Muebles, materiales y precios en un solo lugar. Actualiza tu
+              Muebles, materiales, precios y cotizaciones en un solo lugar. Actualiza tu
               taller sin cambiar el código.
             </p>
             <div className="admin-login-note">
@@ -1327,7 +1330,7 @@ export default function Admin() {
           <div>
             <p className="admin-eyebrow">ESPACIO DE ADMINISTRACIÓN</p>
             <h1>Un taller en orden.</h1>
-            <p>Todo lo que ofreces, listo para actualizar.</p>
+            <p>Tus modelos, tus solicitudes y el próximo paso de cada proyecto.</p>
           </div>
           <span className="admin-connected">
             <i /> Catálogo conectado
@@ -1385,12 +1388,13 @@ export default function Admin() {
           <button onClick={() => setActiveTab("materials")}><Palette size={21} /><span><strong>Gestionar acabados</strong><small>Añade colores y marcas; revisa sus tarifas y visibilidad.</small></span></button>
           <button onClick={() => { setActiveTab("catalog"); setCategoryFilter("Cocina"); setConstructionFilter("all"); setFilter("all"); setSearch(""); }}><SlidersHorizontal size={21} /><span><strong>Editar módulos de cocina</strong><small>Cambia medidas y opciones de los muebles que usará el cliente.</small></span></button>
         </div>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="admin-tabs">
+        <Tabs value={activeTab} onValueChange={tab => {setActiveTab(tab);if(tab === "crm")setCrmVisited(true);}} className="admin-tabs">
           <TabsList className="admin-tab-list">
             <TabsTrigger value="catalog">
               <Package size={17} />
               Catálogo
             </TabsTrigger>
+            <TabsTrigger value="crm"><ClipboardList size={17} /> Cotizaciones · CRM</TabsTrigger>
             <TabsTrigger value="materials">
               <Palette size={17} /> Acabados
               {settingsDirty && <i className="admin-unsaved-dot" aria-label="Cambios sin guardar" />}
@@ -2112,6 +2116,7 @@ export default function Admin() {
           <TabsContent value="kitchens">
             <KitchenAdmin />
           </TabsContent>
+          <TabsContent value="crm" forceMount hidden={activeTab !== "crm"}>{crmVisited && <AdminCRM active={activeTab === "crm"}/>}</TabsContent>
           <TabsContent value="access">
             <AdminPasskeys onSessionExpired={load} />
           </TabsContent>

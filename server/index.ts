@@ -13,6 +13,8 @@ import {
   type Database,
 } from "./admin-auth.ts";
 import { z } from "zod";
+import { designAssistantInputSchema, getDesignRecommendations } from "../lib/design-assistant.ts";
+import { CrmError, createQuoteRequest, listQuoteRequests, readQuoteRequest, updateQuoteRequest } from "./crm.ts";
 import { publicFurnitureResult, publicPrice, publicProduct } from "../lib/public-product.ts";
 import {
   buildKitchen,
@@ -759,6 +761,8 @@ async function get(request: Request, env: Env) {
     ) ||
     "catalog";
   switch (action) {
+    case "quote-requests": return listQuoteRequests(request, env);
+    case "quote-request": return readQuoteRequest(request, env, url.searchParams.get("id") || "");
     case "passkeys": return listPasskeys(request, env);
     case "admin": {
       const authenticated = await admin(request, env);
@@ -885,6 +889,13 @@ async function post(
   if (op === "request-email-code") return requestEmailCode(request, env);
   if (op === "cancel-login") return cancelLogin(request, env);
   if (op === "logout") return logout(request, env);
+  if (op === "create-quote-request") return createQuoteRequest(request, env, data);
+  if (op === "update-quote-request") return updateQuoteRequest(request, env, data);
+  if (op === "design-assistant") {
+    const selection = z.object({op:z.literal("design-assistant"),input:designAssistantInputSchema}).strict().parse(data);
+    const [products, {settings}] = await Promise.all([readProducts(env.DB),readSettings(env.DB)]);
+    return json(validateDomain(() => getDesignRecommendations(selection.input,products,settings)));
+  }
   if (op === "quote") {
     const { product, result } = await calculate(env.DB, data);
     return json(publicFurnitureResult(result, product));
@@ -948,7 +959,7 @@ export default {
           error.status,
           error.retryAfter ? { "Retry-After": String(error.retryAfter) } : {},
         );
-      if (error instanceof HttpError)
+      if (error instanceof HttpError || error instanceof CrmError)
         return json({ error: error.message, code: error.code }, error.status);
       if (error instanceof z.ZodError)
         return json(

@@ -23,6 +23,8 @@ import { useRevealMotion } from "./useRevealMotion";
 import { nextLogoTap } from "./footer-access";
 import "./chrome-quote.css";
 import "./home-redesign.css";
+import "./alrazz-identity.css";
+const DesignAssistant = lazy(() => import("./DesignAssistant"));
 const Configurator = lazy(() => import("./Configurator"));
 const Cart = lazy(() => import("./Cart"));
 const Admin = lazy(() => import("./Admin"));
@@ -103,15 +105,16 @@ export function Header({ compact = false }: { compact?: boolean }) {
           aria-label="Navegación principal" ref={navigation} onClick={() => setMenuOpen(false)}>
           <a href="/#catalogo">Nuestros muebles</a>
           <a href="/cocinas">Cocinas</a>
+          <a href="/asistente">Asistente de diseño</a>
           <a href="/#proceso">Cómo funciona</a>
           <a href="/#materiales">Materiales</a>
           <a href="/#contacto">Contacto</a>
-          <a className="site-nav-design" href="/configurar">Diseñar mi mueble <ArrowUpRight size={20} aria-hidden="true" /></a>
+          <a className="site-nav-design" href="/asistente">Encontrar mi diseño <ArrowUpRight size={20} aria-hidden="true" /></a>
         </nav>
         <div className="header-actions">
           {!compact && (
-            <a href="/configurar" className="header-cta">
-              Diseña el tuyo <ArrowUpRight size={18} aria-hidden="true" />
+            <a href="/asistente" className="header-cta">
+              Empezar mi proyecto <ArrowUpRight size={18} aria-hidden="true" />
             </a>
           )}
           <a
@@ -169,7 +172,9 @@ export default function App() {
     <Suspense
       fallback={<div className="loading-page">Preparando tu espacio…</div>}
     >
-      {path === "/admin" ? (
+      {path === "/asistente" ? (
+        <DesignAssistant />
+      ) : path === "/admin" ? (
         <Admin />
       ) : path === "/configurar" ? (
         <Configurator />
@@ -210,6 +215,7 @@ function Home() {
     catalogSearchText(`${product.name} ${product.category} ${product.description}`).includes(catalogSearchText(search)),
   );
   const hasFilters = Boolean(search.trim() || category);
+  const heroProduct = products[0];
   function clearFilters() {
     setSearch("");
     setCategory("");
@@ -220,18 +226,21 @@ function Home() {
       <Header />
       <main className="home-page" id="main-content" ref={page} tabIndex={-1}>
         <section className="home-hero" aria-labelledby="home-title">
-          <div className="home-hero-image">
-            <img src="/images/hero.webp" srcSet="/images/hero-800.webp 800w, /images/hero.webp 1536w" sizes="100vw" width={1536} height={1024} fetchPriority="high" decoding="async"
-              alt="Mueble modular terracota con repisas y puertas, junto a una ventana con luz natural" />
+          <div className="home-hero-image home-hero-blueprint">
+            <div className="home-hero-sheet">
+              <div className="home-hero-sheet-head"><span>Diseño de catálogo</span><span>Melamina · 18 mm</span></div>
+              {heroProduct && settings ? <CardPreview product={heroProduct} materials={settings.materials} /> : <div className="home-hero-sheet-placeholder" aria-hidden="true"><Layers3 size={90} strokeWidth={.7}/><span>Todo empieza por las medidas.</span></div>}
+              <div className="home-hero-sheet-foot"><strong>{heroProduct?.name ?? "Una idea, bien pensada."}</strong>{heroProduct&&<span>{heroProduct.defaults.width/10} × {heroProduct.defaults.height/10} × {heroProduct.defaults.depth/10} cm</span>}<small>Representación digital · Acabados referenciales</small></div>
+            </div>
           </div>
           <div className="home-hero-copy">
-            <p className="home-eyebrow"><span aria-hidden="true" /> A tu medida. A tu manera.</p>
-            <h1 id="home-title">Tu espacio. <br />Tu forma<br /><em>de vivirlo.</em></h1>
-            <p className="home-hero-intro">Un mueble que encaja contigo.<br />Dale tus medidas, tu color y tu personalidad.</p>
-            <a className="home-button home-button--dark" href="#catalogo">Encuentra tu mueble <ArrowUpRight size={20} aria-hidden="true" /></a>
-            <a className="home-hero-secondary" href="/configurar">O empieza a diseñar <ArrowRight size={17} aria-hidden="true" /></a>
+            <p className="home-eyebrow"><span aria-hidden="true" /> Diseñamos contigo. Lo hacemos a tu medida.</p>
+            <h1 id="home-title">Cada espacio<br />tiene su<br /><em>medida.</em></h1>
+            <p className="home-hero-intro">Primero pensamos en tu espacio.<br />Después encontramos el mueble que lo acompaña.</p>
+            <a className="home-button home-button--dark" href="/asistente">Encontrar mi diseño <ArrowUpRight size={20} aria-hidden="true" /></a>
+            <a className="home-hero-secondary" href="#catalogo">Explorar el catálogo <ArrowRight size={17} aria-hidden="true" /></a>
           </div>
-          <p className="home-hero-caption">El capo <span>Hecho para habitarlo.</span></p>
+          <p className="home-hero-caption">El capo <span>Del plano a tu casa.</span></p>
         </section>
         <div className="home-promise" aria-label="Nuestra propuesta">
           <p><Ruler size={18} strokeWidth={1.5} aria-hidden="true" /> Medidas que se adaptan a ti</p>
@@ -299,7 +308,7 @@ function Home() {
                     <div className="home-card-title"><h3>{product.name}</h3></div>
                     <p className="home-card-dimensions"><span className="home-visually-hidden">Ancho, alto y fondo: </span>{product.defaults.width / 10} × {product.defaults.height / 10} × {product.defaults.depth / 10} cm <span>· Personalizable</span></p>
                     <div className="home-card-bottom">
-                      <span className="home-card-price">{product.publicPrice == null ? <span className="chrome-quote chrome-quote--compact">Cotizar <ArrowUpRight size={14} aria-hidden="true" /></span> : <>Desde <strong>{money(product.publicPrice)}</strong></>}</span>
+                      <span className="home-card-price">{product.publicPrice == null ? <span className="chrome-quote chrome-quote--compact">Cotizar <ArrowUpRight size={14} aria-hidden="true" /></span> : <>Este diseño <strong>{money(product.publicPrice)}</strong></>}</span>
                       <span className="home-card-cta">Personalizar <ArrowRight size={16} aria-hidden="true" /></span>
                     </div>
                     {finishes.length > 0 && <div className="home-card-finishes"><div className="mini-swatches" aria-hidden="true">{finishes.slice(0, 4).map((finish) => <MaterialSwatch key={finish.id} material={finish} title={materialLabel(finish)} />)}</div><span>{finishes.length} {finishes.length === 1 ? "acabado disponible" : "acabados disponibles"}</span></div>}
