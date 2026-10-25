@@ -12,6 +12,9 @@ import {
 } from "./furniture.ts";
 import { publicGeometry, type VisualPanel } from "./public-geometry.ts";
 
+/** Alignment gaps reserve space only; they are never manufactured or priced. */
+export const MIN_KITCHEN_SPACE_WIDTH = 10;
+
 const measure = (min: number, max: number) =>
   z.number().finite().int().min(min).max(max).multipleOf(10);
 const itemBase = {
@@ -33,7 +36,7 @@ export const kitchenItemSchema = z.discriminatedUnion("kind", [
       .object({
         ...itemBase,
         kind: z.literal(kind),
-        width: measure(100, 2000),
+        width: measure(kind === "space" ? MIN_KITCHEN_SPACE_WIDTH : 100, 2000),
         height: measure(100, 2600),
         depth: measure(100, 1000),
       })

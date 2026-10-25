@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ArrowRight, Check, Plus, X } from "lucide-react";
+import { ArrowRight, Check, Loader2, Plus, X } from "lucide-react";
 import {
   Dialog,
   DialogClose,
@@ -29,12 +29,16 @@ export function KitchenBuilderDialog({
   settings,
   onClose,
   onAdd,
+  initialProductId = "",
+  initialConfig,
 }: {
   space: KitchenSlot;
   products: PublicProduct[];
   settings: PublicSettings;
   onClose: () => void;
-  onAdd: (product: PublicProduct, config: Config) => void;
+  onAdd: (product: PublicProduct, config: Config) => void | Promise<void>;
+  initialProductId?: string;
+  initialConfig?: Config;
 }) {
   const candidates = useMemo(
     () =>
@@ -44,13 +48,16 @@ export function KitchenBuilderDialog({
       }),
     [products, space],
   );
-  const [selectedId, setSelectedId] = useState(candidates[0]?.product.id ?? "");
+  const initial = candidates.find(candidate => candidate.product.id === initialProductId) ?? candidates[0];
+  const [selectedId, setSelectedId] = useState(initial?.product.id ?? "");
   const [config, setConfig] = useState<Config | undefined>(
-    candidates[0]?.config,
+    initial && initialConfig && initial.product.id === initialProductId && !kitchenConfigIssue(initial.product, initialConfig, space)
+      ? structuredClone(initialConfig) : initial?.config,
   );
   const [error, setError] = useState("");
   const [invalidMeasures, setInvalidMeasures] = useState<string[]>([]);
   const [brand, setBrand] = useState("all");
+  const [submitting, setSubmitting] = useState(false);
   const selected = candidates.find(
     (candidate) => candidate.product.id === selectedId,
   )?.product;
@@ -70,13 +77,14 @@ export function KitchenBuilderDialog({
     <Dialog
       open
       onOpenChange={(open) => {
-        if (!open) onClose();
+        if (!open && !submitting) onClose();
       }}
     >
       <DialogContent showCloseButton={false} className="kitchen-build-dialog">
         <DialogClose
           className="kitchen-build-close"
           aria-label="Cerrar selección de módulo"
+          disabled={submitting}
         >
           <X size={20} />
         </DialogClose>
@@ -95,7 +103,7 @@ export function KitchenBuilderDialog({
             puertas y su color.
           </DialogDescription>
         </DialogHeader>
-        <div className="kitchen-build-body">
+        <fieldset className="kitchen-build-body" disabled={submitting} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
           <section className="kitchen-build-models">
             <h3>1. El diseño</h3>
             <div className="kitchen-build-candidates">
@@ -240,7 +248,7 @@ export function KitchenBuilderDialog({
               <ExtraSelector product={selected} config={config} onChange={update} />
             </section>
           )}
-        </div>
+        </fieldset>
         <div className="kitchen-build-footer">
           {config && (
             <p>
@@ -258,23 +266,25 @@ export function KitchenBuilderDialog({
           )}
           <button
             className="button"
-            disabled={!selected || !config || !!issue || invalidMeasures.length > 0}
-            onClick={() => {
+            disabled={submitting || !selected || !config || !!issue || invalidMeasures.length > 0}
+            aria-busy={submitting}
+            onClick={async () => {
               if (!selected || !config) return;
+              setSubmitting(true); setError("");
               try {
-                onAdd(selected, config);
+                await onAdd(selected, config);
               } catch (cause) {
                 setError(
                   cause instanceof Error
                     ? cause.message
                     : "Revisa el espacio e inténtalo de nuevo.",
                 );
-              }
+              } finally { setSubmitting(false); }
             }}
           >
-            <Plus size={17} /> {replacingFurniture ? "Sustituir este módulo" : "Añadir este módulo"} <ArrowRight size={17} />
+            {submitting ? <Loader2 size={17} className="animate-spin" /> : <Plus size={17} />} {submitting ? "Comprobando encaje…" : replacingFurniture ? "Sustituir este módulo" : "Añadir este módulo"} <ArrowRight size={17} />
           </button>
-          <small>El precio de tu cocina se actualiza al añadirlo.</small>
+          <small>Comprobamos el encaje y el precio en el servidor antes de incorporarlo. Si no encaja, tu distribución se conserva.</small>
         </div>
       </DialogContent>
     </Dialog>

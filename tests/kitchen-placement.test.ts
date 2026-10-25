@@ -91,7 +91,10 @@ test("replacement keeps identity and exact chosen dimensions, and rejects a stal
   const changed = structuredClone(plan);
   if (changed.items[0].kind === "furniture") changed.items[0].config.depth -= 10;
   assert.throws(() => insertKitchenModule(changed, slot, selected, config, () => "unused"), /espacio cambió/i);
-  assert.throws(() => insertKitchenModule(plan, slot, selected, { ...config, width: 550 }, () => "unused"), /100 mm/i);
+  const fiftyMillimeterGap = insertKitchenModule(plan, slot, selected, { ...config, width: 550 }, () => "gap-50");
+  assert.equal(fiftyMillimeterGap.plan.items[1].kind, "space");
+  if (fiftyMillimeterGap.plan.items[1].kind === "space") assert.equal(fiftyMillimeterGap.plan.items[1].width, 50);
+  assert.doesNotThrow(() => buildKitchen(fiftyMillimeterGap.plan, [base, alternative], defaultSettings));
   assert.throws(() => insertKitchenModule(plan, slot, selected, { ...config, width: 510, height: 811 }, () => "unused"), /pasos de 10/i);
   assert.throws(() => insertKitchenModule(plan, slot, selected, { ...config, width: 700 }, () => "unused"), /ancho/i);
 });
@@ -141,7 +144,7 @@ test("a long alignment reservation is split into schema-valid spaces", () => {
   const slot = { ...getEmptyKitchenSlot(blank)!, widthAvailable: 1000, leadingSpace: 2050 };
   let index = 0;
   const added = insertKitchenModule(blank, slot, selected, base.defaults, () => `long-${index++}`);
-  assert.deepEqual(added.plan.items.flatMap(item => item.kind === "space" ? [item.width] : []), [1950, 100]);
+  assert.deepEqual(added.plan.items.flatMap(item => item.kind === "space" ? [item.width] : []), [2000, 50]);
   assert.doesNotThrow(() => buildKitchen(added.plan, [base], defaultSettings));
   assert.throws(() => insertKitchenModule(blank, { ...slot, leadingSpace: Infinity }, selected, base.defaults, () => "unused"), /margen/i);
 });
@@ -286,6 +289,94 @@ test("replacing a space keeps its order and trailing clearance without moving la
         config,
         () => "another-id",
       ),
-    /no está disponible/,
+    /no está disponible|espacio cambió/,
   );
+});
+
+test("small trailing spaces preserve exact furniture size, neighbours, engine pricing and old snapshots", () => {
+  const base: Product = { ...productTemplate("kitchen-base"), active: true };
+  const plan = singleModule(base);
+  const original = structuredClone(plan);
+  const neighbour = { ...structuredClone(plan.items[0]), id: "right" };
+  plan.items.push(neighbour);
+  const baseline = buildKitchen(plan, [base], defaultSettings);
+  const baselineBefore = structuredClone(baseline);
+  const selected = publicFixture(base);
+  const slot = getKitchenReplacementSlot(plan, "editable")!;
+  for (const remainder of [10, 50, 90]) {
+    const config = { ...base.defaults, width: 600 - remainder };
+    const inserted = insertKitchenModule(plan, slot, selected, config, () => `gap-${remainder}`);
+    const quoted = buildKitchen(inserted.plan, [base], defaultSettings);
+    const air = quoted.result.modules.find(item => item.id === `gap-${remainder}`)!;
+    assert.equal(air.kind, "space");
+    assert.equal(air.size[0], remainder);
+    assert.equal(air.price, 0);
+    assert.equal(inserted.plan.items[0].kind, "furniture");
+    if (inserted.plan.items[0].kind === "furniture") assert.deepEqual(inserted.plan.items[0].config, config);
+    assert.deepEqual(quoted.result.modules.find(item => item.id === "right")!.position, baseline.result.modules.find(item => item.id === "right")!.position);
+    const generated = buildFurniture(base, config, defaultSettings);
+    const oldNeighbour = buildFurniture(base, base.defaults, defaultSettings);
+    assert.equal(quoted.result.price, generated.price + oldNeighbour.price);
+    assert.equal(quoted.result.geometry.length, generated.panels.length + (generated.fixtures?.length ?? 0) + oldNeighbour.panels.length + (oldNeighbour.fixtures?.length ?? 0));
+  }
+  assert.deepEqual(baseline, baselineBefore, "an earlier quote remains an unchanged snapshot");
+  assert.deepEqual(plan.items[0], original.items[0], "insertion never mutates the source furniture");
+});
+
+test("a proposal keeps the model's width even when it leaves only 50 mm", () => {
+  const template: Product = { ...productTemplate("kitchen-base"), active: true };
+  const candidate = { ...template, id: "base-550", defaults: { ...template.defaults, width: 550 } };
+  const source = singleModule(template);
+  const sourceBefore = structuredClone(source);
+  const slot = getKitchenReplacementSlot(source, "editable")!;
+  const fitted = fitKitchenSlotProduct(publicFixture(candidate), slot)!;
+  assert.ok(fitted);
+  assert.equal(fitted.width, 550, "do not stretch to 600 or shrink to 500 to avoid a small gap");
+  const inserted = insertKitchenModule(source, slot, publicFixture(candidate), fitted, () => "fitted-gap");
+  assert.equal(inserted.plan.items[1].kind, "space");
+  if (inserted.plan.items[1].kind === "space") assert.equal(inserted.plan.items[1].width, 50);
+  assert.doesNotThrow(() => buildKitchen(inserted.plan, [template, candidate], defaultSettings));
+  assert.deepEqual(source, sourceBefore);
+});
+
+test("current UI slots reject changed walls, room height, neighbours and stale empty plans before allocating IDs", () => {
+  const base: Product = { ...productTemplate("kitchen-base"), active: true };
+  const source = singleModule(base);
+  source.items.push({ ...structuredClone(source.items[0]), id: "neighbour" });
+  const selected = publicFixture(base);
+  const result = buildKitchen(source, [base], defaultSettings).result;
+  const replacement = getKitchenReplacementSlot(source, "editable")!;
+  const append = getKitchenSlots(source, result).find(slot => slot.row === "base" && !slot.replaceId)!;
+  const mutations: ((plan: KitchenPlan) => void)[] = [
+    plan => { plan.walls.a -= 10; },
+    plan => { plan.roomHeight = 2600; },
+    plan => { plan.wallElevation -= 10; },
+    plan => { if (plan.items[1].kind === "furniture") plan.items[1].config.depth -= 10; },
+  ];
+  for (const mutate of mutations) for (const slot of [replacement, append]) {
+    const changed = structuredClone(source);
+    mutate(changed);
+    const before = structuredClone(changed);
+    assert.throws(() => insertKitchenModule(changed, slot, selected, base.defaults, () => { assert.fail("stale slots cannot allocate an ID"); }), /espacio cambió/i);
+    assert.deepEqual(changed, before);
+  }
+  const blank = { ...source, items: [] };
+  const first = getEmptyKitchenSlot(blank)!;
+  assert.throws(() => insertKitchenModule({ ...blank, walls: { ...blank.walls, a: 3000 } }, first, selected, base.defaults, () => "unused"), /espacio cambió/i);
+});
+
+test("a partial placeholder replacement validates the whole reservation before allocating IDs", () => {
+  const base: Product = { ...productTemplate("kitchen-base"), active: true };
+  const source = singleModule(base);
+  source.items.unshift({ id: "free", kind: "space", wall: "a", row: "base", width: 600, height: 900, depth: 600 });
+  const before = structuredClone(source);
+  const selected = publicFixture(base);
+  const hole = getKitchenSlots(source, buildKitchen(source, [base], defaultSettings).result).find(slot => slot.replaceId === "free")!;
+  assert.equal(hole.replaceWidth, 600);
+  const config = { ...base.defaults, width: 400 };
+  const noId = () => { assert.fail("an invalid partial reservation cannot allocate IDs"); };
+  assert.throws(() => insertKitchenModule(source, { ...hole, leadingSpace: 200, widthAvailable: 500 }, selected, config, noId), /tramo disponible/i);
+  assert.throws(() => insertKitchenModule(source, { ...hole, replaceWidth: 500 }, selected, config, noId), /espacio cambió/i);
+  assert.throws(() => insertKitchenModule(source, { ...hole, leadingSpace: -10 }, selected, config, noId), /margen/i);
+  assert.deepEqual(source, before);
 });

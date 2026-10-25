@@ -1,6 +1,20 @@
 import type { KitchenPlan } from "../lib/kitchen";
 import type { PublicProduct } from "./types";
 
+/** API validation may reorder object keys; that alone is not a design change. */
+export function sameKitchenPlan(left: KitchenPlan, right: KitchenPlan): boolean {
+  const equal = (a: unknown, b: unknown): boolean => {
+    if (Object.is(a, b)) return true;
+    if (!a || !b || typeof a !== "object" || typeof b !== "object") return false;
+    if (Array.isArray(a) || Array.isArray(b))
+      return Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((value, index) => equal(value, b[index]));
+    const keys = Object.keys(a);
+    return keys.length === Object.keys(b).length && keys.every(key =>
+      Object.hasOwn(b, key) && equal((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key]));
+  };
+  return equal(left, right);
+}
+
 type StartingProduct = Pick<
   PublicProduct,
   "id" | "active" | "category" | "construction" | "defaults"
@@ -118,6 +132,14 @@ export function startingKitchen(
 }
 
 /** Reordering one lane cannot accidentally move an item to another wall or row. */
+export function canMoveKitchenItem(plan: KitchenPlan, id: string, direction: -1 | 1): boolean {
+  const item = plan.items.find(value => value.id === id);
+  if (!item) return false;
+  const siblings = plan.items.filter(value => value.wall === item.wall && (value.row === "wall") === (item.row === "wall"));
+  const index = siblings.findIndex(value => value.id === id);
+  return index + direction >= 0 && index + direction < siblings.length;
+}
+
 export function moveKitchenItem(
   plan: KitchenPlan,
   id: string,

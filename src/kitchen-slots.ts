@@ -1,4 +1,5 @@
 import type { KitchenPlan, KitchenQuote, KitchenModule } from "../lib/kitchen";
+import { subtractKitchenIntervals } from "./kitchen-free-intervals.ts";
 
 export type PlacementSlot = {
   id: string;
@@ -16,6 +17,8 @@ export type KitchenSlot = PlacementSlot & {
   replaceId?: string;
   replaceKind?: "space" | "furniture";
   replaceFingerprint?: string;
+  planFingerprint?: string;
+  replaceWidth?: number;
 };
 
 /** Replacement reserves the existing width, keeping the same lane order. */
@@ -27,6 +30,7 @@ export function getKitchenReplacementSlot(plan: KitchenPlan, id: string): Kitche
     wall: item.wall, row: item.row, widthAvailable: item.config.width,
     height: item.config.height, depth: item.config.depth, offset: 0, leadingSpace: 0,
     replaceId: id, replaceKind: "furniture", replaceFingerprint: JSON.stringify(item),
+    planFingerprint: JSON.stringify(plan),
   };
 }
 
@@ -38,6 +42,7 @@ export function getEmptyKitchenSlot(plan: KitchenPlan): KitchenSlot | undefined 
     wall: "a", row: "base", widthAvailable: plan.walls.a,
     height: Math.min(1100, plan.roomHeight ?? 2600), depth: 600,
     offset: 0, leadingSpace: 0,
+    planFingerprint: JSON.stringify(plan),
   };
 }
 const lane = (row: string) => row === "wall" ? "wall" : "base";
@@ -62,6 +67,7 @@ export function getKitchenSlots(plan: KitchenPlan, quote: KitchenQuote): Kitchen
     return module.id !== item.id || module.kind !== item.kind || module.wall !== item.wall || module.row !== item.row || module.size.some((size, axis) => size !== [measures.width, measures.height, measures.depth][axis]);
   })) return [];
 
+  const planFingerprint = JSON.stringify(plan);
   // The server starts its bounds at the room origin and centers the occupied
   // envelope, which can be narrower than the room itself.
   const shift = [quote.envelope.width / 2, 0, quote.envelope.depth / 2];
@@ -94,17 +100,17 @@ export function getKitchenSlots(plan: KitchenPlan, quote: KitchenQuote): Kitchen
     return occupied.filter(box => intersects([box.min[1], box.max[1]], [elevation, elevation + height]) && intersects([box.min[normalAxis], box.max[normalAxis]], normal))
       .map(box => [box.min[alongAxis], box.max[alongAxis]] as Interval);
   };
-  const make = (wall: "a" | "b", row: KitchenSlot["row"], offset: number, widthAvailable: number, height: number, depth: number, leadingSpace: number, replaceId?: string): KitchenSlot => {
+  const make = (wall: "a" | "b", row: KitchenSlot["row"], offset: number, widthAvailable: number, height: number, depth: number, leadingSpace: number, replaceId?: string, replaceWidth?: number): KitchenSlot => {
     const elevation = row === "wall" ? plan.wallElevation : 0;
     const width = Math.min(600, widthAvailable);
     const y = elevation + Math.min(height, row === "wall" ? 700 : 900) / 2;
     const center: [number, number, number] = wall === "a" ? [offset + width / 2, y, depth + 35] : [plan.walls.a - depth - 35, y, offset + width / 2];
     return {
-      id: replaceId ? `space-${replaceId}` : `end-${wall}-${row}-${offset}`,
+      id: replaceId ? `space-${replaceId}-${offset}` : `end-${wall}-${row}-${offset}`,
       position: center.map((value, axis) => value - shift[axis]) as [number, number, number],
       label: `Añadir ${row === "wall" ? "alacena" : row === "tall" ? "columna alta" : "módulo bajo"} en pared ${wall.toUpperCase()}, espacio de ${widthAvailable / 10} cm`,
-      wall, row, widthAvailable, height, depth, offset, leadingSpace,
-      ...(replaceId ? { replaceId, replaceKind: "space" as const, replaceFingerprint: JSON.stringify(plan.items.find(item => item.id === replaceId)) } : {}),
+      wall, row, widthAvailable, height, depth, offset, leadingSpace, planFingerprint,
+      ...(replaceId ? { replaceId, replaceKind: "space" as const, replaceWidth, replaceFingerprint: JSON.stringify(plan.items.find(item => item.id === replaceId)) } : {}),
     };
   };
   const slots: KitchenSlot[] = [];
@@ -113,25 +119,18 @@ export function getKitchenSlots(plan: KitchenPlan, quote: KitchenQuote): Kitchen
     const height = Math.min(module.size[1], row === "wall" ? 1200 : row === "base" ? 1100 : 3000, (plan.roomHeight ?? 2600) - (row === "wall" ? plan.wallElevation : 0));
     const depth = Math.min(module.size[2], row === "wall" ? 450 : 600, module.wall === "a" ? maximumNewDepthA : Infinity);
     if (module.size[0] < 300 || height < 100 || depth < 100) continue;
-    if (blockers(module.wall, row, height, depth).some(block => intersects(block, [offset, offset + module.size[0]]))) continue;
-    slots.push(make(module.wall, row, offset, module.size[0], height, depth, 0, module.id));
+    const free = subtractKitchenIntervals([offset, offset + module.size[0]], blockers(module.wall, row, height, depth), 300);
+    for (const [from, to] of free)
+      slots.push(make(module.wall, row, from, to - from, height, depth, from - offset, module.id, module.size[0]));
   }
   for (const wall of plan.layout === "l" ? ["a", "b"] as const : ["a"] as const) for (const row of ["base", "wall"] as const) {
     const height = Math.min(row === "wall" ? 1200 : 1100, (plan.roomHeight ?? 2600) - (row === "wall" ? plan.wallElevation : 0));
     const depth = Math.min(row === "wall" ? 450 : 600, wall === "a" ? maximumNewDepthA : Infinity);
     if (height < 100 || depth < 100 || (wall === "b" && depth > plan.walls.a)) continue;
-    let free: Interval[] = [[cursors[wall][row], plan.walls[wall]]];
-    for (const blocked of blockers(wall, row, height, depth)) {
-      free = free.flatMap(interval => !intersects(interval, blocked) ? [interval] : [
-        [interval[0], Math.min(interval[1], blocked[0])] as Interval,
-        [Math.max(interval[0], blocked[1]), interval[1]] as Interval,
-      ].filter(([a, b]) => b - a >= 300));
-    }
+    const free = subtractKitchenIntervals([cursors[wall][row], plan.walls[wall]], blockers(wall, row, height, depth), 300);
     for (const [from, to] of free) {
-      // A generated alignment spacer must respect the public minimum of 100 mm.
       const leading = from - cursors[wall][row];
-      const offset = leading > 0 && leading < 100 ? cursors[wall][row] + 100 : from;
-      if (to - offset >= 300) slots.push(make(wall, row, offset, to - offset, height, depth, offset - cursors[wall][row]));
+      if (to - from >= 300) slots.push(make(wall, row, from, to - from, height, depth, leading));
     }
   }
   return slots;

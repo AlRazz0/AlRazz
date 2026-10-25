@@ -5,9 +5,25 @@ import { buildKitchen, type KitchenPlan } from "../lib/kitchen.ts";
 import { defaultSettings, productSchema } from "../lib/furniture.ts";
 import { productTemplate } from "../lib/product-templates.ts";
 import {
+  canMoveKitchenItem,
+  sameKitchenPlan,
   moveKitchenItem,
   startingKitchen,
 } from "../src/kitchen-planner-state.ts";
+
+test("equivalent API objects keep a saved design unchanged while measures and item order matter", () => {
+  const product = { ...productTemplate("kitchen-base"), active: true };
+  const plan = startingKitchen([product]);
+  const reordered = structuredClone(plan);
+  reordered.items = reordered.items.map(item => Object.fromEntries(Object.entries(item).reverse()) as typeof item);
+  assert.equal(sameKitchenPlan(plan, reordered), true);
+  const resized = structuredClone(reordered);
+  const first = resized.items[0];
+  if (first.kind !== "furniture") throw Error("Expected starter furniture");
+  first.config.width += 10;
+  assert.equal(sameKitchenPlan(plan, resized), false);
+  assert.equal(sameKitchenPlan(plan, {...reordered, items: [...reordered.items].reverse()}), false);
+});
 
 test("starter kitchen fits current catalog modules without changing their defaults", () => {
   const catalog = JSON.parse(
@@ -131,4 +147,8 @@ test("reordering follows the visible wall lane and leaves unrelated rows untouch
   assert.equal(moveKitchenItem(plan, "aw", 1), plan);
   assert.equal(moveKitchenItem(plan, "a1", -1), plan);
   assert.equal(moveKitchenItem(plan, "missing", 1), plan);
+  assert.equal(canMoveKitchenItem(plan, "a1", -1), false);
+  assert.equal(canMoveKitchenItem(plan, "aw", 1), false);
+  assert.equal(canMoveKitchenItem(plan, "a1", 1), true);
+  assert.equal(canMoveKitchenItem(plan, "a3", 1), false);
 });
