@@ -36,6 +36,7 @@ import { FrontSelector, DoorLayoutSelector } from "./FrontSelector";
 import { MaterialDetails, MaterialSwatch } from "./MaterialSwatch";
 import { materialLabel } from "./materials";
 import { ContactLinks } from "./ContactLinks";
+import { QuoteRequestForm } from "./QuoteRequestForm";
 import { sameKitchenPlan, canMoveKitchenItem, hasKitchenFurniture, moveKitchenItem, removeKitchenItem, startingKitchen } from "./kitchen-planner-state";
 import { getKitchenAddChoices } from "./kitchen-add-choices";
 import { KitchenLayoutMap } from "./KitchenLayoutMap";
@@ -114,11 +115,13 @@ export default function KitchenPlanner() {
   const [pastPlans, setPastPlans] = useState<KitchenPlan[]>([]);
   const [futurePlans, setFuturePlans] = useState<KitchenPlan[]>([]);
   const request = useRef(0);
+  const ownSavedSources = useRef(new Set<string>());
   const editRevision = useRef(0);
   const acceptedPlanQuote = useRef("");
   const moduleEditor = useRef<HTMLDivElement>(null);
   const sceneElement = useRef<HTMLElement>(null);
   const contactSection = useRef<HTMLElement>(null);
+  const ownsSaved = !!saved && (ownSavedSources.current.has(saved.id + ":" + saved.version) || stored.some(item => item.id === saved.id && item.version === saved.version));
 
   function load() {
     setLoading(true);
@@ -149,7 +152,8 @@ export default function KitchenPlanner() {
           setPlan(initial);
           setSelected(initial.items[0]?.id || "");
         }
-        void api<{ kitchens: SavedKitchen[] }>("action=kitchens")
+        // Complete the owner-cookie lookup before enabling save/contact actions.
+        await api<{ kitchens: SavedKitchen[] }>("action=kitchens")
           .then((data) => setStored(data.kitchens))
           .catch(() =>
             setHistoryError(
@@ -362,6 +366,7 @@ export default function KitchenPlanner() {
         name,
         plan,
       });
+      ownSavedSources.current.add(kitchen.id + ":" + kitchen.version);
       setStored((previous) => [
         kitchen,
         ...previous.filter((item) => item.id !== kitchen.id),
@@ -373,6 +378,7 @@ export default function KitchenPlanner() {
         setPlan(kitchen.plan);
         setQuoteKey(JSON.stringify(kitchen.plan));
         history.replaceState(null, "", "/cocinas?cocina=" + kitchen.id);
+        if (saved && !ownsSaved) setSaveNotice("Se guardó una copia propia con las tarifas actuales. La versión compartida conserva su información original.");
       } else {
         setSaveNotice(
           "Se guardó la versión enviada. Tus cambios más recientes siguen en pantalla; guárdalos cuando termines.",
@@ -399,7 +405,7 @@ export default function KitchenPlanner() {
     }
   }
   async function requestKitchenQuote() {
-    if ((saved && saved.name === name.trim()) || (await save())) setQuoteContactOpen(true);
+    if ((saved && ownsSaved && saved.name === name.trim()) || (await save())) setQuoteContactOpen(true);
   }
   async function copyLink() {
     if (!saved) return;
@@ -721,7 +727,7 @@ export default function KitchenPlanner() {
                   disabled={saving}
                   onClick={() => void requestKitchenQuote()}
                 >
-                  {saving ? "Guardando…" : "Cotizar mi cocina"}
+                  {saving ? "Guardando…" : saved && !ownsSaved ? "Guardar copia y cotizar" : "Cotizar mi cocina"}
                   <ArrowUpRight size={18} />
                 </button>
               )}
@@ -775,6 +781,8 @@ export default function KitchenPlanner() {
               <Save size={17} />
               {saving
                 ? "Guardando…"
+                : saved && !ownsSaved
+                  ? "Guardar una copia propia"
                 : saved
                   ? "Guardar otra versión"
                   : "Guardar mi cocina"}
@@ -782,7 +790,7 @@ export default function KitchenPlanner() {
             {saved && (
               <div className="kitchen-saved">
                 <Check size={16} />
-                <span>{saved.result.price == null
+                <span>{!ownsSaved ? "Versión compartida. Guarda una copia propia para solicitar cotización." : saved.result.price == null
                   ? "Diseño guardado. Listo para solicitar una cotización."
                   : "Diseño guardado. Conserva esta versión y su precio."}</span>
                 <button onClick={copyLink}>
@@ -1329,7 +1337,7 @@ export default function KitchenPlanner() {
               Comparte esta cocina con nuestro equipo para revisar medidas,
               herrajes y acabados.
             </p>
-            {saved.result.price == null && (
+            {saved.result.price == null && ownsSaved && (
               <button
                 type="button"
                 className="button chrome-quote"
@@ -1340,6 +1348,7 @@ export default function KitchenPlanner() {
                 Cotizar mi cocina <ArrowUpRight size={18} />
               </button>
             )}
+            {ownsSaved ? <QuoteRequestForm key={saved.id + saved.version} sources={[{kind:"kitchen",id:saved.id,version:saved.version}]} projectTitle={saved.name} initiallyOpen={quoteContactOpen}/> : <div><p>Para adjuntar esta versión compartida guardaremos una copia propia con las tarifas actuales.</p><button type="button" className="button chrome-quote" disabled={saving || !currentQuote || !name.trim()} onClick={() => void requestKitchenQuote()}>{saving ? "Guardando…" : "Guardar copia propia y solicitar cotización"}<ArrowUpRight size={18}/></button></div>}
             {(saved.result.price != null || quoteContactOpen) && (
               <div id="kitchen-contact-options">
                 <ContactLinks

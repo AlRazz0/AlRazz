@@ -22,3 +22,5 @@ jobs:
       - run: npm run check:storefront
       - run: npm run test:auth-api
       - run: npm run test:kitchen-fit-api
+      - run: npm run test:crm-api
+      - run: npm run test:assistant-api

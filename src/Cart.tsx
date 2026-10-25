@@ -24,6 +24,7 @@ import type { Design, PublicSettings } from "./types";
 import { Header, Footer } from "./App";
 import Viewer from "./Viewer";
 import { ContactLinks } from "./ContactLinks";
+import { QuoteRequestForm } from "./QuoteRequestForm";
 export default function Cart() {
   const [designs, setDesigns] = useState<Design[]>([]);
   const [settings, setSettings] = useState<PublicSettings>();
@@ -32,6 +33,7 @@ export default function Cart() {
   const [busy, setBusy] = useState("");
   const [remove, setRemove] = useState<Design>();
   const [contactsOpen, setContactsOpen] = useState(false);
+  const [quoteSelection,setQuoteSelection] = useState<string[] | null>(null);
   const contactSection = useRef<HTMLDivElement>(null);
   function requestQuote() {
     setContactsOpen(true);
@@ -71,7 +73,8 @@ export default function Cart() {
       setRemove(undefined);
     }
   }
-  const total = designs.reduce<number | null>(
+  const selectedDesigns = designs.filter(design => quoteSelection === null || quoteSelection.includes(design.id));
+  const total = selectedDesigns.reduce<number | null>(
     (sum, design) =>
       sum === null || design.price == null
         ? null
@@ -81,7 +84,7 @@ export default function Cart() {
   const needsQuote = total === null;
   const message = [
     "Hola, El capo. Quiero cotizar estos muebles:",
-    ...designs.map((d) =>
+    ...selectedDesigns.map((d) =>
       [
         d.product.name + " · " + d.quantity + " unidad(es)",
         d.config.width +
@@ -145,6 +148,7 @@ export default function Cart() {
                     />
                   </div>
                   <div className="cart-detail">
+                    <label className="cart-quote-selection"><input type="checkbox" checked={quoteSelection === null || quoteSelection.includes(d.id)} onChange={event => {const current=quoteSelection ?? designs.map(design=>design.id);setQuoteSelection(event.target.checked ? [...current,d.id] : current.filter(id=>id!==d.id));}}/> Incluir en la cotización del taller</label>
                     <span className="eyebrow">{d.product.category}</span>
                     <h2>{d.product.name}</h2>
                     <p>
@@ -212,7 +216,7 @@ export default function Cart() {
               <h2>Hagámoslo realidad.</h2>
               <div className="total-row">
                 <span>
-                  {designs.reduce((n, d) => n + d.quantity, 0)} muebles
+                  {selectedDesigns.reduce((n, d) => n + d.quantity, 0)} muebles seleccionados
                 </span>
                 <b>{total === null ? "Por cotizar" : money(total)}</b>
               </div>
@@ -221,6 +225,8 @@ export default function Cart() {
                   ? "Tu solicitud incluye muebles sin precio publicado. El equipo preparará la cotización completa con las medidas y cantidades guardadas."
                   : "Total referencial. Cada diseño conserva su versión y precio guardados. El equipo confirmará las tarifas y condiciones finales."}
               </p>
+              <div className="cart-quote-count"><strong>{selectedDesigns.length} de {designs.length} diseños seleccionados para cotizar</strong>{designs.length > 20 && <button type="button" className="text-link" onClick={() => setQuoteSelection(designs.slice(0,20).map(design=>design.id))}>Elegir los primeros 20</button>}<p>La solicitud al taller incluirá únicamente los diseños marcados, con sus cantidades guardadas.</p></div>
+              <QuoteRequestForm sources={selectedDesigns.map(design=>({kind:"design" as const,id:design.id,version:design.version}))} projectTitle={selectedDesigns.length + " diseños seleccionados"}/>
               <div ref={contactSection} tabIndex={-1} id="cart-quote-contacts">
                 {needsQuote && (
                   <button
@@ -233,7 +239,7 @@ export default function Cart() {
                     Cotizar mis diseños <ArrowUpRight size={18} />
                   </button>
                 )}
-                {(!needsQuote || contactsOpen) && (
+                {selectedDesigns.length > 0 && (!needsQuote || contactsOpen) && (
                   <div id="cart-contact-options">
                     {settings && (settings.whatsapp || settings.whatsappSecondary) ? (
                       <ContactLinks settings={settings} message={message} />
@@ -248,6 +254,7 @@ export default function Cart() {
               </div>
               <button
                 className="button outline full"
+                disabled={!selectedDesigns.length}
                 onClick={() =>
                   download(
                     "El-capo-solicitud.txt",
@@ -260,6 +267,7 @@ export default function Cart() {
               </button>
               <button
                 className="text-link"
+                disabled={!selectedDesigns.length}
                 onClick={async () => {
                   try {
                     await navigator.clipboard.writeText(message);

@@ -39,6 +39,7 @@ import { ExtraSelector } from "./ExtraSelector";
 import { constructionDescriptions } from "./construction-labels";
 import ModelShowcase from "./ModelShowcase";
 import { ContactLinks } from "./ContactLinks";
+import { QuoteRequestForm } from "./QuoteRequestForm";
 import "./design-studio.css";
 const searchText = (value: string) =>
   value
@@ -67,6 +68,7 @@ export default function Configurator() {
   const [pending, setPending] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState<Design>();
+  const [ownsSaved, setOwnsSaved] = useState(false);
   const [quoteContacts, setQuoteContacts] = useState(false);
   const [snapshot, setSnapshot] = useState(false);
   const [past, setPast] = useState<Config[]>([]);
@@ -92,9 +94,14 @@ export default function Configurator() {
         const params = new URLSearchParams(location.search);
         const id = params.get("d");
         if (id) {
-          const { design: saved } = await api(
-            "action=design&id=" + encodeURIComponent(id),
-          );
+          // A public snapshot URL is read access, never proof of ownership.
+          // Finish the owner-cookie lookup before exposing save/contact actions.
+          const [{ design: saved }, own] = await Promise.all([
+            api<{design:Design}>("action=design&id=" + encodeURIComponent(id)),
+            api<{designs:Design[]}>("action=designs").catch(() => ({designs:[]})),
+          ]);
+          setSaved(saved);
+          setOwnsSaved(own.designs.some(design => design.id === saved.id && design.version === saved.version));
           setProduct(saved.product);
           setConfig(saved.config);
           setRenderConfig(saved.config);
@@ -222,9 +229,11 @@ export default function Configurator() {
         op: "save-design",
         productId: product.id,
         config,
+        ...(saved && !ownsSaved ? {quantity:saved.quantity,...(saved.name ? {name:saved.name} : {})} : {}),
       });
       if (submittedRevision === editRevision.current) {
         setSaved(d.design);
+        setOwnsSaved(true);
         setQuoteContacts(requestQuote);
         setProduct(d.design.product);
         setConfig(d.design.config);
@@ -236,12 +245,18 @@ export default function Configurator() {
         setPending(false);
         setQuoteError("");
       }
-      toast.success("Tu diseño se guardó en Mis diseños.");
+      toast.success(saved && !ownsSaved
+        ? "Se guardó una copia propia con la tarifa vigente. La versión compartida se conserva."
+        : "Tu diseño se guardó en Mis diseños.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "No se pudo guardar.");
     } finally {
       setSaving(false);
     }
+  }
+  async function requestDesignQuote() {
+    if (saved && ownsSaved) setQuoteContacts(true);
+    else await save(true);
   }
   function capture() {
     const image = viewer.current?.capture();
@@ -778,23 +793,25 @@ export default function Configurator() {
             </p>
             <button
               className={`button full ${consultation ? "chrome-quote" : "rust"}`}
-              onClick={() => save(consultation)}
+              onClick={() => consultation ? void requestDesignQuote() : void save()}
               disabled={saving || !currentQuote}
             >
-              {saving ? "Guardando…" : consultation ? "Cotizar" : "Guardar mi diseño"}
+              {saving ? "Guardando…" : consultation ? saved && !ownsSaved ? "Guardar copia y cotizar" : "Cotizar" : saved && !ownsSaved ? "Guardar una copia propia" : "Guardar mi diseño"}
               {consultation ? <ArrowUpRight size={18} /> : <Save size={18} />}
             </button>
-            {quoteContacts && saved && (
+            {saved && !ownsSaved && <div className="small-note"><p>Este enlace muestra una versión compartida. Para adjuntarla a tu solicitud guardaremos una copia propia con las tarifas actuales.</p>{!consultation && <button type="button" className="text-link" disabled={saving || !currentQuote} onClick={() => void requestDesignQuote()}>Guardar copia propia y solicitar cotización <ArrowUpRight size={17}/></button>}</div>}
+            {saved && ownsSaved && <QuoteRequestForm key={saved.id + saved.version} sources={[{kind:"design",id:saved.id,version:saved.version}]} projectTitle={saved.name || product.name} initiallyOpen={quoteContacts}/>}
+            {quoteContacts && saved && ownsSaved && (
               <ContactLinks settings={settings} message={`Hola, El capo. Quisiera cotizar mi diseño de ${product.name}, con las medidas y acabados que elegí: ${location.origin}/configurar?d=${saved.id}`} />
             )}
-            {saved && (
+            {saved && ownsSaved && (
               <a className="saved-link" href="/carrito">
                 <Check size={17} /> Guardado. Ver mis diseños <ArrowRightIcon />
               </a>
             )}
             <p className="small-note">
               {consultation
-                ? "Guardaremos tu diseño para enviarlo por WhatsApp. Te confirmaremos el precio según tus medidas y acabados."
+                ? "Guardaremos una versión para adjuntarla a tu solicitud. El taller confirmará el precio según las medidas y acabados."
                 : "El importe y la fecha se confirman después de la validación técnica y comercial."}
             </p>
           </div>
