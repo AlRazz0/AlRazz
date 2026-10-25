@@ -1,5 +1,5 @@
 import {
-  useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   forwardRef,
@@ -13,11 +13,9 @@ import {
   getResizeDirection,
   getViewDirection,
 } from "./camera-motion";
-import { createSwatchTextures } from "./swatch-textures";
 import { createDimensionOverlay } from "./viewer-dimensions";
 import { doorRotation, doorPreviewBounds } from "./door-preview";
-import { createDoorPivot, createPlaceholder, createTransparentFront } from "./front-mesh";
-import { withDoorHinges, doorLatchDirection } from "../lib/door-hinges";
+import { createViewerModel, preserveViewerCamera } from "./viewer-model";
 import { createPlacementOverlay, placementBounds } from "./viewer-placement";
 import type { PlacementSlot } from "./kitchen-slots";
 import "./viewer-placement.css";
@@ -25,7 +23,6 @@ import type { VisualPanel } from "../lib/public-geometry";
 import type { PublicMaterial } from "./types";
 import {
   STUDIO_COLOR,
-  clearGroup,
   createScaleReference,
   createStudio,
   disposeObjects,
@@ -76,9 +73,11 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
     camera: THREE.PerspectiveCamera;
     controls: OrbitControls;
     group: THREE.Group;
+    model: ReturnType<typeof createViewerModel>;
     reference: THREE.Group;
     environment: THREE.Group;
     decoration: THREE.Object3D | null;
+    studio: { group: THREE.Group; decoration: THREE.Object3D; width: number; depth: number } | null;
     dimensions: ReturnType<typeof createDimensionOverlay>;
     placements: ReturnType<typeof createPlacementOverlay> | null;
     placementBounds: THREE.Box3;
@@ -90,6 +89,7 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
     doorTarget: number;
     framed: boolean;
     frame: (direction?: THREE.Vector3, animated?: boolean) => void;
+    reconcileFrame: () => void;
     animate: (
       channel: "camera" | "doors",
       update: (progress: number) => void,
@@ -97,9 +97,11 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
     ) => void;
     settle: () => void;
     render: () => void;
+    invalidate: () => void;
   } | null>(null);
   const [error, setError] = useState("");
   const framedOpen = small ? false : open;
+  const framingSettings = useRef<{ view: View; small: boolean; open: boolean; reference: boolean; environment: boolean } | null>(null);
   useImperativeHandle(
     ref,
     () => ({
@@ -116,7 +118,7 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
     }),
     [],
   );
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!mount.current) return;
     const el = mount.current;
     let renderer: THREE.WebGLRenderer;
@@ -198,8 +200,12 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
       }
     >();
     let animationFrame = 0;
+    let renderFrame = 0;
     let disposed = false;
     const render = () => {
+      if (renderFrame) cancelAnimationFrame(renderFrame);
+      renderFrame = 0;
+      if (disposed) return;
       const r = runtime.current;
       if (r?.reference.visible) {
         const direction = camera.position
@@ -216,6 +222,10 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
         el.clientHeight,
       );
       placementOverlay?.draw(camera, el.clientWidth, el.clientHeight);
+    };
+    const invalidate = () => {
+      if (disposed || renderFrame || motions.size) return;
+      renderFrame = requestAnimationFrame(() => { renderFrame = 0; render(); });
     };
     const tick = (now: number) => {
       animationFrame = 0;
@@ -332,10 +342,24 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
       );
       r.framed = true;
     };
+    const reconcileFrame = () => {
+      const r = runtime.current;
+      if (!r || !r.framed || motions.has("camera")) return;
+      if (r.reference.visible) placeReference(r.reference,
+        camera.position.clone().sub(controls.target).normalize(), r.width, r.depth);
+      const bounds = small && r.previewBounds ? r.previewBounds.clone() : new THREE.Box3().setFromObject(group);
+      if (!r.placementBounds.isEmpty()) bounds.union(r.placementBounds);
+      if (r.reference.visible) bounds.expandByObject(r.reference);
+      if (r.decoration && r.environment.visible) bounds.expandByObject(r.decoration);
+      if (preserveViewerCamera(camera, controls.target, bounds)) controls.update();
+    };
+    let viewportWidth = 0, viewportHeight = 0;
     const resize = () => {
       const w = el.clientWidth,
         h = el.clientHeight;
       if (!w || !h) return;
+      if (w === viewportWidth && h === viewportHeight) return;
+      viewportWidth = w; viewportHeight = h;
       renderer.setSize(w, h);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
@@ -349,7 +373,7 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
     };
     const ro = new ResizeObserver(resize);
     ro.observe(el);
-    controls.addEventListener("change", render);
+    controls.addEventListener("change", invalidate);
     controls.addEventListener("start", stopCameraMotion);
     preference.addEventListener("change", handleMotionPreference);
     document.addEventListener("visibilitychange", handleVisibility);
@@ -359,9 +383,11 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
       camera,
       controls,
       group,
+      model: createViewerModel(group, invalidate, renderer.capabilities.getMaxAnisotropy()),
       reference: person,
       environment: studio,
       decoration: null,
+      studio: null,
       dimensions: dimensionOverlay,
       placements: placementOverlay,
       placementBounds: new THREE.Box3(),
@@ -373,21 +399,25 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
       doorTarget: 0,
       framed: false,
       frame,
+      reconcileFrame,
       animate,
       settle,
       render,
+      invalidate,
     };
     resize();
     return () => {
       disposed = true;
       cancelAnimationFrame(animationFrame);
+      cancelAnimationFrame(renderFrame);
       motions.clear();
       preference.removeEventListener("change", handleMotionPreference);
       document.removeEventListener("visibilitychange", handleVisibility);
       ro.disconnect();
-      controls.removeEventListener("change", render);
+      controls.removeEventListener("change", invalidate);
       controls.removeEventListener("start", stopCameraMotion);
       controls.dispose();
+      runtime.current?.model.dispose();
       disposeObjects(scene);
       light.shadow.dispose();
       renderer.dispose();
@@ -398,108 +428,20 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
       runtime.current = null;
     };
   }, [small]);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const r = runtime.current;
     if (!r) return;
-    const needsInitialFrame = r.group.children.length === 0;
-    clearGroup(r.group);
-    r.doors = [];
-    const swatches = createSwatchTextures(
-      r.render,
-      r.renderer.capabilities.getMaxAnisotropy(),
-    );
-    withDoorHinges(panels).forEach((panel) => {
-      const doorHandle = panel.handle ?? handle;
-      if (panel.surface === "placeholder") {
-        r.group.add(createPlaceholder(panel));
-        return;
-      }
-      if (
-        panel.door &&
-        (panel.surface === "glass" || panel.surface === "aluminum-glass")
-      ) {
-        const hinge = createTransparentFront(panel, doorHandle);
-        hinge.rotation.y = doorRotation(hinge, r.doorAmount);
-        r.doors.push(hinge);
-        r.group.add(hinge);
-        return;
-      }
-      if (panel.shape === "cylinder") {
-        const radius = panel.size[1] / 2000;
-        const rod = new THREE.Mesh(
-          new THREE.CylinderGeometry(radius, radius, panel.size[0] / 1000, 24),
-          new THREE.MeshStandardMaterial({
-            color: "#a8aba8",
-            roughness: 0.28,
-            metalness: 0.8,
-          }),
-        );
-        rod.rotation.z = Math.PI / 2;
-        rod.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), panel.rotationY ?? 0);
-        rod.position.set(
-          ...(panel.position.map((n) => n / 1000) as [number, number, number]),
-        );
-        rod.castShadow = true;
-        rod.receiveShadow = true;
-        r.group.add(rod);
-        return;
-      }
-      const finish = materials.find((f) => f.id === panel.material);
-      const color = finish?.color || "#b99469";
-      const geo = new THREE.BoxGeometry(
-        ...(panel.size.map((n) => n / 1000) as [number, number, number]),
-      );
-      const mat = new THREE.MeshStandardMaterial({
-        color,
-        roughness: 0.77,
-        metalness: 0,
-      });
-      swatches.attach(
-        mat,
-        finish?.renderTexture === false ? undefined : finish?.swatch,
-      );
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.position.set(
-        ...(panel.position.map((n) => n / 1000) as [number, number, number]),
-      );
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      mesh.rotation.y = panel.rotationY ?? 0;
-      const lines = new THREE.LineSegments(
-        new THREE.EdgesGeometry(geo),
-        new THREE.LineBasicMaterial({
-          color: new THREE.Color(color).multiplyScalar(0.72),
-          transparent: true,
-          opacity: 0.5,
-        }),
-      );
-      mesh.add(lines);
-      if (panel.door) {
-        const hinge = createDoorPivot(panel, mesh);
-        hinge.rotation.y = doorRotation(hinge, r.doorAmount);
-        r.doors.push(hinge);
-        if (doorHandle !== "push") {
-          const h = new THREE.Mesh(
-            new THREE.BoxGeometry(0.009, 0.09, 0.025),
-            new THREE.MeshStandardMaterial({
-              color: 0x3a3733,
-              metalness: 0.65,
-              roughness: 0.35,
-            }),
-          );
-          h.name = "front-handle";
-          h.position.set(doorLatchDirection(panel) * (panel.size[0] / 2000 - 0.045), 0, 0.02);
-          mesh.add(h);
-        }
-        r.group.add(hinge);
-      } else r.group.add(mesh);
-    });
-    r.previewBounds = small ? doorPreviewBounds(r.group, r.doors) : null;
-    if (needsInitialFrame || small) r.frame(getViewDirection(view));
-    r.render();
-    return () => swatches.dispose();
+    const firstGeometry = !r.framed;
+    const updated = r.model.update(panels, materials, handle, r.doorAmount);
+    r.doors = updated.doors;
+    if (updated.boundsChanged) {
+      r.previewBounds = small ? doorPreviewBounds(r.group, r.doors) : null;
+      if (firstGeometry) r.frame(getViewDirection(view));
+      else r.reconcileFrame();
+    }
+    if (updated.changed) r.invalidate();
   }, [panels, materials, handle, small]);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const r = runtime.current;
     if (!r) return;
     const slots = !small && onPlacementSelect ? placementSlots : [];
@@ -507,10 +449,10 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
     const changedBounds = !r.placementBounds.equals(nextBounds);
     r.placementBounds.copy(nextBounds);
     r.placements?.update(slots, onPlacementSelect);
-    if (changedBounds) r.frame(undefined, false);
-    r.render();
+    if (changedBounds) r.reconcileFrame();
+    r.invalidate();
   }, [placementSlots, onPlacementSelect, small]);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const r = runtime.current;
     if (!r) return;
     const start = r.doorAmount;
@@ -527,19 +469,24 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
       Math.abs(start - target) < 0.000001 ? 0 : 540,
     );
   }, [open, small]);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const r = runtime.current;
     if (!r) return;
     r.width = width / 1000;
     r.depth = depth / 1000;
     r.reference.visible = reference && !small;
     r.environment.visible = environment && !small;
-    clearGroup(r.environment);
-    r.decoration = null;
-    if (r.environment.visible) {
+    if (r.environment.visible && !r.studio) {
       const studio = createStudio(r.width, r.depth);
       r.environment.add(studio.group);
-      r.decoration = studio.decoration;
+      r.studio = { ...studio, width: r.width, depth: r.depth };
+    }
+    if (r.studio) {
+      // The wall and vase move with the rear edge; their geometry stays cached.
+      r.studio.group.position.z = (r.studio.depth - r.depth) / 2;
+      r.studio.decoration.position.x += (r.studio.width - r.width) / 2;
+      r.studio.width = r.width;
+      r.decoration = r.studio.decoration;
     }
     r.renderer.domElement.setAttribute(
       "aria-label",
@@ -549,17 +496,25 @@ const Viewer = forwardRef<ViewerHandle, Props>(function Viewer(
           : "") +
         (!small ? " Arrastra para girar y usa la rueda para acercarte." : ""),
     );
+    r.invalidate();
   }, [width, depth, reference, environment, small]);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const r = runtime.current;
     if (!r) return;
     r.dimensions?.update(width, height, depth, dimensions && !small);
-    r.render();
+    r.invalidate();
   }, [width, height, depth, dimensions, small]);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const r = runtime.current;
     if (!r) return;
-    r.frame(getViewDirection(view), true);
+    const previous = framingSettings.current;
+    framingSettings.current = { view, small, open: framedOpen, reference, environment };
+    if (!previous || !r.framed || previous.view !== view || previous.small !== small)
+      r.frame(getViewDirection(view), Boolean(previous));
+    else if (previous.open !== framedOpen || previous.reference !== reference || previous.environment !== environment)
+      r.frame(undefined, true);
+    else r.reconcileFrame();
+    r.invalidate();
   }, [width, height, depth, view, small, framedOpen, reference, environment]);
   return (
     <div className={"viewer " + (small ? "viewer-small" : "")} ref={mount}>

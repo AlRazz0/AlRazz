@@ -11,6 +11,7 @@ type Props = {
   products: readonly PublicProduct[];
   selected: string;
   pending: boolean;
+  preview?: boolean;
   error?: string;
   onSelect: (id: string) => void;
   onMove?: (id: string, direction: -1 | 1) => void;
@@ -60,11 +61,11 @@ function LaneDiagram({ wall, lane, selected, pattern }: {
   </div>;
 }
 
-export function KitchenLayoutMap({ plan, quote, products, selected, pending, error, onSelect, onMove }: Props) {
+export function KitchenLayoutMap({ plan, quote, products, selected, pending, preview = false, error, onSelect, onMove }: Props) {
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   const layout = useMemo(() => buildKitchenLayoutView(plan, quote, products), [plan, quote, products]);
   return <section className="kitchen-layout-map" aria-labelledby={`${id}-title`}>
-    <div className="kitchen-layout-heading"><div><p>Tu cocina, pieza a pieza</p><h2 id={`${id}-title`}>Vista de distribución.</h2></div><span className={`kitchen-layout-status${error || layout.invalid ? " needs-review" : ""}`} role="status"><Ruler size={15} aria-hidden="true" />{pending ? "Calculando distribución…" : layout.invalid ? "Revisa las medidas" : error ? "Necesita un ajuste" : layout.fromQuote ? "Distribución calculada" : "Borrador: falta cálculo"}</span></div>
+    <div className="kitchen-layout-heading"><div><p>Tu cocina, pieza a pieza</p><h2 id={`${id}-title`}>Vista de distribución.</h2></div><span className={`kitchen-layout-status${error || layout.invalid ? " needs-review" : ""}`} role="status"><Ruler size={15} aria-hidden="true" />{preview ? "Vista previa: medida sin confirmar" : pending ? "Calculando distribución…" : layout.invalid ? "Revisa las medidas" : error ? "Necesita un ajuste" : layout.fromQuote ? "Distribución calculada" : "Borrador: falta cálculo"}</span></div>
     <p className="kitchen-layout-intro">Cada bloque ocupa su ancho real. Selecciona una pieza en la lista para ajustar sus medidas; las columnas comparten espacio con los muebles bajos.</p>
     <p className="kitchen-layout-scroll-hint">Desliza los planos de lado a lado para ver cada fila completa.</p>
     <div className="kitchen-layout-legend" aria-label="Leyenda"><span><i className="is-furniture" />Mueble</span><span><i className="is-reserved" />Reserva de equipo o lavadero</span><span><i className="is-free" />Espacio libre</span><span><i className="is-blocked" />Bloqueo por columna o equipo alto</span><span><i className="is-excess" />Exceso</span></div>
