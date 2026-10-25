@@ -9,6 +9,8 @@ import { Header, Footer } from "./App";
 import { CatalogThumbnail } from "./CatalogThumbnail";
 import { QuoteRequestForm } from "./QuoteRequestForm";
 import { materialLabel } from "./materials";
+import { AssistantKitchenMeasures } from "./AssistantKitchenMeasures";
+import { kitchenSpaceReasons } from "../lib/kitchen-space-summary";
 import "./design-assistant.css";
 
 type Purpose = DesignAssistantInput["purpose"];
@@ -140,8 +142,9 @@ export default function DesignAssistant() {
         <div className="assistant-option-grid">{result.options.map((option,index)=><article className={`assistant-option${selection?.optionId===option.id?" is-chosen":""}`} key={option.id}>
           <div className="assistant-option-image"><span>Propuesta {String(index+1).padStart(2,"0")}</span><CatalogThumbnail name={option.title} geometry={option.kind==="furniture"?option.product.preview.geometry:option.result.geometry} materials={option.kind==="kitchen"?option.result.materials:settings?.materials??[]} handle={option.kind==="furniture"?option.config.handle:"push"}/></div>
           <div className="assistant-option-copy"><p className="assistant-budget-state" data-state={option.budgetState}>{option.budgetState==="within"?"Dentro de tu presupuesto":option.budgetState==="over"?"Supera el presupuesto indicado":option.budgetState==="quote-required"?"El taller debe confirmar el precio":"Propuesta compatible"}</p>
-            <h3>{option.title}</h3><p className="assistant-option-size">{dimension(option.fit.width)} ancho × {dimension(option.fit.height)} alto × {dimension(option.fit.depth)} fondo</p>
-            <ul>{option.reasons.map((reason,reasonIndex)=><li key={reasonIndex}>{reason}</li>)}</ul>
+            <h3>{option.title}</h3>
+            {option.kind === "kitchen" ? <AssistantKitchenMeasures summary={option.spaceSummary} quote={option.result}/> : <p className="assistant-option-size">{dimension(option.fit.width)} ancho × {dimension(option.fit.height)} alto × {dimension(option.fit.depth)} fondo</p>}
+            <ul>{(option.kind === "kitchen" && !option.spaceSummary ? kitchenSpaceReasons(option.plan.items.length) : option.reasons).map((reason,reasonIndex)=><li key={reasonIndex}>{reason}</li>)}</ul>
             <div className="assistant-option-price"><span>Importe referencial</span><strong>{option.price===null?"Por cotizar":money(option.price)}</strong></div>
             <button type="button" className="button assistant-personalize" disabled={!!busyChoice} onClick={()=>void choose(option,true)}>{busyChoice===option.id?<Loader2 size={16} className="animate-spin"/>:<SlidersHorizontal size={16}/>} Personalizar esta propuesta</button>
             <button type="button" className="assistant-request" disabled={!!busyChoice} onClick={()=>void choose(option,false)}>Solicitar cotización <ArrowUpRight size={17}/></button>

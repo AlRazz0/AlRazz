@@ -5,6 +5,7 @@ import {
 } from "./furniture.ts";
 import { buildKitchen, publicKitchenQuote, type KitchenPlan, type KitchenQuote } from "./kitchen.ts";
 import { publicFurnitureResult, publicProduct, type PublicProductMetadata } from "./public-product.ts";
+import { kitchenSpaceReasons, summarizeKitchenSpace, type KitchenSpaceSummary } from "./kitchen-space-summary.ts";
 
 const measure = (minimum: number, maximum: number) => z.number().finite().int().min(minimum).max(maximum).multipleOf(10, "Usa medidas en pasos de 10 mm.");
 export const designAssistantInputSchema = z.object({
@@ -22,7 +23,7 @@ export const designAssistantInputSchema = z.object({
 });
 export type DesignAssistantInput = z.infer<typeof designAssistantInputSchema>;
 export type DesignAssistantBudgetState = "not-provided" | "within" | "over" | "quote-required";
-/** Kitchen depth is the greatest module depth, not the second wall's length. */
+/** Legacy kitchen ranking bounds: width is occupied A, depth is module depth, not the L envelope. Use spaceSummary for display. */
 export type DesignAssistantFit = { width: number; height: number; depth: number; freeWidth: number; freeHeight: number; freeDepth: number };
 type AssistantProduct = PublicProductMetadata & { preview: ReturnType<typeof publicFurnitureResult> };
 type RecommendationBase = {
@@ -31,7 +32,7 @@ type RecommendationBase = {
 };
 export type DesignAssistantOption = RecommendationBase & (
   | { kind: "furniture"; product: AssistantProduct; config: Config }
-  | { kind: "kitchen"; plan: KitchenPlan; result: KitchenQuote }
+  | { kind: "kitchen"; plan: KitchenPlan; result: KitchenQuote; spaceSummary: KitchenSpaceSummary }
 );
 export type DesignAssistantResult = {
   input: DesignAssistantInput; options: DesignAssistantOption[];
@@ -223,13 +224,8 @@ function kitchenCandidates(input: DesignAssistantInput, products: readonly Produ
       const fit = fitInfo(input, occupiedA, result.envelope.height, greatestDepth);
       const option: DesignAssistantOption = {
         kind: "kitchen", id: `kitchen-${source.product.id}-${variant}`, title: `${layout === "l" ? "Cocina en L" : "Cocina lineal"} · ${variant === "compact" ? "inicio compacto" : variant === "storage" ? "más almacenaje" : "con alacenas"}`,
-        plan, result, price: result.price, fit,
-        reasons: [
-          `Propuesta inicial con ${items.length} módulos publicados, dentro de las paredes y altura indicadas.`,
-          ...fitReasons(fit),
-          ...(layout === "l" ? [`Pared B de ${wallB} mm; se respeta la reserva de esquina calculada por el motor.`] : []),
-          "Los electrodomésticos, lavadero e instalaciones no están incluidos: añade sus reservas y revisa la distribución antes de solicitar la cotización final.",
-        ],
+        plan, result, price: result.price, fit, spaceSummary: summarizeKitchenSpace(result),
+        reasons: kitchenSpaceReasons(items.length),
         ...budgetInfo(result.price, input.budget),
       };
       candidates.push({ option, score: candidateScore(option, input, variant === "compact" ? 0 : variant === "storage" ? 1 : 2), order: source.product.order, model: source.product.id });
