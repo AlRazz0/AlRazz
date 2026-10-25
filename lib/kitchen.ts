@@ -11,6 +11,7 @@ import {
   type Settings,
 } from "./furniture.ts";
 import { publicGeometry, type VisualPanel } from "./public-geometry.ts";
+import { kitchenEnvironmentSchema, verifyKitchenEnvironment, type KitchenVerification } from "./kitchen-environment.ts";
 
 /** Alignment gaps reserve space only; they are never manufactured or priced. */
 export const MIN_KITCHEN_SPACE_WIDTH = 10;
@@ -53,6 +54,7 @@ export const kitchenPlanSchema = z
     wallElevation: measure(1200, 2000),
     install: z.boolean(),
     transport: z.boolean(),
+    environment: kitchenEnvironmentSchema.optional(),
     items: z.array(kitchenItemSchema).min(1).max(16),
   })
   .strict()
@@ -90,6 +92,27 @@ export const kitchenPlanSchema = z
         path: ["items"],
         message: "Añade al menos un mueble a la cocina.",
       });
+    const environmentalIds = new Set<string>();
+    for (const [index, obstacle] of (plan.environment?.obstacles ?? []).entries()) {
+      const path = ["environment", "obstacles", index];
+      const add = (message: string) => context.addIssue({ code: z.ZodIssueCode.custom, path, message });
+      if (environmentalIds.has(obstacle.id)) add("Cada obstáculo necesita un identificador único.");
+      environmentalIds.add(obstacle.id);
+      if (plan.layout === "straight" && obstacle.wall === "b") add(`«${obstacle.name}»: usa la pared A en una cocina lineal.`);
+      if (obstacle.offset + obstacle.width > plan.walls[obstacle.wall]) add(`«${obstacle.name}» supera el largo de la pared ${obstacle.wall.toUpperCase()}.`);
+      if (obstacle.elevation + obstacle.height > (plan.roomHeight ?? 2600)) add(`«${obstacle.name}» supera la altura del ambiente.`);
+      if (obstacle.wall === "b" && obstacle.depth > plan.walls.a) add(`«${obstacle.name}» supera el fondo disponible desde la pared B.`);
+    }
+    const drawerIds = new Set<string>();
+    for (const [index, drawer] of (plan.environment?.drawers ?? []).entries()) {
+      const item = plan.items.find(item => item.id === drawer.itemId);
+      const add = (message: string) => context.addIssue({ code: z.ZodIssueCode.custom, path: ["environment", "drawers", index], message });
+      if (drawerIds.has(drawer.id)) add("Cada recorrido de cajón necesita un identificador único.");
+      drawerIds.add(drawer.id);
+      if (!item || item.kind !== "furniture") add(`«${drawer.name}» necesita un mueble existente.`);
+      else if (drawer.offset + drawer.width > item.config.width || drawer.elevation + drawer.height > item.config.height)
+        add(`«${drawer.name}» no cabe dentro del frente del mueble indicado. Revisa su ancho, altura y posición.`);
+    }
   });
 export type KitchenItem = z.infer<typeof kitchenItemSchema>;
 export type KitchenPlan = z.infer<typeof kitchenPlanSchema>;
@@ -115,6 +138,7 @@ export type KitchenQuote = {
   envelope: { width: number; height: number; depth: number };
   warnings: string[];
   materials: PublicMaterial[];
+  verification?: KitchenVerification;
 };
 /** Private calculation remains numeric for administration and immutable snapshots. */
 export type KitchenCalculation = Omit<KitchenQuote, "price" | "furniturePrice" | "servicesPrice" | "modules"> & {
@@ -387,6 +411,11 @@ export function buildKitchen(
       min[axis] = Math.min(min[axis], box.min[axis]);
       max[axis] = Math.max(max[axis], box.max[axis]);
     }
+  const fronts = new Map(prepared.filter(part => part.item.kind === "furniture").map(part => [part.item.id,
+    part.geometry.map(panel => ({ ...panel, ...(panel.door && part.item.kind === "furniture" ? { handle: part.item.config.handle } : {}) }))]));
+  const verification = verifyKitchenEnvironment(plan, placed, fronts);
+  const environmentalErrors = verification.issues.filter(issue => issue.severity === "error");
+  if (environmentalErrors.length) throw new Error(environmentalErrors.map(issue => issue.message).join(" "));
   const center = [(min[0] + max[0]) / 2, 0, (min[2] + max[2]) / 2];
   for (const panel of geometry)
     panel.position = panel.position.map(
@@ -423,9 +452,11 @@ export function buildKitchen(
         depth: max[2] - min[2],
       },
       materials: publicMaterials(settings),
+      verification,
       warnings: [
         "Composición referencial: confirma medidas, anclajes, ventilación e instalaciones en una visita técnica.",
         "Los espacios reservados no incluyen electrodomésticos, lavadero, encimera ni sus recortes o instalaciones.",
+        ...verification.issues.map(issue => issue.message),
         ...(plan.layout === "l" && cornerOffset
           ? [
               `La pared B reserva ${cornerOffset} mm en la esquina para evitar cruces entre muebles.`,

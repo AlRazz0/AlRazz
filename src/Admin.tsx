@@ -92,6 +92,8 @@ import { AdminMaterials } from "./AdminMaterials";
 import { AdminExtrasSummary } from "./AdminExtrasSummary";
 import { AdminPlanImport } from "./AdminPlanImport";
 import AdminCRM from "./AdminCRM";
+import AdminMeasurements from "./AdminMeasurements";
+import { AdminCompletedProjects } from "./AdminCompletedProjects";
 
 type AdminSnapshot = {
   admin: boolean;
@@ -390,8 +392,9 @@ export default function Admin() {
   const [filter, setFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [constructionFilter, setConstructionFilter] = useState("all");
-  const [activeTab, setActiveTab] = useState(new URLSearchParams(location.search).get("tab") === "crm" ? "crm" : "catalog");
+  const [activeTab, setActiveTab] = useState(() => { const tab=new URLSearchParams(location.search).get("tab"); return tab && ["crm","measurements","projects"].includes(tab) ? tab : "catalog"; });
   const [crmVisited,setCrmVisited] = useState(new URLSearchParams(location.search).get("tab") === "crm");
+  const [projectsVisited,setProjectsVisited] = useState(new URLSearchParams(location.search).get("tab") === "projects");
   const [editor, setEditor] = useState<Product | null>(null);
   const [original, setOriginal] = useState<Product | null>(null);
   const [editorError, setEditorError] = useState("");
@@ -1388,13 +1391,15 @@ export default function Admin() {
           <button onClick={() => setActiveTab("materials")}><Palette size={21} /><span><strong>Gestionar acabados</strong><small>Añade colores y marcas; revisa sus tarifas y visibilidad.</small></span></button>
           <button onClick={() => { setActiveTab("catalog"); setCategoryFilter("Cocina"); setConstructionFilter("all"); setFilter("all"); setSearch(""); }}><SlidersHorizontal size={21} /><span><strong>Editar módulos de cocina</strong><small>Cambia medidas y opciones de los muebles que usará el cliente.</small></span></button>
         </div>
-        <Tabs value={activeTab} onValueChange={tab => {setActiveTab(tab);if(tab === "crm")setCrmVisited(true);}} className="admin-tabs">
+        <Tabs value={activeTab} onValueChange={tab => {setActiveTab(tab);if(tab === "crm")setCrmVisited(true);if(tab === "projects")setProjectsVisited(true);}} className="admin-tabs">
           <TabsList className="admin-tab-list">
             <TabsTrigger value="catalog">
               <Package size={17} />
               Catálogo
             </TabsTrigger>
             <TabsTrigger value="crm"><ClipboardList size={17} /> Cotizaciones · CRM</TabsTrigger>
+            <TabsTrigger value="measurements"><SlidersHorizontal size={17} /> Uso y rendimiento</TabsTrigger>
+            <TabsTrigger value="projects"><Package size={17} /> Trabajos reales</TabsTrigger>
             <TabsTrigger value="materials">
               <Palette size={17} /> Acabados
               {settingsDirty && <i className="admin-unsaved-dot" aria-label="Cambios sin guardar" />}
@@ -2117,6 +2122,8 @@ export default function Admin() {
             <KitchenAdmin />
           </TabsContent>
           <TabsContent value="crm" forceMount hidden={activeTab !== "crm"}>{crmVisited && <AdminCRM active={activeTab === "crm"}/>}</TabsContent>
+          <TabsContent value="measurements"><AdminMeasurements active={activeTab === "measurements"}/></TabsContent>
+          <TabsContent value="projects" forceMount hidden={activeTab !== "projects"}>{projectsVisited&&<AdminCompletedProjects active={activeTab === "projects"} products={products} materials={settings.materials}/>}</TabsContent>
           <TabsContent value="access">
             <AdminPasskeys onSessionExpired={load} />
           </TabsContent>

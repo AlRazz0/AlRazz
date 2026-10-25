@@ -3,6 +3,7 @@ import { ArrowUpRight, CheckCircle2, ClipboardList, Loader2 } from "lucide-react
 import { api } from "../lib/api";
 import type { QuoteRequestReceipt, QuoteRequestSource } from "../lib/crm";
 import "./quote-request.css";
+import { recordStep } from "../lib/measurement-client";
 
 export function QuoteRequestForm({ sources, projectTitle = "Tu proyecto", initiallyOpen = false }: {
   sources: readonly QuoteRequestSource[];
@@ -25,6 +26,7 @@ export function QuoteRequestForm({ sources, projectTitle = "Tu proyecto", initia
   currentSources.current = sourceKey;
   useEffect(() => { setReceipt(undefined); setError(""); }, [sourceKey]);
   useEffect(() => { if(initiallyOpen)setOpen(true); }, [initiallyOpen]);
+  useEffect(() => { if(open && !receipt)recordStep("quote_started"); }, [open,receipt]);
   useEffect(() => { if(open && !receipt)firstField.current?.focus({preventScroll:true}); }, [open,receipt]);
   const canSubmit = sources.length > 0 && sources.length <= 20;
   async function submit(event: FormEvent) {

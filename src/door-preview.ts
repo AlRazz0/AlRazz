@@ -1,6 +1,7 @@
 import * as THREE from "three";
+import { KITCHEN_DOOR_OPEN_RADIANS } from "../lib/kitchen-opening-geometry.ts";
 
-export const DOOR_OPEN_ANGLE = -Math.PI * 0.58;
+export const DOOR_OPEN_ANGLE = -KITCHEN_DOOR_OPEN_RADIANS;
 
 export function doorRotation(door: THREE.Group, amount: number): number {
   return (door.userData.closedRotationY ?? 0) +

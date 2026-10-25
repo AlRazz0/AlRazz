@@ -24,7 +24,12 @@ import { nextLogoTap } from "./footer-access";
 import "./chrome-quote.css";
 import "./home-redesign.css";
 import "./alrazz-identity.css";
+import { startMeasurements } from "../lib/measurement-client";
+import { MeasurementPreferences } from "./MeasurementPreferences";
+import "./measurements.css";
 const DesignAssistant = lazy(() => import("./DesignAssistant"));
+const CustomerQuote = lazy(() => import("./CustomerQuote"));
+const CompletedProjects = lazy(() => import("./CompletedProjects").then(module => ({default:module.CompletedProjects})));
 const Configurator = lazy(() => import("./Configurator"));
 const Cart = lazy(() => import("./Cart"));
 const Admin = lazy(() => import("./Admin"));
@@ -163,16 +168,20 @@ export function Footer({
         </a>
       )}
       <span>Diseñado y fabricado en Perú · 2026</span>
+      <MeasurementPreferences />
     </footer>
   );
 }
 export default function App() {
   const path = window.location.pathname;
+  useEffect(() => { void startMeasurements(); }, []);
   return (
     <Suspense
       fallback={<div className="loading-page">Preparando tu espacio…</div>}
     >
-      {path === "/asistente" ? (
+      {path === "/cotizacion" ? (
+        <CustomerQuote />
+      ) : path === "/asistente" ? (
         <DesignAssistant />
       ) : path === "/admin" ? (
         <Admin />
@@ -337,6 +346,7 @@ function Home() {
             <p className="home-material-note">Los tonos de pantalla son referenciales. Confirmamos disponibilidad y muestra física contigo.</p>
           </div>
         </section>
+        <Suspense fallback={null}><CompletedProjects limit={6}/></Suspense>
         <section id="proceso" className="home-section home-process" aria-labelledby="process-title" tabIndex={-1}>
           <div className="home-section-heading" data-reveal><div><p className="home-eyebrow">De la pantalla a tu espacio.</p><h2 id="process-title">Pensarlo. Probarlo. Habitarlo.</h2></div><a className="home-text-link" href="/configurar">Empieza a crear <ArrowUpRight size={19} aria-hidden="true" /></a></div>
           <div className="home-steps">

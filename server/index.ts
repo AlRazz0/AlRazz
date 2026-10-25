@@ -14,7 +14,10 @@ import {
 } from "./admin-auth.ts";
 import { z } from "zod";
 import { designAssistantInputSchema, getDesignRecommendations } from "../lib/design-assistant.ts";
-import { CrmError, createQuoteRequest, listQuoteRequests, readQuoteRequest, updateQuoteRequest } from "./crm.ts";
+import { CrmError, createQuoteRequest, listQuoteRequests, readQuoteRequest, updateQuoteRequest, readCrmMetrics, listCrmAgenda, completeQuoteAction } from "./crm.ts";
+import { recordMeasurement, readMeasurements } from "./measurements.ts";
+import { listCommercialQuotes, issueCommercialQuote, viewCommercialQuote, respondCommercialQuote } from "./commercial-quotes.ts";
+import { CompletedProjectsError, listCompletedProjects, readCompletedProject, saveCompletedProject, removeCompletedProject } from "./completed-projects.ts";
 import { publicFurnitureResult, publicPrice, publicProduct } from "../lib/public-product.ts";
 import {
   buildKitchen,
@@ -761,6 +764,13 @@ async function get(request: Request, env: Env) {
     ) ||
     "catalog";
   switch (action) {
+    case "measurements": return readMeasurements(request, env);
+    case "crm-metrics": return readCrmMetrics(request, env);
+    case "crm-agenda": return listCrmAgenda(request, env);
+    case "commercial-quotes": return listCommercialQuotes(request, env, url.searchParams.get("id") || "");
+    case "completed-projects": return listCompletedProjects(request, env);
+    case "completed-project": return readCompletedProject(request, env, url.searchParams.get("id") || "");
+    case "admin-completed-projects": return listCompletedProjects(request, env, true);
     case "quote-requests": return listQuoteRequests(request, env);
     case "quote-request": return readQuoteRequest(request, env, url.searchParams.get("id") || "");
     case "passkeys": return listPasskeys(request, env);
@@ -879,6 +889,13 @@ async function post(
 ) {
   const data = await bodyOf(request);
   const op = quote || z.string().parse(data.op);
+  if (op === "measure") return recordMeasurement(request, env, data);
+  if (op === "issue-commercial-quote") return issueCommercialQuote(request, env, data);
+  if (op === "view-commercial-quote") return viewCommercialQuote(request, env, data);
+  if (op === "respond-commercial-quote") return respondCommercialQuote(request, env, data);
+  if (op === "complete-quote-action") return completeQuoteAction(request, env, data);
+  if (op === "save-completed-project") return saveCompletedProject(request, env, data);
+  if (op === "remove-completed-project") return removeCompletedProject(request, env, data);
   if (op === "passkey-register-options") return registrationOptions(request, env, data);
   if (op === "passkey-register-verify") return registrationVerify(request, env, data);
   if (op === "passkey-auth-options") return authenticationOptions(request, env);
@@ -959,7 +976,7 @@ export default {
           error.status,
           error.retryAfter ? { "Retry-After": String(error.retryAfter) } : {},
         );
-      if (error instanceof HttpError || error instanceof CrmError)
+      if (error instanceof HttpError || error instanceof CrmError || error instanceof CompletedProjectsError)
         return json({ error: error.message, code: error.code }, error.status);
       if (error instanceof z.ZodError)
         return json(

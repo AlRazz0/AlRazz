@@ -10,6 +10,8 @@ En cocina, `spaceSummary.walls` describe por separado las paredes A y B, su long
 
 `price` es el importe referencial calculado en servidor o `null` cuando el administrador oculta precios. `withinBudget` solo es verdadero o falso si existen presupuesto e importe público. `budgetState` distingue `within`, `over`, `quote-required` y `not-provided`; la respuesta añade `no-options` cuando ningún candidato encaja. Los costes internos y las tarifas ocultas no se publican ni justifican que una opción esté dentro del presupuesto.
 
+La tabla de comparación utiliza `features` y `benefits`: cantidad de muebles, repisas y puertas realmente generadas y barras de colgado presentes en los herrajes del modelo. En cocina suma las características de los muebles, sin convertir reservas o huecos en productos; muestra ocupación y espacio libre por pared/fila. Los beneficios comparativos de precio usan únicamente los totales públicos del servidor. No se infieren cajones, volumen útil ni capacidad de carga: los cajones quedan por confirmar con el taller. Una necesidad escrita como complemento no crea automáticamente una pieza en el motor.
+
 La búsqueda es acotada, no una optimización exhaustiva: hasta 32 modelos de la familia, tres tamaños por mueble y 32 intentos constructivos por tamaño. En cocina se preseleccionan hasta dos bases compatibles y una alacena por composición, se evalúan como máximo seis composiciones y se detiene al obtener tres distintas válidas. Las cocinas son puntos de partida; se deben añadir las reservas de equipos, lavadero e instalaciones y revisar las medidas antes de solicitar la cotización final. Los snapshots guardados permanecen intactos.
 
 Validación:
