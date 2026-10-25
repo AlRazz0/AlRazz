@@ -41,7 +41,7 @@ export function KitchenDimensionInput({ label, value, min, max, onCommit, onVali
       }}
       onBlur={commit} onKeyDown={event => {
         if (event.key === "Enter") { event.preventDefault(); commit(); }
-        if (event.key === "Escape") { setDraft(String(value)); setError(""); onValidityChange?.(true); }
+        if (event.key === "Escape") { setDraft(String(value)); setError(""); onValidityChange?.(Number.isFinite(value) && value >= min && value <= max && value % 10 === 0); }
       }} />
     <small id={`${id}-hint`} role={error ? "alert" : undefined} className={error ? "kitchen-dimension-error" : ""}>
       {error || `${min}–${max} mm`}

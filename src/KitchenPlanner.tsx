@@ -28,6 +28,7 @@ import {
   type Config,
 } from "../lib/furniture";
 import type { KitchenPlan, KitchenQuote } from "../lib/kitchen";
+import { MIN_KITCHEN_SPACE_WIDTH } from "../lib/kitchen";
 import type { PublicProduct, PublicSettings } from "./types";
 import { Header, Footer } from "./App";
 import Viewer, { type View } from "./Viewer";
@@ -35,7 +36,9 @@ import { FrontSelector, DoorLayoutSelector } from "./FrontSelector";
 import { MaterialDetails, MaterialSwatch } from "./MaterialSwatch";
 import { materialLabel } from "./materials";
 import { ContactLinks } from "./ContactLinks";
-import { hasKitchenFurniture, moveKitchenItem, removeKitchenItem, startingKitchen } from "./kitchen-planner-state";
+import { sameKitchenPlan, canMoveKitchenItem, hasKitchenFurniture, moveKitchenItem, removeKitchenItem, startingKitchen } from "./kitchen-planner-state";
+import { getKitchenAddChoices } from "./kitchen-add-choices";
+import { KitchenLayoutMap } from "./KitchenLayoutMap";
 import { KitchenTemplatePicker } from "./KitchenTemplatePicker";
 import { KitchenBuilderDialog } from "./KitchenBuilderDialog";
 import { getEmptyKitchenSlot, getKitchenReplacementSlot, getKitchenSlots, type KitchenSlot } from "./kitchen-slots";
@@ -78,6 +81,7 @@ export default function KitchenPlanner() {
   const [quoteKey, setQuoteKey] = useState("");
   const [selected, setSelected] = useState("");
   const [invalidMeasures, setInvalidMeasures] = useState<string[]>([]);
+  const [invalidRoomMeasures, setInvalidRoomMeasures] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
@@ -88,6 +92,8 @@ export default function KitchenPlanner() {
   const [snapshot, setSnapshot] = useState(false);
   const [saved, setSaved] = useState<SavedKitchen>();
   const [saving, setSaving] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [addError, setAddError] = useState("");
   const [name, setName] = useState("Mi cocina");
   const [stored, setStored] = useState<SavedKitchen[]>([]);
   const [view, setView] = useState<View>("iso");
@@ -99,11 +105,13 @@ export default function KitchenPlanner() {
   const [copied, setCopied] = useState(false);
   const [quoteContactOpen, setQuoteContactOpen] = useState(false);
   const [placement, setPlacement] = useState<KitchenSlot>();
+  const [placementProduct, setPlacementProduct] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [pastPlans, setPastPlans] = useState<KitchenPlan[]>([]);
   const [futurePlans, setFuturePlans] = useState<KitchenPlan[]>([]);
   const request = useRef(0);
   const editRevision = useRef(0);
+  const acceptedPlanQuote = useRef("");
   const moduleEditor = useRef<HTMLDivElement>(null);
   const sceneElement = useRef<HTMLElement>(null);
   const contactSection = useRef<HTMLElement>(null);
@@ -165,6 +173,11 @@ export default function KitchenPlanner() {
       setError("");
       return;
     }
+    if (acceptedPlanQuote.current === JSON.stringify(plan)) {
+      acceptedPlanQuote.current = "";
+      setPending(false);
+      return;
+    }
     const controller = new AbortController();
     const sequence = ++request.current;
     setPending(true);
@@ -191,10 +204,10 @@ export default function KitchenPlanner() {
           }
         })
         .catch((cause) => {
-          if (!controller.signal.aborted) setError(cause.message);
+          if (sequence === request.current && !controller.signal.aborted) setError(cause.message);
         })
         .finally(() => {
-          if (!controller.signal.aborted) setPending(false);
+          if (sequence === request.current && !controller.signal.aborted) setPending(false);
         });
     }, 250);
     return () => {
@@ -204,10 +217,14 @@ export default function KitchenPlanner() {
   }, [plan, snapshot]);
 
   function change(next: KitchenPlan, recordHistory = true) {
+    // An unavailable move or identical edit must not invalidate a valid quote.
+    if (plan && sameKitchenPlan(plan, next)) return;
+    request.current++;
+    acceptedPlanQuote.current = "";
     if (
       recordHistory &&
       plan &&
-      JSON.stringify(plan) !== JSON.stringify(next)
+      !sameKitchenPlan(plan, next)
     ) {
       setPastPlans((previous) => [
         ...previous.slice(-19),
@@ -223,7 +240,10 @@ export default function KitchenPlanner() {
     setCopied(false);
     setQuoteContactOpen(false);
     setActionError("");
+    setAddError("");
     setSaveNotice("");
+    setPlacement(undefined);
+    setPlacementProduct("");
     history.replaceState(null, "", "/cocinas");
   }
   function restorePlan(direction: "undo" | "redo") {
@@ -274,23 +294,37 @@ export default function KitchenPlanner() {
         config: { ...next, install: false, transport: false },
       });
   }
-  function add(kind: Item["kind"]) {
-    if (!plan || plan.items.length >= 16) return;
-    const id = crypto.randomUUID();
-    let item: Item;
+  function selectModuleEditor(id: string) {
+    setSelected(id);
+    requestAnimationFrame(() => {
+      moduleEditor.current?.scrollIntoView({ block: "start", behavior: "instant" });
+      moduleEditor.current?.focus({ preventScroll: true });
+    });
+  }
+  async function applyCheckedPlan(next: KitchenPlan) {
+    if (plan && sameKitchenPlan(plan, next)) return;
+    if (!hasKitchenFurniture(next)) { change(next); return; }
+    const revision = editRevision.current;
+    const response = await fetch("/api/kitchen-quote", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan: next }), signal: AbortSignal.timeout(15000),
+    });
+    const result = await response.json() as KitchenQuote & { error?: string };
+    if (!response.ok) throw Error(result.error || "Este módulo no encaja en la distribución. Revisa sus medidas o posición.");
+    if (revision !== editRevision.current) throw Error("La distribución cambió mientras comprobábamos el módulo. Selecciona de nuevo su espacio.");
+    change(next);
+    acceptedPlanQuote.current = JSON.stringify(next);
+    setQuote(result); setQuoteKey(JSON.stringify(next)); setPending(false); setError("");
+  }
+  async function add(kind: Item["kind"]) {
+    if (!plan || invalidRoom || plan.items.length >= 16) return;
     if (kind === "furniture") {
-      const product = products.find((value) => value.id === addProduct);
-      if (!product) return;
-      item = {
-        id,
-        kind,
-        wall,
-        row,
-        productId: product.id,
-        config: { ...product.defaults, install: false, transport: false },
-      };
-    } else {
-      item = {
+      const choice = addChoices.find(choice => choice.product.id === addProduct);
+      if (choice) { setPlacementProduct(choice.product.id); setPlacement(choice.space); }
+      return;
+    }
+    const id = crypto.randomUUID();
+    const item: Item = {
         id,
         kind,
         wall,
@@ -303,10 +337,13 @@ export default function KitchenPlanner() {
               ? 600
               : 900,
         depth: kind === "space" && row === "wall" ? 350 : 600,
-      };
-    }
-    change({ ...plan, items: [...plan.items, item] });
-    setSelected(id);
+    };
+    setAdding(true); setAddError("");
+    try {
+      await applyCheckedPlan({ ...plan, items: [...plan.items, item] });
+      setSelected(id);
+    } catch (cause) { setAddError(cause instanceof Error ? cause.message : "No se pudo comprobar el espacio. Tu distribución se conserva."); }
+    finally { setAdding(false); }
   }
   async function save() {
     if (!plan || !currentQuote) return;
@@ -357,7 +394,7 @@ export default function KitchenPlanner() {
     }
   }
   async function requestKitchenQuote() {
-    if (saved || (await save())) setQuoteContactOpen(true);
+    if ((saved && saved.name === name.trim()) || (await save())) setQuoteContactOpen(true);
   }
   async function copyLink() {
     if (!saved) return;
@@ -378,20 +415,25 @@ export default function KitchenPlanner() {
     current?.kind === "furniture"
       ? products.find((item) => item.id === current.productId)
       : undefined;
+  const invalidRoom = invalidRoomMeasures.filter(key => key !== "wall-b" || plan?.layout === "l").length > 0;
+  const roomValidity = (key: string, valid: boolean) => setInvalidRoomMeasures(previous =>
+    valid ? previous.filter(value => value !== key) : previous.includes(key) ? previous : [...previous, key]);
   const currentQuote = Boolean(
-    quote && plan && hasKitchenFurniture(plan) && quoteKey === JSON.stringify(plan) && !pending && !error && !invalidMeasures.length,
+    quote && plan && hasKitchenFurniture(plan) && quoteKey === JSON.stringify(plan) && !pending && !error && !invalidMeasures.length && !invalidRoom,
   );
   const visibleQuote = quote && plan && hasKitchenFurniture(plan) && quoteKey === JSON.stringify(plan) ? quote : undefined;
   const placementSlots = useMemo(
     () => (plan && quote && currentQuote ? getKitchenSlots(plan, quote) : []),
     [plan, quote, currentQuote],
   );
-  function placeModule(product: PublicProduct, config: Config) {
+  async function placeModule(product: PublicProduct, config: Config) {
     if (!plan || !placement) return;
     const placed = insertKitchenModule(plan, placement, product, config, () =>
       crypto.randomUUID(),
     );
-    change(placed.plan);
+    setAdding(true);
+    try { await applyCheckedPlan(placed.plan); }
+    finally { setAdding(false); }
     setSelected(placed.selected);
     setPlacement(undefined);
     sceneElement.current?.scrollIntoView({
@@ -408,6 +450,11 @@ export default function KitchenPlanner() {
   const kitchenProducts = products.filter(
     (product) => product.active && product.category === "Cocina",
   );
+  const addChoices = useMemo(() => plan ? getKitchenAddChoices(plan, currentQuote ? quote : undefined, kitchenProducts, wall, row) : [], [plan, quote, currentQuote, products, wall, row]);
+  const replacing = plan?.items.find(item => item.id === placement?.replaceId);
+  useEffect(() => {
+    if (addChoices.length && !addChoices.some(choice => choice.product.id === addProduct)) setAddProduct(addChoices[0].product.id);
+  }, [addChoices, addProduct]);
   if (loading)
     return (
       <>
@@ -434,7 +481,7 @@ export default function KitchenPlanner() {
   return (
     <>
       <Header compact />
-      <main className="kitchen-page">
+      <main id="main-content" tabIndex={-1} className="kitchen-page">
         <section className="kitchen-intro">
           <div>
             <p className="eyebrow">EL CAPO / COCINAS A TU MEDIDA</p>
@@ -498,14 +545,14 @@ export default function KitchenPlanner() {
                   environment={false}
                   placementSlots={placementSlots}
                   onPlacementSelect={(id) =>
-                    setPlacement(placementSlots.find((slot) => slot.id === id))
+                    { setPlacementProduct(""); setPlacement(placementSlots.find((slot) => slot.id === id)); }
                   }
                 />
               ) : (
                 <div className="kitchen-empty">
                   <LayoutPanelTop size={42} strokeWidth={1} />
                   <p>{pending && hasKitchenFurniture(plan) ? "Preparando tu nueva distribución…" : error ? "Ajusta los parámetros para visualizar esta distribución." : "Tu espacio está listo. Empieza por un mueble."}</p>
-                  {!plan.items.length && <button className="button" onClick={() => setPlacement(getEmptyKitchenSlot(plan))}>
+                  {!plan.items.length && <button className="button" disabled={invalidRoom} onClick={() => {setPlacementProduct("");setPlacement(getEmptyKitchenSlot(plan));}}>
                     <Plus size={17} /> Añadir el primer módulo
                   </button>}
                   {!hasKitchenFurniture(plan) && <small>Puedes diseñar libremente. Añade al menos un mueble para calcular y guardar.</small>}
@@ -603,98 +650,18 @@ export default function KitchenPlanner() {
               </button>
             </div>
             <div className="kitchen-measures">
-              <label>
-                Pared A · mm
-                <input
-                  type="number"
-                  min="1000"
-                  max="6000"
-                  step="10"
-                  value={Number.isFinite(plan.walls.a) ? plan.walls.a : ""}
-                  onChange={(event) =>
-                    change({
-                      ...plan,
-                      walls: {
-                        ...plan.walls,
-                        a:
-                          event.target.value === ""
-                            ? NaN
-                            : Number(event.target.value),
-                      },
-                    })
-                  }
-                />
-              </label>
-              {plan.layout === "l" && (
-                <label>
-                  Pared B · mm
-                  <input
-                    type="number"
-                    min="1000"
-                    max="6000"
-                    step="10"
-                    value={Number.isFinite(plan.walls.b) ? plan.walls.b : ""}
-                    onChange={(event) =>
-                      change({
-                        ...plan,
-                        walls: {
-                          ...plan.walls,
-                          b:
-                            event.target.value === ""
-                              ? NaN
-                              : Number(event.target.value),
-                        },
-                      })
-                    }
-                  />
-                </label>
-              )}
-              <label>
-                Altura del ambiente · mm
-                <input
-                  type="number"
-                  min="2000"
-                  max="4000"
-                  step="10"
-                  value={
-                    Number.isFinite(plan.roomHeight ?? 2600)
-                      ? (plan.roomHeight ?? 2600)
-                      : ""
-                  }
-                  onChange={(event) =>
-                    change({
-                      ...plan,
-                      roomHeight:
-                        event.target.value === ""
-                          ? NaN
-                          : Number(event.target.value),
-                    })
-                  }
-                />
-              </label>
-              <label>
-                Base de alacenas · mm
-                <input
-                  type="number"
-                  min="1200"
-                  max="2000"
-                  step="10"
-                  value={
-                    Number.isFinite(plan.wallElevation)
-                      ? plan.wallElevation
-                      : ""
-                  }
-                  onChange={(event) =>
-                    change({
-                      ...plan,
-                      wallElevation:
-                        event.target.value === ""
-                          ? NaN
-                          : Number(event.target.value),
-                    })
-                  }
-                />
-              </label>
+              <KitchenDimensionInput label="Pared A" value={plan.walls.a} min={1000} max={6000}
+                onCommit={value => change({...plan, walls: {...plan.walls, a: value}})}
+                onValidityChange={valid => roomValidity("wall-a",valid)} />
+              {plan.layout === "l" && <KitchenDimensionInput label="Pared B" value={plan.walls.b} min={1000} max={6000}
+                onCommit={value => change({...plan, walls: {...plan.walls, b: value}})}
+                onValidityChange={valid => roomValidity("wall-b",valid)} />}
+              <KitchenDimensionInput label="Altura del ambiente" value={plan.roomHeight ?? 2600} min={2000} max={4000}
+                onCommit={value => change({...plan, roomHeight: value})}
+                onValidityChange={valid => roomValidity("height",valid)} />
+              <KitchenDimensionInput label="Base de alacenas" value={plan.wallElevation} min={1200} max={2000}
+                onCommit={value => change({...plan, wallElevation: value})}
+                onValidityChange={valid => roomValidity("elevation",valid)} />
             </div>
             <p className="kitchen-help">
               Los módulos se colocan en el orden de cada fila. En L dejamos
@@ -754,15 +721,19 @@ export default function KitchenPlanner() {
                 value={name}
                 onChange={(event) => {
                   setName(event.target.value);
-                  change({ ...plan });
+                  editRevision.current++;
+                  setQuoteContactOpen(false);
+                  setCopied(false);
                 }}
               />
             </label>
+            {saved && saved.name !== name.trim() && <p className="kitchen-help" role="status">El nombre está sin guardar. El enlace anterior conserva su nombre y precio originales.</p>}
             <button
               className="button kitchen-save"
               disabled={
                 !currentQuote ||
                 saving ||
+                !name.trim() ||
                 plan.items.every((item) => item.kind !== "furniture")
               }
               onClick={save}
@@ -788,8 +759,7 @@ export default function KitchenPlanner() {
             )}
             {snapshot && (
               <p className="kitchen-help">
-                Estás viendo una versión guardada. Al editar, se consultan los
-                modelos y tarifas actuales.
+                Esta versión guardada conserva sus precios. Cambiar el nombre no recalcula la cocina. Al modificar módulos o guardar otra versión, se consultan los modelos y tarifas actuales.
               </p>
             )}
             {saveNotice && (
@@ -816,6 +786,9 @@ export default function KitchenPlanner() {
             ))}
           </div>
         )}
+        <KitchenLayoutMap plan={plan} quote={currentQuote ? quote : undefined} products={products} selected={selected} pending={pending} error={error || (invalidMeasures.length || invalidRoom ? "Revisa las medidas incompletas." : "")}
+          onSelect={selectModuleEditor}
+          onMove={(id, direction) => { if (canMoveKitchenItem(plan,id,direction)) change(moveKitchenItem(plan,id,direction)); }} />
         <section className="kitchen-assembly">
           <div className="kitchen-section-heading">
             <div>
@@ -865,11 +838,7 @@ export default function KitchenPlanner() {
                                 className="kitchen-module-select"
                                 aria-pressed={selected === item.id}
                                 onClick={() => {
-                                  setSelected(item.id);
-                                  moduleEditor.current?.scrollIntoView({
-                                    block: "start",
-                                    behavior: "instant",
-                                  });
+                                  selectModuleEditor(item.id);
                                 }}
                               >
                                 {item.kind === "furniture" && itemProduct ? <KitchenModelPreview product={itemProduct} config={item.config}
@@ -886,6 +855,7 @@ export default function KitchenPlanner() {
                               <div className="kitchen-module-actions">
                                 <button
                                   aria-label={`Mover ${modelName(item)} antes`}
+                                  disabled={!canMoveKitchenItem(plan,item.id,-1)}
                                   onClick={() =>
                                     change(moveKitchenItem(plan, item.id, -1))
                                   }
@@ -894,6 +864,7 @@ export default function KitchenPlanner() {
                                 </button>
                                 <button
                                   aria-label={`Mover ${modelName(item)} después`}
+                                  disabled={!canMoveKitchenItem(plan,item.id,1)}
                                   onClick={() =>
                                     change(moveKitchenItem(plan, item.id, 1))
                                   }
@@ -961,21 +932,23 @@ export default function KitchenPlanner() {
                 value={addProduct}
                 onChange={(event) => setAddProduct(event.target.value)}
               >
-                {kitchenProducts.map((product) => (
+                {!addChoices.length && <option value="">No hay un módulo que encaje aquí</option>}
+                {addChoices.map(({product,config}) => (
                   <option key={product.id} value={product.id}>
-                    {product.name}
+                    {product.name} · {config.width / 10} cm de ancho
                   </option>
                 ))}
               </select>
             </label>
             <button
               className="button"
-              disabled={!addProduct || plan.items.length >= 16}
+              disabled={adding || invalidRoom || !addChoices.some(choice => choice.product.id === addProduct) || plan.items.length >= 16}
               onClick={() => add("furniture")}
             >
               <Plus size={17} />
-              Añadir mueble
+              Revisar medidas y añadir
             </button>
+            <p className="kitchen-help">{adding ? "Comprobando que encaje, sin cambiar tu distribución…" : addChoices.length ? "Se muestran modelos compatibles con la fila y el espacio disponible. Confirmarás sus medidas antes de añadir." : "No queda un espacio compatible en esta fila. Cambia de fila o pared, sustituye una pieza o ajusta la distribución."}</p>
             <p className="kitchen-help">
               O reserva el espacio para un equipo. No se añade a la cotización.
             </p>
@@ -984,7 +957,7 @@ export default function KitchenPlanner() {
                 const Icon = gapIcons[kind as keyof typeof gapIcons];
                 return (
                   <button
-                    disabled={plan.items.length >= 16}
+                    disabled={adding || invalidRoom || plan.items.length >= 16}
                     key={kind}
                     onClick={() => add(kind as Item["kind"])}
                   >
@@ -994,15 +967,16 @@ export default function KitchenPlanner() {
                 );
               })}
             </div>
+            {addError && <p role="alert" className="kitchen-alert">{addError} Tu distribución se conserva.</p>}
             <small>{plan.items.length} / 16 elementos</small>
           </div>
-          <div className="kitchen-item-editor" ref={moduleEditor}>
+          <div className="kitchen-item-editor" ref={moduleEditor} tabIndex={-1} role="region" aria-label="Editar módulo seleccionado">
             <p className="eyebrow">03 / LOS DETALLES</p>
             {current ? (
               <>
                 <h2>{modelName(current)}</h2>
                 <div className="kitchen-editor-actions">
-                  {current.kind === "furniture" && <button type="button" onClick={() => setPlacement(getKitchenReplacementSlot(plan, current.id))}>
+                  {current.kind === "furniture" && <button type="button" onClick={() => { setPlacementProduct(""); setPlacement(getKitchenReplacementSlot(plan, current.id)); }}>
                     <RefreshCw size={16} /> Cambiar modelo
                   </button>}
                   <button type="button" onClick={() => remove(current.id)}><Trash2 size={16} /> Retirar esta pieza</button>
@@ -1081,7 +1055,7 @@ export default function KitchenPlanner() {
                         min={
                           current.kind === "furniture"
                             ? (product?.limits[key].min ?? 100)
-                            : 100
+                            : current.kind === "space" && key === "width" ? MIN_KITCHEN_SPACE_WIDTH : 100
                         }
                         max={
                           current.kind === "furniture"
@@ -1365,6 +1339,8 @@ export default function KitchenPlanner() {
         <KitchenBuilderDialog
           key={placement.id}
           space={placement}
+          initialProductId={placementProduct || (replacing?.kind === "furniture" ? replacing.productId : "")}
+          initialConfig={replacing?.kind === "furniture" ? replacing.config : undefined}
           products={products}
           settings={settings}
           onClose={() => setPlacement(undefined)}

@@ -1,0 +1,98 @@
+.kitchen-layout-map { max-width: 1450px; margin: 48px auto 35px; padding: 30px; background: #fdfcf7; border: 1px solid #d9ddce; border-radius: 4px; color: #30372b; }
+.kitchen-layout-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; }
+.kitchen-layout-heading > div > p { font-size: 10px; letter-spacing: .09em; text-transform: uppercase; color: #6d755f; }
+.kitchen-layout-heading h2 { font-size: 34px; font-weight: 400; letter-spacing: -.045em; line-height: 1.15; margin-top: 11px; }
+.kitchen-layout-status { display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; border-radius: 3px; padding: 9px 12px; background: #edf0e4; color: #576548; font-size: 11px; }
+.kitchen-layout-status.needs-review { background: #f6e9df; color: #874b31; }
+.kitchen-layout-intro { margin: 19px 0 17px; max-width: 760px; font-size: 12px; line-height: 1.75; color: #646e57; }
+.kitchen-layout-scroll-hint { display: none; }
+.kitchen-layout-legend { display: flex; flex-wrap: wrap; gap: 12px 22px; font-size: 10px; color: #66715a; }
+.kitchen-layout-legend > span { display: inline-flex; align-items: center; gap: 7px; }
+.kitchen-layout-legend i { display: block; width: 13px; height: 11px; border-radius: 1px; border: 1px solid #abb897; }
+.kitchen-layout-legend .is-furniture { background: #becda8; }
+.kitchen-layout-legend .is-reserved { background: #e7d4b6; border-style: dashed; border-color: #ab8d66; }
+.kitchen-layout-legend .is-free { background: #f7f8f2; border-style: dashed; }
+.kitchen-layout-legend .is-blocked { background: repeating-linear-gradient(125deg, #f6eddf 0 3px, #ab825c 3px 4px, #f6eddf 4px 7px); border-color: #ad815a; }
+.kitchen-layout-legend .is-excess { background: #fae4d9; border-color: #a44d31; }
+.kitchen-layout-wall { margin-top: 30px; border-top: 1px solid #d8decd; padding-top: 24px; }
+.kitchen-layout-wall-title { display: flex; justify-content: space-between; align-items: center; gap: 14px; }
+.kitchen-layout-wall-title h3 { font-size: 20px; font-weight: 400; letter-spacing: -.035em; }
+.kitchen-layout-wall-title > strong { font-size: 13px; font-weight: 500; color: #657254; }
+.kitchen-layout-lane { margin-top: 22px; }
+.kitchen-layout-lane-head { display: flex; align-items: start; justify-content: space-between; gap: 15px; }
+.kitchen-layout-lane-head h4 { font-size: 12px; font-weight: 500; line-height: 1.5; }
+.kitchen-layout-metrics { display: flex; flex-wrap: wrap; gap: 8px 19px; font-size: 10px; color: #6c755f; justify-content: end; }
+.kitchen-layout-metrics > span { display: inline-flex; gap: 6px; }
+.kitchen-layout-metrics strong { font-weight: 500; color: #4b583c; }
+.kitchen-layout-metrics .is-free strong { color: #4c6a38; }
+.kitchen-layout-metrics .is-blocked, .kitchen-layout-metrics .is-blocked strong { color: #885b37; }
+.kitchen-layout-metrics .is-excess, .kitchen-layout-metrics .is-excess strong { color: #9a482e; }
+.kitchen-layout-diagram { width: 100%; margin: 0 0 8px; }
+.kitchen-layout-diagram svg { display: block; width: 100%; height: auto; min-height: 135px; }
+.kitchen-layout-shape > rect { fill: #becda8; stroke: #859771; stroke-width: 1.2px; vector-effect: non-scaling-stroke; }
+.kitchen-layout-shape.is-reserved > rect { fill: #e7d4b6; stroke: #ab8d66; stroke-dasharray: 5 3; }
+.kitchen-layout-shape.is-space > rect { fill: transparent; stroke: #a8b39a; stroke-dasharray: 5 4; }
+.kitchen-layout-shape.is-excess > rect { fill: #edd0bb; stroke: #aa4e31; }
+.kitchen-layout-shape.is-selected > rect { stroke: #924d2e; stroke-width: 2.5px; }
+.kitchen-layout-shape > text { font: 500 16px Arial, Helvetica, sans-serif; fill: #35472a; }
+.kitchen-layout-shape .kitchen-layout-svg-size { font-size: 11px; font-weight: 400; fill: #50603f; }
+.kitchen-layout-diagram .kitchen-layout-svg-note { font: 12px Arial, Helvetica, sans-serif; fill: #6a735e; }
+.kitchen-layout-diagram:focus-visible { outline: 3px solid #315d70; outline-offset: 3px; }
+.kitchen-layout-obstruction .kitchen-layout-svg-note { fill: #795032; }
+.kitchen-layout-blocked-note { margin-top: 12px; color: #805c3b; font-size: 10px; line-height: 1.7; }
+.kitchen-layout-piece-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+.kitchen-layout-piece { min-width: 0; border: 1px solid #dce0d1; background: #f7f8f0; border-radius: 3px; }
+.kitchen-layout-piece.is-selected { border-color: #9c7658; background: #f1ecdf; }
+.kitchen-layout-piece.needs-review { border-color: #c69a79; }
+.kitchen-layout-select { display: flex; align-items: center; gap: 11px; text-align: left; width: 100%; min-height: 64px; padding: 13px; border: 0; border-radius: 3px; background: transparent; color: #3f4d32; }
+.kitchen-layout-select:hover { background: #ebefdf; }
+.kitchen-layout-select > span:nth-child(2) { display: grid; gap: 5px; min-width: 0; flex: 1; }
+.kitchen-layout-select strong { font-size: 12px; font-weight: 500; overflow-wrap: anywhere; line-height: 1.45; }
+.kitchen-layout-select small { font-size: 10px; color: #68755a; line-height: 1.5; }
+.kitchen-layout-select > svg { flex-shrink: 0; }
+.kitchen-layout-piece-number { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; border: 1px solid #c5d0b7; background: #edf0e4; font-size: 11px; }
+.kitchen-layout-select .kitchen-layout-piece-warning { color: #9a482e; }
+.kitchen-layout-piece-move { display: flex; justify-content: end; padding: 0 5px 4px; gap: 4px; }
+.kitchen-layout-piece-move button { min-width: 44px; min-height: 44px; display: grid; place-items: center; padding: 9px; border: 0; background: transparent; border-radius: 3px; color: #61734c; }
+.kitchen-layout-piece-move button:not(:disabled):hover { background: #e6ebda; }
+.kitchen-layout-piece-move button:disabled { opacity: .3; cursor: not-allowed; }
+.kitchen-layout-map button:focus-visible { outline: 3px solid #315d70; outline-offset: 3px; }
+.kitchen-layout-empty, .kitchen-layout-unavailable { padding: 18px 0; color: #6b765e; font-size: 11px; line-height: 1.7; }
+.kitchen-layout-empty { grid-column: 1 / -1; }
+.kitchen-layout-unavailable { color: #99593d; }
+.kitchen-layout-server-error { margin-top: 22px; padding: 13px 15px; border-left: 2px solid #af6847; background: #f7ebe1; color: #8d4b31; font-size: 12px; line-height: 1.7; }
+.kitchen-layout-footnote { margin-top: 27px; font-size: 10px; line-height: 1.8; color: #6b755f; max-width: 950px; }
+@media (max-width: 1000px) {
+  .kitchen-layout-piece-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kitchen-layout-map { padding: 24px; }
+}
+@media (max-width: 600px) {
+  .kitchen-layout-map { margin-top: 28px; padding: 23px 17px; }
+  .kitchen-layout-heading { display: block; }
+  .kitchen-layout-heading h2 { font-size: 30px; }
+  .kitchen-layout-heading > div > p { font-size: 9px; }
+  .kitchen-layout-status { margin-top: 16px; font-size: 10px; }
+  .kitchen-layout-intro { font-size: 11px; }
+  .kitchen-layout-scroll-hint { display: block; font-size: 10px; color: #67755a; margin: -4px 0 17px; }
+  .kitchen-layout-legend { gap: 10px 15px; font-size: 9px; }
+  .kitchen-layout-wall { margin-top: 25px; padding-top: 21px; }
+  .kitchen-layout-wall-title h3 { font-size: 20px; }
+  .kitchen-layout-wall-title > strong { font-size: 12px; }
+  .kitchen-layout-lane-head { display: block; }
+  .kitchen-layout-metrics { justify-content: start; gap: 7px 13px; margin-top: 10px; font-size: 9px; }
+  .kitchen-layout-diagram { overflow-x: auto; padding-bottom: 4px; }
+  .kitchen-layout-diagram svg { min-width: 480px; min-height: 110px; }
+  .kitchen-layout-shape > text { font-size: 24px; }
+  .kitchen-layout-shape .kitchen-layout-svg-size { font-size: 19px; }
+  .kitchen-layout-diagram .kitchen-layout-svg-note { font-size: 20px; }
+  .kitchen-layout-piece-list { grid-template-columns: 1fr; gap: 7px; }
+  .kitchen-layout-piece { display: flex; align-items: center; }
+  .kitchen-layout-select { min-width: 0; padding: 12px 11px; min-height: 67px; }
+  .kitchen-layout-select strong { font-size: 11px; }
+  .kitchen-layout-select small { font-size: 9px; }
+  .kitchen-layout-select > svg { width: 15px; }
+  .kitchen-layout-piece-number { width: 22px; height: 22px; font-size: 10px; }
+  .kitchen-layout-piece-move { flex-shrink: 0; padding: 0 3px; gap: 0; }
+  .kitchen-layout-piece-move button { min-width: 44px; min-height: 44px; padding: 10px; }
+  .kitchen-layout-footnote { font-size: 9px; margin-top: 21px; }
+}

@@ -22,6 +22,16 @@ Después de instalarlo y reiniciar SketchUp:
 
 La correspondencia de ejes y la envolvente deben comprobarse en el modelo de origen. El exportador no detecta automáticamente tableros de 18 mm ni la familia constructiva, ni reconstruye mecanizados. No se ha homologado con un conjunto de modelos reales de taller; confirma el resultado antes de fabricar.
 
+## Del borrador al planificador de cocinas
+
+1. Exporta las medidas exteriores del componente con el exportador anterior. Si necesitas conservar su aspecto a la vista, exporta también una imagen PNG o JPG. El asistente admite además referencias WebP. El JSON puede contener varios componentes, pero convierte **uno seleccionado** en cada borrador.
+2. En **Catálogo → Desde un plano**, elige el componente y una estructura ya soportada. Revisa ancho, alto, fondo, columnas y repisas; confirma las medidas y continúa en el editor. La imagen sigue siendo una referencia local: no se guarda como imagen comercial del catálogo.
+3. En el editor, comprueba la configuración inicial y los límites que podrá modificar el cliente, los frentes permitidos, los acabados, los accesorios y la forma de cotizar. El motor genera la estructura parametrizable de melamina de **18 mm**; no reproduce automáticamente el interior del modelo de SketchUp.
+4. Para que el módulo pueda aparecer en `/cocinas`, asigna la categoría comercial **Cocina**, guarda el borrador y publica únicamente después de revisar sus datos. La categoría no cambia la estructura: una base de cocina y una alacena necesitan construcciones y rangos compatibles con su ubicación. Las alacenas admitidas por el planificador usan almacenaje con trasera o estante sin trasera, hasta 1200 mm de alto y 450 mm de fondo.
+5. En el planificador, selecciona una pared y fila y comprueba dónde se ofrece el módulo. Ajusta sus medidas y acabado y confirma. El servidor verifica el encaje de la cocina completa antes de incorporarlo; el mapa de distribución ayuda a detectar holguras o excesos, pero la fabricación y los anclajes requieren revisión del taller.
+
+Este proceso permite partir de un diseño propio sin convertir el archivo `.skp` en código ni cargar una malla arbitraria. Si la forma exige una familia constructiva que el motor no soporta, hay que ampliar y validar ese motor antes de ofrecerla. Consulta la [guía de cocinas modulares](cocinas-modulares.md#ver-qué-cabe-antes-de-añadir) para la colocación, los huecos pequeños y las reservas parciales.
+
 ## Formato de intercambio
 
 El botón **Descargar ejemplo de medidas** genera este formato, que también puede prepararse manualmente:
@@ -41,4 +51,4 @@ Máximo 1 MB y 100 componentes. Solo se aceptan nombres y dimensiones numéricas
 
 No se abre un `.skp` arbitrario directamente ni se convierte en una nueva familia constructiva. Para referencias PDF, exporta una página como imagen. Para una estructura no soportada, hace falta ampliar y validar el motor antes de ofrecerla; no se sustituyen sus reglas por la malla importada.
 
-Referencias técnicas: [ComponentInstance y transformación](https://ruby.sketchup.com/Sketchup/ComponentInstance.html), [contexto de edición del modelo](https://ruby.sketchup.com/Sketchup/Model.html#edit_transform-instance_method), [transformaciones](https://ruby.sketchup.com/Geom/Transformation.html).
+Referencias técnicas: [exportar imágenes desde SketchUp](https://help.sketchup.com/en/sketchup/importing-and-exporting-image-files), [componentes y entidades](https://developer.sketchup.com/article-entity-overview), [ComponentInstance y transformación](https://ruby.sketchup.com/Sketchup/ComponentInstance.html), [contexto de edición del modelo](https://ruby.sketchup.com/Sketchup/Model.html#edit_transform-instance_method), [transformaciones](https://ruby.sketchup.com/Geom/Transformation.html).

@@ -10,7 +10,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "check": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test tests/furniture.test.ts tests/auth.test.ts tests/deployment.test.mjs tests/camera.test.ts tests/swatch-textures.test.ts tests/viewer-dimensions.test.ts tests/pages.test.mjs tests/catalog-expansion.test.ts tests/construction.test.ts tests/construction-csv.test.ts tests/workshop-collection.test.ts tests/workshop-expansion.test.ts tests/door-preview.test.ts tests/footer-access.test.ts tests/model-gallery.test.ts tests/admin-product-preview.test.ts tests/kitchen-wardrobe-collection.test.ts tests/wardrobe-kitchen.test.ts tests/front-pricing.test.ts tests/front-mesh.test.ts tests/kitchen.test.ts tests/kitchen-glass-collection.test.ts tests/kitchen-admin-export.test.ts tests/kitchen-planner-state.test.ts tests/kitchen-slots.test.ts tests/viewer-placement.test.ts tests/kitchen-templates.test.ts tests/kitchen-placement.test.ts tests/admin-mailer.test.ts tests/admin-email-relay.test.mjs tests/admin-catalog-draft.test.ts tests/product-extras.test.ts tests/admin-material-draft.test.ts tests/passkey-browser.test.ts tests/catalog-thumbnail.test.ts tests/plan-reference.test.ts tests/door-hinges.test.ts tests/kitchen-door-hinges.test.ts",
+    "test": "node --experimental-strip-types --test tests/furniture.test.ts tests/auth.test.ts tests/deployment.test.mjs tests/camera.test.ts tests/swatch-textures.test.ts tests/viewer-dimensions.test.ts tests/pages.test.mjs tests/catalog-expansion.test.ts tests/construction.test.ts tests/construction-csv.test.ts tests/workshop-collection.test.ts tests/workshop-expansion.test.ts tests/door-preview.test.ts tests/footer-access.test.ts tests/model-gallery.test.ts tests/admin-product-preview.test.ts tests/kitchen-wardrobe-collection.test.ts tests/wardrobe-kitchen.test.ts tests/front-pricing.test.ts tests/front-mesh.test.ts tests/kitchen.test.ts tests/kitchen-glass-collection.test.ts tests/kitchen-admin-export.test.ts tests/kitchen-planner-state.test.ts tests/kitchen-slots.test.ts tests/viewer-placement.test.ts tests/kitchen-templates.test.ts tests/kitchen-placement.test.ts tests/admin-mailer.test.ts tests/admin-email-relay.test.mjs tests/admin-catalog-draft.test.ts tests/product-extras.test.ts tests/admin-material-draft.test.ts tests/passkey-browser.test.ts tests/catalog-thumbnail.test.ts tests/plan-reference.test.ts tests/door-hinges.test.ts tests/kitchen-door-hinges.test.ts tests/kitchen-partial-space.test.ts tests/kitchen-layout-view.test.ts tests/kitchen-add-choices.test.ts tests/kitchen-gap-schema.test.ts",
     "test:api": "node --experimental-strip-types --test tests/api.integration.mjs",
     "test:auth-api": "node --experimental-strip-types --test tests/auth.integration.mjs tests/passkeys.integration.mjs",
     "test:kitchen-api": "node --experimental-strip-types --test tests/kitchen-api.integration.mjs",
@@ -20,7 +20,8 @@
     "deploy": "wrangler deploy",
     "prepare:pages": "node scripts/prepare-pages.mjs",
     "deploy:pages": "wrangler pages deploy --cwd hosting/pages --project-name alrazz --branch main",
-    "check:storefront": "node scripts/check-storefront-build.mjs"
+    "check:storefront": "node scripts/check-storefront-build.mjs",
+    "test:kitchen-fit-api": "node --experimental-strip-types --test tests/kitchen-fit-api.integration.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

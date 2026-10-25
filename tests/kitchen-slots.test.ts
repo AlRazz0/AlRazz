@@ -18,10 +18,12 @@ test("slots replace existing air without moving neighbours and show free space b
   assert.equal(hole.offset, 600);
   assert.equal(hole.widthAvailable, 600);
   assert.equal(hole.leadingSpace, 0);
+  assert.equal(hole.planFingerprint, JSON.stringify(input));
   assert.equal(hole.position[0], result.modules.find(module => module.id === "free")!.position[0]);
   const end = slots.find(slot => slot.row === "base" && !slot.replaceId)!;
   assert.equal(end.offset, 1800);
   assert.equal(end.widthAvailable, 1800);
+  assert.equal(end.planFingerprint, JSON.stringify(input));
   assert.ok(end.position[0] > result.envelope.width / 2);
   const replaced = { ...input, items: input.items.map(item => item.id === "free" ? cabinet("inserted") : item) };
   const after = quote(replaced);
@@ -78,4 +80,19 @@ test("adding on A cannot silently push an already full B wall beyond its room bo
   const bigger = { ...input, walls: { a: 3600, b: 1550 } };
   const slots = getKitchenSlots(bigger, quote(bigger));
   assert.ok(slots.filter(slot => slot.wall === "a").every(slot => slot.depth <= 300));
+});
+
+test("a 50 mm alignment gap is offered exactly instead of shifting the next cabinet by another 50 mm", () => {
+  const input = plan([
+    { id: "appliance", wall: "a", row: "tall", kind: "fridge", width: 650, height: 2000, depth: 600 },
+    { id: "upper-air", wall: "a", row: "wall", kind: "space", width: 600, height: 700, depth: 300 },
+    cabinet("base"),
+  ]);
+  const result = quote(input);
+  const upper = getKitchenSlots(input, result).find(slot => slot.row === "wall" && !slot.replaceId)!;
+  assert.ok(upper);
+  assert.equal(upper.leadingSpace, 50);
+  assert.equal(upper.offset, 650);
+  assert.equal(upper.widthAvailable, input.walls.a - 650);
+  assert.equal(upper.planFingerprint, JSON.stringify(input));
 });
