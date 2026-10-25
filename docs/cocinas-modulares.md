@@ -2,6 +2,8 @@
 
 El planificador compone modelos publicados de la categoría **Cocina**. Cada módulo usa el mismo motor de geometría, despiece y precio que el configurador individual. El catálogo y las tarifas siguen siendo administrables en D1.
 
+La [vista 3D durante la edición](live-preview.md) distingue el borrador visual de la cotización y distribución aceptadas por el servidor.
+
 ## Construir desde una plantilla
 
 En `/cocinas`, elige **Lineal compacta**, **Lineal familiar**, **Frente de almacenaje**, **L compacta**, **L familiar** o **L con columnas**. Son seis composiciones distintas de partida, construidas con los modelos visibles del catálogo. Si el administrador oculta modelos necesarios, se adaptan a los disponibles o se omiten las composiciones que no pueden construirse.

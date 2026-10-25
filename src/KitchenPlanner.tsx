@@ -46,6 +46,7 @@ import { insertKitchenModule } from "./kitchen-placement";
 import { KitchenDimensionInput } from "./KitchenDimensionInput";
 import { KitchenModelPreview } from "./KitchenModelPreview";
 import { ExtraSelector } from "./ExtraSelector";
+import { createLiveKitchenPreview, type LiveKitchenPreview } from "./live-furniture-preview";
 import "./kitchen-planner.css";
 
 type Item = KitchenPlan["items"][number];
@@ -82,6 +83,9 @@ export default function KitchenPlanner() {
   const [selected, setSelected] = useState("");
   const [invalidMeasures, setInvalidMeasures] = useState<string[]>([]);
   const [invalidRoomMeasures, setInvalidRoomMeasures] = useState<string[]>([]);
+  const [visualDraft, setVisualDraft] = useState<KitchenPlan>();
+  const [visualDirty, setVisualDirty] = useState(false);
+  const lastScene = useRef<Pick<LiveKitchenPreview,"geometry" | "materials" | "envelope"> | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
@@ -162,7 +166,7 @@ export default function KitchenPlanner() {
     contactSection.current?.scrollIntoView({ block: "nearest" });
     contactSection.current?.focus({ preventScroll: true });
   }, [quoteContactOpen, saved?.id]);
-  useEffect(() => setInvalidMeasures([]), [selected]);
+  useEffect(() => { setInvalidMeasures([]); setVisualDraft(undefined); setVisualDirty(false); }, [selected]);
   useEffect(() => {
     if (!plan || snapshot) return;
     if (!hasKitchenFurniture(plan)) {
@@ -217,6 +221,7 @@ export default function KitchenPlanner() {
   }, [plan, snapshot]);
 
   function change(next: KitchenPlan, recordHistory = true) {
+    setVisualDraft(undefined); setVisualDirty(false);
     // An unavailable move or identical edit must not invalidate a valid quote.
     if (plan && sameKitchenPlan(plan, next)) return;
     request.current++;
@@ -419,9 +424,32 @@ export default function KitchenPlanner() {
   const roomValidity = (key: string, valid: boolean) => setInvalidRoomMeasures(previous =>
     valid ? previous.filter(value => value !== key) : previous.includes(key) ? previous : [...previous, key]);
   const currentQuote = Boolean(
-    quote && plan && hasKitchenFurniture(plan) && quoteKey === JSON.stringify(plan) && !pending && !error && !invalidMeasures.length && !invalidRoom,
+    quote && plan && hasKitchenFurniture(plan) && quoteKey === JSON.stringify(plan) && !pending && !error && !invalidMeasures.length && !invalidRoom && !visualDirty,
   );
   const visibleQuote = quote && plan && hasKitchenFurniture(plan) && quoteKey === JSON.stringify(plan) ? quote : undefined;
+  const visualBuilder = useMemo(() => {
+    if (!settings || !products.length) return;
+    try { return createLiveKitchenPreview(products,settings.materials); } catch { return; }
+  }, [products,settings?.materials]);
+  const visualPlan = visualDraft ?? plan;
+  const localScene = useMemo(() => {
+    if (!visualBuilder || !visualPlan || !hasKitchenFurniture(visualPlan) || (snapshot && !visualDirty)) return;
+    try { return visualBuilder(visualPlan); } catch { return; }
+  }, [visualBuilder,visualPlan,snapshot,visualDirty]);
+  const scene = visualPlan && hasKitchenFurniture(visualPlan)
+    ? currentQuote && visibleQuote ? visibleQuote : localScene ?? lastScene.current ?? visibleQuote
+    : undefined;
+  useEffect(() => {
+    if (!plan || !hasKitchenFurniture(plan)) lastScene.current = undefined;
+    else if (currentQuote && visibleQuote) lastScene.current = visibleQuote;
+    else if (localScene) lastScene.current = localScene;
+  }, [plan,localScene,visibleQuote,currentQuote]);
+  function previewMeasure(next: KitchenPlan | undefined, dirty: boolean) {
+    editRevision.current++;
+    setVisualDirty(dirty);
+    if (!dirty) setVisualDraft(undefined);
+    else if (next) setVisualDraft(next);
+  }
   const placementSlots = useMemo(
     () => (plan && quote && currentQuote ? getKitchenSlots(plan, quote) : []),
     [plan, quote, currentQuote],
@@ -533,11 +561,11 @@ export default function KitchenPlanner() {
               </span>
             </div>
             <div className="kitchen-canvas">
-              {visibleQuote ? (
+              {scene ? (
                 <Viewer
-                  panels={visibleQuote.geometry}
-                  materials={visibleQuote.materials}
-                  {...visibleQuote.envelope}
+                  panels={scene.geometry}
+                  materials={scene.materials}
+                  {...scene.envelope}
                   view={view}
                   open={open}
                   dimensions={dimensions}
@@ -558,10 +586,12 @@ export default function KitchenPlanner() {
                   {!hasKitchenFurniture(plan) && <small>Puedes diseñar libremente. Añade al menos un mueble para calcular y guardar.</small>}
                 </div>
               )}
-              {hasKitchenFurniture(plan) && (pending || error) && (
+              {hasKitchenFurniture(plan) && (visualDirty || pending || error) && (
                 <span className="kitchen-scene-status" role="status">
-                  {pending
-                    ? "Actualizando tu distribución…"
+                  {visualDirty
+                    ? "Vista previa: confirma la medida para calcular"
+                    : pending
+                    ? "Comprobando medidas y precio…"
                     : "Revisa las medidas o deshaz el último cambio"}
                 </span>
               )}
@@ -652,15 +682,19 @@ export default function KitchenPlanner() {
             <div className="kitchen-measures">
               <KitchenDimensionInput label="Pared A" value={plan.walls.a} min={1000} max={6000}
                 onCommit={value => change({...plan, walls: {...plan.walls, a: value}})}
+                onPreview={(value,dirty) => previewMeasure(value === null ? undefined : {...plan,walls:{...plan.walls,a:value}},dirty)}
                 onValidityChange={valid => roomValidity("wall-a",valid)} />
               {plan.layout === "l" && <KitchenDimensionInput label="Pared B" value={plan.walls.b} min={1000} max={6000}
                 onCommit={value => change({...plan, walls: {...plan.walls, b: value}})}
+                onPreview={(value,dirty) => previewMeasure(value === null ? undefined : {...plan,walls:{...plan.walls,b:value}},dirty)}
                 onValidityChange={valid => roomValidity("wall-b",valid)} />}
               <KitchenDimensionInput label="Altura del ambiente" value={plan.roomHeight ?? 2600} min={2000} max={4000}
                 onCommit={value => change({...plan, roomHeight: value})}
+                onPreview={(value,dirty) => previewMeasure(value === null ? undefined : {...plan,roomHeight:value},dirty)}
                 onValidityChange={valid => roomValidity("height",valid)} />
               <KitchenDimensionInput label="Base de alacenas" value={plan.wallElevation} min={1200} max={2000}
                 onCommit={value => change({...plan, wallElevation: value})}
+                onPreview={(value,dirty) => previewMeasure(value === null ? undefined : {...plan,wallElevation:value},dirty)}
                 onValidityChange={valid => roomValidity("elevation",valid)} />
             </div>
             <p className="kitchen-help">
@@ -786,7 +820,7 @@ export default function KitchenPlanner() {
             ))}
           </div>
         )}
-        <KitchenLayoutMap plan={plan} quote={currentQuote ? quote : undefined} products={products} selected={selected} pending={pending} error={error || (invalidMeasures.length || invalidRoom ? "Revisa las medidas incompletas." : "")}
+        <KitchenLayoutMap plan={visualPlan ?? plan} preview={visualDirty} quote={currentQuote ? quote : undefined} products={products} selected={selected} pending={pending} error={error || (invalidMeasures.length || invalidRoom ? "Revisa las medidas incompletas." : "")}
           onSelect={selectModuleEditor}
           onMove={(id, direction) => { if (canMoveKitchenItem(plan,id,direction)) change(moveKitchenItem(plan,id,direction)); }} />
         <section className="kitchen-assembly">
@@ -1050,7 +1084,8 @@ export default function KitchenPlanner() {
                 </div>
                 <div className="kitchen-measures three">
                   {(["width", "height", "depth"] as const).map((key) => (
-                    <KitchenDimensionInput key={`${current.id}-${key}`} label={names[key]}
+                    <KitchenDimensionInput key={`${current.id}-${key}`} label={names[key]} slider
+                        onPreview={(value,dirty) => previewMeasure(value === null ? undefined : {...plan,items:plan.items.map(item => item.id !== current.id ? item : current.kind === "furniture" ? {...current,config:{...current.config,[key]:value}} : {...current,[key]:value})},dirty)}
                         onValidityChange={valid => setInvalidMeasures(previous => valid ? previous.filter(field => field !== key) : [...new Set([...previous, key])])}
                         min={
                           current.kind === "furniture"

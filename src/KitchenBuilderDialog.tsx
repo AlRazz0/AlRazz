@@ -54,6 +54,8 @@ export function KitchenBuilderDialog({
     initial && initialConfig && initial.product.id === initialProductId && !kitchenConfigIssue(initial.product, initialConfig, space)
       ? structuredClone(initialConfig) : initial?.config,
   );
+  const [visualConfig, setVisualConfig] = useState<Config>();
+  const [measureReset, setMeasureReset] = useState(0);
   const [error, setError] = useState("");
   const [invalidMeasures, setInvalidMeasures] = useState<string[]>([]);
   const [brand, setBrand] = useState("all");
@@ -68,9 +70,11 @@ export function KitchenBuilderDialog({
   const update = (next: Config) => {
     if (!selected) return;
     setConfig(next);
+    setVisualConfig(undefined);
     setError("");
   };
-  const issue = selected && config ? kitchenConfigIssue(selected, config, space) : "";
+  const effectiveConfig = visualConfig ?? config;
+  const issue = selected && effectiveConfig ? kitchenConfigIssue(selected, effectiveConfig, space) : "";
   const limits = selected ? kitchenDimensionLimits(selected, space) : undefined;
   const replacingFurniture = space.replaceKind === "furniture";
   return (
@@ -114,8 +118,10 @@ export function KitchenBuilderDialog({
                   className={selectedId === product.id ? "selected" : ""}
                   aria-pressed={selectedId === product.id}
                   onClick={() => {
+                    setMeasureReset(value => value + 1);
                     setSelectedId(product.id);
                     setInvalidMeasures([]);
+                    setVisualConfig(undefined);
                     setConfig({
                       ...fitted,
                       ...(config &&
@@ -149,19 +155,29 @@ export function KitchenBuilderDialog({
               </p>
             )}
           </section>
-          {selected && config && (
+          {selected && config && effectiveConfig && (
             <section className="kitchen-build-details">
               <h3>2. Sus medidas y distribución</h3>
               <div className="kitchen-build-selected-preview">
-                <KitchenModelPreview product={selected} config={config}
-                  color={settings.materials.find(material => material.id === config.finish)?.color} />
-                <p>Vista esquemática de tu módulo. La cocina completa se actualiza al confirmar.</p>
+                <KitchenModelPreview product={selected} config={effectiveConfig}
+                  color={settings.materials.find(material => material.id === effectiveConfig.finish)?.color} />
+                <p>Vista esquemática inmediata. La cocina completa se comprueba al confirmar.</p>
               </div>
               {limits && <div className="kitchen-measures three">
                 {(["width", "height", "depth"] as const).map(key => <KitchenDimensionInput
                   key={`${selected.id}-${key}`} label={{ width: "Ancho", height: "Alto", depth: "Fondo" }[key]}
+                  slider
+                  resetKey={measureReset}
+                  disabled={submitting}
                   value={config[key]} min={limits[key].min} max={limits[key].max}
                   onCommit={value => update({ ...config, [key]: value })}
+                  onPreview={(value, dirty) => {
+                    if (!dirty) { setVisualConfig(undefined); return; }
+                    // Incomplete or invalid typing keeps the last valid schematic.
+                    if (value === null) return;
+                    setVisualConfig({ ...config, [key]: value });
+                    setError("");
+                  }}
                   onValidityChange={valid => setInvalidMeasures(previous => valid ? previous.filter(field => field !== key) : [...new Set([...previous, key])])} />)}
               </div>}
               <p className="kitchen-help">Escribe la medida exacta y pulsa Enter o sal del campo. El rango depende del modelo y del espacio disponible.</p>
@@ -250,12 +266,12 @@ export function KitchenBuilderDialog({
           )}
         </fieldset>
         <div className="kitchen-build-footer">
-          {config && (
+          {effectiveConfig && (
             <p>
-              {config.width / 10} cm de ancho · {config.modules}{" "}
-              {config.modules === 1 ? "columna" : "columnas"}
-              {space.replaceId && space.widthAvailable > config.width
-                ? ` · quedan ${(space.widthAvailable - config.width) / 10} cm libres`
+              {effectiveConfig.width / 10} cm de ancho · {effectiveConfig.modules}{" "}
+              {effectiveConfig.modules === 1 ? "columna" : "columnas"}
+              {space.replaceId && space.widthAvailable > effectiveConfig.width
+                ? ` · quedan ${(space.widthAvailable - effectiveConfig.width) / 10} cm libres`
                 : ""}
             </p>
           )}
@@ -266,13 +282,13 @@ export function KitchenBuilderDialog({
           )}
           <button
             className="button"
-            disabled={submitting || !selected || !config || !!issue || invalidMeasures.length > 0}
+            disabled={submitting || !selected || !effectiveConfig || !!issue || invalidMeasures.length > 0}
             aria-busy={submitting}
             onClick={async () => {
-              if (!selected || !config) return;
+              if (!selected || !effectiveConfig) return;
               setSubmitting(true); setError("");
               try {
-                await onAdd(selected, config);
+                await onAdd(selected, effectiveConfig);
               } catch (cause) {
                 setError(
                   cause instanceof Error

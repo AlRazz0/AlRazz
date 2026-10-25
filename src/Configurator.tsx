@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowUpRight,
@@ -13,7 +13,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Slider } from "@/components/ui/slider";
+import { StudioDimensionControl } from "./StudioDimensionControl";
+import { createLiveFurniturePreview, type LiveFurniturePreview } from "./live-furniture-preview";
 import { Switch } from "@/components/ui/switch";
 import { api } from "../lib/api";
 import {
@@ -51,6 +52,13 @@ export default function Configurator() {
   const [settings, setSettings] = useState<PublicSettings>();
   const [config, setConfig] = useState<Config>();
   const [renderConfig, setRenderConfig] = useState<Config>();
+  const [visualDraft, setVisualDraft] = useState<Config>();
+  const [visualDirty, setVisualDirty] = useState(false);
+  const [quoteKey, setQuoteKey] = useState("");
+  const revision = useRef(0);
+  const editRevision = useRef(0);
+  const [inputReset, setInputReset] = useState(0);
+  const lastVisual = useRef<(LiveFurniturePreview & { productId: string; materials: PublicSettings["materials"] }) | undefined>(undefined);
   const liveSettings = useRef<PublicSettings>(undefined);
   const [quote, setQuote] = useState<Quote>();
   const [loading, setLoading] = useState(true);
@@ -91,6 +99,7 @@ export default function Configurator() {
           setConfig(saved.config);
           setRenderConfig(saved.config);
           setQuote(saved.result);
+          setQuoteKey(JSON.stringify({productId:saved.product.id, config:saved.config}));
           setSettings({ ...d.settings, materials: saved.materials });
           setSnapshot(true);
         } else {
@@ -107,6 +116,7 @@ export default function Configurator() {
             setConfig(initialConfig);
             setRenderConfig(p.defaults);
             setQuote(p.preview);
+            setQuoteKey(JSON.stringify({productId:p.id, config:p.defaults}));
           } else
             setError(
               "Todavía no hay modelos publicados. El administrador puede activar uno desde el panel.",
@@ -120,6 +130,7 @@ export default function Configurator() {
   useEffect(() => {
     if (!product || !config || snapshot) return;
     const abort = new AbortController();
+    const sequence = ++revision.current;
     setPending(true);
     const timer = setTimeout(async () => {
       try {
@@ -132,14 +143,16 @@ export default function Configurator() {
         const d = (await r.json()) as Quote & { error?: string };
         if (!r.ok)
           throw Error(d.error || "No se pudo calcular esta configuración.");
+        if (abort.signal.aborted || sequence !== revision.current) return;
         setQuote(d);
+        setQuoteKey(JSON.stringify({productId:product.id, config}));
         setRenderConfig(config);
         setQuoteError("");
       } catch (e) {
-        if (!abort.signal.aborted)
+        if (!abort.signal.aborted && sequence === revision.current)
           setQuoteError(e instanceof Error ? e.message : "Error de conexión.");
       } finally {
-        if (!abort.signal.aborted) setPending(false);
+        if (!abort.signal.aborted && sequence === revision.current) setPending(false);
       }
     }, 200);
     return () => {
@@ -148,6 +161,10 @@ export default function Configurator() {
     };
   }, [product, config, snapshot]);
   function change(next: Config) {
+    setVisualDraft(undefined); setVisualDirty(false);
+    setInputReset(value => value + 1);
+    if (config && JSON.stringify(next) === JSON.stringify(config)) return;
+    revision.current++; editRevision.current++; setPending(true); setQuoteError("");
     setQuoteContacts(false);
     if (liveSettings.current) setSettings(liveSettings.current);
     const live = products.find((p) => p.id === product?.id);
@@ -162,11 +179,13 @@ export default function Configurator() {
     setQuoteContacts(false);
     const p = products.find((p) => p.id === id);
     if (!p) return;
+    revision.current++; editRevision.current++; setInputReset(value => value + 1); setVisualDraft(undefined); setVisualDirty(false); setPending(true);
     setProduct(p);
     if (liveSettings.current) setSettings(liveSettings.current);
     setConfig({ ...p.defaults });
     setRenderConfig({ ...p.defaults });
     setQuote(p.preview);
+    setQuoteKey(JSON.stringify({productId:p.id,config:p.defaults}));
     setQuoteError("");
     setPast([]);
     setFuture([]);
@@ -177,6 +196,7 @@ export default function Configurator() {
   function undo() {
     setQuoteContacts(false);
     if (!config || !past.length) return;
+    revision.current++; editRevision.current++; setInputReset(value => value + 1); setVisualDraft(undefined); setVisualDirty(false); setPending(true); setQuoteError("");
     setFuture([config, ...future]);
     setConfig(past[past.length - 1]);
     setPast(past.slice(0, -1));
@@ -186,6 +206,7 @@ export default function Configurator() {
   function redo() {
     setQuoteContacts(false);
     if (!config || !future.length) return;
+    revision.current++; editRevision.current++; setInputReset(value => value + 1); setVisualDraft(undefined); setVisualDirty(false); setPending(true); setQuoteError("");
     setPast([...past, config]);
     setConfig(future[0]);
     setFuture(future.slice(1));
@@ -193,7 +214,8 @@ export default function Configurator() {
     setSaved(undefined);
   }
   async function save(requestQuote = false) {
-    if (!product || !config || quoteError || pending) return;
+    if (!product || !config || !currentQuote) return;
+    const submittedRevision = editRevision.current;
     setSaving(true);
     try {
       const d = await api("", {
@@ -201,8 +223,19 @@ export default function Configurator() {
         productId: product.id,
         config,
       });
-      setSaved(d.design);
-      setQuoteContacts(requestQuote);
+      if (submittedRevision === editRevision.current) {
+        setSaved(d.design);
+        setQuoteContacts(requestQuote);
+        setProduct(d.design.product);
+        setConfig(d.design.config);
+        setRenderConfig(d.design.config);
+        setQuote(d.design.result);
+        setQuoteKey(JSON.stringify({productId:d.design.product.id,config:d.design.config}));
+        setSettings(current => current ? {...current,materials:d.design.materials} : current);
+        setSnapshot(true);
+        setPending(false);
+        setQuoteError("");
+      }
       toast.success("Tu diseño se guardó en Mis diseños.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "No se pudo guardar.");
@@ -218,6 +251,33 @@ export default function Configurator() {
       a.download = "El-capo-" + product?.id + ".png";
       a.click();
     } else toast.error("La imagen 3D aún no está disponible.");
+  }
+  const previewProduct = visualDirty ? products.find(model => model.id === product?.id) ?? product : product;
+  const previewMaterials = visualDirty ? liveSettings.current?.materials ?? settings?.materials : settings?.materials;
+  const previewBuilder = useMemo(() => {
+    if (!previewProduct || !previewMaterials) return;
+    try { return createLiveFurniturePreview(previewProduct, previewMaterials); } catch { return; }
+  }, [previewProduct, previewMaterials]);
+  const visualResult = useMemo(() => {
+    if (!previewBuilder || !config || (snapshot && !visualDirty)) return;
+    try { return {visual:previewBuilder(visualDraft ?? config)}; } catch (cause) { return {issue:cause instanceof Error ? cause.message : "Revisa las medidas y distribución."}; }
+  }, [previewBuilder, config, visualDraft, snapshot, visualDirty]);
+  const localVisual = visualResult?.visual;
+  const localIssue = visualResult?.issue;
+  const currentQuote = !!quote && !!product && !!config && !pending && !quoteError && !visualDirty &&
+    quoteKey === JSON.stringify({productId:product.id,config});
+  const previewIssue = currentQuote ? undefined : localIssue;
+  useEffect(() => {
+    if (currentQuote && quote && product && renderConfig && settings)
+      lastVisual.current = {geometry:quote.geometry,config:renderConfig,productId:product.id,materials:settings.materials};
+    else if (localVisual && product && previewMaterials)
+      lastVisual.current = {...localVisual, productId: product.id, materials: previewMaterials};
+  }, [currentQuote,quote,renderConfig,settings,localVisual,product,previewMaterials]);
+  function previewDimension(key: "width" | "height" | "depth", value: number | null, dirty: boolean) {
+    editRevision.current++;
+    setVisualDirty(dirty);
+    if (!dirty) setVisualDraft(undefined);
+    else if (config && value !== null) setVisualDraft({...config,[key]:value});
   }
   if (loading)
     return (
@@ -240,7 +300,11 @@ export default function Configurator() {
         </div>
       </>
     );
-  const displayedConfig = renderConfig || config;
+  const previousVisual = lastVisual.current?.productId === product.id ? lastVisual.current : undefined;
+  const liveVisual = (snapshot && !visualDirty) || currentQuote ? undefined : localVisual ?? previousVisual;
+  const displayedConfig = liveVisual?.config ?? renderConfig ?? config;
+  const displayedGeometry = liveVisual?.geometry ?? quote?.geometry;
+  const displayedMaterials = localVisual ? previewMaterials! : liveVisual ? previousVisual?.materials ?? settings.materials : settings.materials;
   const consultation = product.showPrice === false || quote?.price === null;
   const construction = getConstruction(product);
   const distributionOptions = getConstructionOptions(product, config);
@@ -277,11 +341,11 @@ export default function Configurator() {
             <span>COLECCIÓN MODULAR</span>
             <span>Melamina · 18 mm</span>
           </div>
-          {quote ? (
+          {displayedGeometry ? (
             <Viewer
               ref={viewer}
-              panels={quote.geometry}
-              materials={settings.materials}
+              panels={displayedGeometry}
+              materials={displayedMaterials}
               {...displayedConfig}
               view={view}
               open={open}
@@ -294,9 +358,11 @@ export default function Configurator() {
           )}
           <div className="stage-tag">
             <Box size={15} />
-            {snapshot
+            {visualDirty && !previewIssue
+              ? "Vista previa en tiempo real"
+              : snapshot
               ? "Diseño guardado"
-              : quoteError
+              : quoteError || previewIssue
                 ? "Última vista válida"
                 : "Vista 3D interactiva"}
           </div>
@@ -414,7 +480,9 @@ export default function Configurator() {
             }
             onChange={pick}
           />
-          <Tabs defaultValue="medidas" className="config-tabs">
+          <Tabs defaultValue="medidas" className="config-tabs" onValueChange={() => {
+            setVisualDraft(undefined); setVisualDirty(false); setInputReset(value => value + 1);
+          }}>
             <TabsList variant="line" aria-label="Pasos para personalizar tu mueble">
               <TabsTrigger value="medidas"><span className="studio-step" aria-hidden="true">01</span> Medidas</TabsTrigger>
               <TabsTrigger value="distribucion"><span className="studio-step" aria-hidden="true">02</span> Distribución</TabsTrigger>
@@ -425,45 +493,15 @@ export default function Configurator() {
                 <p className="tab-intro">Empecemos por tu espacio.</p>
                 <div className="studio-unit-switch" role="group" aria-label="Unidad de las medidas">
                   {(["cm", "mm"] as const).map((unit) => (
-                    <button key={unit} type="button" aria-pressed={dimensionUnit === unit} onClick={() => setDimensionUnit(unit)}>{unit}</button>
+                    <button key={unit} type="button" aria-pressed={dimensionUnit === unit} onClick={() => { setVisualDraft(undefined); setVisualDirty(false); setDimensionUnit(unit); }}>{unit}</button>
                   ))}
                 </div>
               </div>
-              {(["width", "height", "depth"] as const).map((k) => (
-                <div className="dimension-field" key={k}>
-                  <div>
-                    <label htmlFor={k}>{dimensionLabels[k]}</label>
-                    <span>
-                      <input
-                        id={k}
-                        aria-label={dimensionLabels[k] + (dimensionUnit === "cm" ? " en centímetros" : " en milímetros")}
-                        type="number"
-                        inputMode="decimal"
-                        min={product.limits[k].min / (dimensionUnit === "cm" ? 10 : 1)}
-                        max={product.limits[k].max / (dimensionUnit === "cm" ? 10 : 1)}
-                        step={dimensionUnit === "cm" ? 1 : 10}
-                        value={config[k] / (dimensionUnit === "cm" ? 10 : 1)}
-                        onChange={(e) =>
-                          change({ ...config, [k]: Number(e.target.value) * (dimensionUnit === "cm" ? 10 : 1) })
-                        }
-                      />{" "}
-                      {dimensionUnit}
-                    </span>
-                  </div>
-                  <Slider
-                    aria-label={dimensionLabels[k]}
-                    aria-valuetext={`${config[k] / 10} centímetros`}
-                    min={product.limits[k].min}
-                    max={product.limits[k].max}
-                    step={10}
-                    value={[config[k]]}
-                    onValueChange={([v]) => change({ ...config, [k]: v })}
-                  />
-                  <div className="range-label">
-                    <span>{product.limits[k].min / 10} cm</span>
-                    <span>{product.limits[k].max / 10} cm</span>
-                  </div>
-                </div>
+              {(["width", "height", "depth"] as const).map(key => (
+                <StudioDimensionControl key={product.id + key} label={dimensionLabels[key]} value={config[key]}
+                  min={product.limits[key].min} max={product.limits[key].max} unit={dimensionUnit} resetKey={inputReset}
+                  onPreview={(value,dirty) => previewDimension(key,value,dirty)}
+                  onCommit={value => change({...config,[key]:value})} />
               ))}
               <p className="small-note">
                 Los tableros siempre tienen 18 mm de espesor.
@@ -689,9 +727,9 @@ export default function Configurator() {
             </TabsContent>
           </Tabs>
           <ExtraSelector product={product} config={config} onChange={change} />
-          {quoteError && (
+          {(quoteError || previewIssue) && (
             <p className="error-box" role="alert">
-              {quoteError}
+              {quoteError || previewIssue}
             </p>
           )}
           {snapshot && (
@@ -722,7 +760,9 @@ export default function Configurator() {
             {!consultation && <div>
               <span>Tu precio referencial</span>
               <strong aria-live="polite">
-                {pending
+                {visualDirty
+                  ? "Ajustando medidas…"
+                  : !currentQuote && !quoteError
                   ? "Calculando…"
                   : quoteError
                     ? "Revisa las medidas"
@@ -739,7 +779,7 @@ export default function Configurator() {
             <button
               className={`button full ${consultation ? "chrome-quote" : "rust"}`}
               onClick={() => save(consultation)}
-              disabled={saving || pending || !!quoteError || !quote}
+              disabled={saving || !currentQuote}
             >
               {saving ? "Guardando…" : consultation ? "Cotizar" : "Guardar mi diseño"}
               {consultation ? <ArrowUpRight size={18} /> : <Save size={18} />}
@@ -774,7 +814,7 @@ export default function Configurator() {
       <div className="studio-mobile-summary" aria-label="Resumen de tu diseño">
         <div>
           <span>{product.name}</span>
-          <strong>{pending ? "Actualizando…" : quoteError ? "Revisa las medidas" : consultation ? "Por cotizar" : quote?.price != null ? money(quote.price) : "Tu diseño"}</strong>
+          <strong>{visualDirty ? "Ajustando medidas…" : !currentQuote && !quoteError ? "Actualizando…" : quoteError ? "Revisa las medidas" : consultation ? "Por cotizar" : quote?.price != null ? money(quote.price) : "Tu diseño"}</strong>
         </div>
         <a href="#resumen-diseno" onClick={() => document.getElementById("resumen-diseno")?.focus({ preventScroll: true })}>Ver resumen <ArrowUpRight size={17} aria-hidden="true" /></a>
       </div>
@@ -783,7 +823,7 @@ export default function Configurator() {
         geometry={quote?.geometry ?? []}
         materials={settings.materials}
         config={displayedConfig}
-        pending={pending || !!quoteError}
+        pending={!currentQuote}
       />
       <Footer settings={settings} />
     </>
