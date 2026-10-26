@@ -14,6 +14,8 @@ test("measurement input admits only consented coarse data and rejects customer i
 });
 test("private and unknown routes cannot participate in measurement",()=>{
   assert.equal(measurementPage("/cocinas"),"kitchen");
+  assert.equal(measurementPage("/coleccion"),"collection");
+  assert.equal(measurementPage("/mueble"),"product");
   for(const path of ["/admin","/cotizacion","/configurar?token=secret","/unknown"] )assert.equal(measurementPage(path),null);
 });
 test("p75 uses the nearest rank without mutating source and handles small samples",()=>{

@@ -3,7 +3,7 @@ import { api } from "../lib/api";
 import type { MeasurementReport, MeasurementStep, MeasurementPage } from "../lib/measurement-types";
 import "./measurements.css";
 const steps:Record<MeasurementStep,string>={visit:"Sesiones medidas",assistant_result:"Vieron propuestas",design_saved:"Guardaron un diseño",quote_started:"Abrieron el formulario",quote_submitted:"Registraron una solicitud"};
-const pages:Record<MeasurementPage,string>={home:"Inicio",assistant:"Asistente",configurator:"Muebles",kitchen:"Cocinas",cart:"Selección"};
+const pages:Record<MeasurementPage,string>={home:"Inicio",collection:"Colección",product:"Presentación del mueble",assistant:"Asistente",configurator:"Personalizador",kitchen:"Cocinas",cart:"Selección"};
 export default function AdminMeasurements({active=true}:{active?:boolean}) {
   const [days,setDays]=useState("30"),[report,setReport]=useState<MeasurementReport>(),[error,setError]=useState(""),[refresh,setRefresh]=useState(0);
   useEffect(()=>{if(!active)return;let current=true;setError("");setReport(undefined);api<MeasurementReport>(`action=measurements&days=${days}`).then(data=>{if(current)setReport(data);}).catch(cause=>{if(current)setError(cause instanceof Error?cause.message:"No se pudo cargar la medición.");});return()=>{current=false;};},[active,days,refresh]);

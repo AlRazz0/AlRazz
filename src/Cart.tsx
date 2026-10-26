@@ -115,7 +115,7 @@ export default function Cart() {
             <p className="eyebrow">TUS IDEAS, EN UN SOLO LUGAR</p>
             <h1>Mis diseños.</h1>
           </div>
-          <a className="text-link" href="/#catalogo">
+          <a className="text-link" href="/coleccion">
             Añadir otro mueble <Plus size={19} />
           </a>
         </div>
