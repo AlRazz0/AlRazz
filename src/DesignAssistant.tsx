@@ -9,7 +9,10 @@ import { Header, Footer } from "./App";
 import { CatalogThumbnail } from "./CatalogThumbnail";
 import { QuoteRequestForm } from "./QuoteRequestForm";
 import { materialLabel } from "./materials";
+import { AssistantKitchenMeasures } from "./AssistantKitchenMeasures";
+import { kitchenSpaceReasons } from "../lib/kitchen-space-summary";
 import "./design-assistant.css";
+import "./editorial-tools.css";
 
 type Purpose = DesignAssistantInput["purpose"];
 const purposes = [
@@ -133,15 +136,23 @@ export default function DesignAssistant() {
           <button className="assistant-find button" disabled={finding || !!busyChoice} aria-busy={finding}>{finding?<><Loader2 size={19} className="animate-spin" aria-hidden="true"/> Buscando propuestas…</>:<>Ver mis propuestas <ArrowRight size={19} aria-hidden="true"/></>}</button>
           <p className="assistant-privacy-note">Buscar propuestas no registra una solicitud ni comparte tus datos de contacto.</p>
         </form>
-        <aside className="assistant-method"><p className="alrazz-eyebrow">Nuestro punto de partida</p><h2>Un proyecto pensado<br />para hacerlo bien.</h2><ol><li><span>01</span><div><strong>El espacio manda.</strong><p>Buscamos medidas y distribuciones compatibles con lo que nos indicas.</p></div></li><li><span>02</span><div><strong>Decides viendo alternativas.</strong><p>Compara dimensiones, acabados e importes y ajusta tu propuesta en 3D.</p></div></li><li><span>03</span><div><strong>El taller te acompaña.</strong><p>Envía una versión concreta para revisar materiales, entrega e instalación.</p></div></li></ol><a href="/#catalogo">Prefiero explorar el catálogo <ArrowUpRight size={17}/></a></aside>
+        <aside className="assistant-method"><p className="alrazz-eyebrow">Nuestro punto de partida</p><h2>Un proyecto pensado<br />para hacerlo bien.</h2><ol><li><span>01</span><div><strong>El espacio manda.</strong><p>Buscamos medidas y distribuciones compatibles con lo que nos indicas.</p></div></li><li><span>02</span><div><strong>Decides viendo alternativas.</strong><p>Compara dimensiones, acabados e importes y ajusta tu propuesta en 3D.</p></div></li><li><span>03</span><div><strong>El taller te acompaña.</strong><p>Envía una versión concreta para revisar materiales, entrega e instalación.</p></div></li></ol><a href="/coleccion">Prefiero explorar el catálogo <ArrowUpRight size={17}/></a></aside>
       </div>
       {result&&<section className="assistant-results" aria-labelledby="assistant-results-title">
         <div className="assistant-result-heading"><div><p className="alrazz-eyebrow">Tu espacio, interpretado</p><h2 id="assistant-results-title" ref={resultHeading} tabIndex={-1}>{result.options.length?"Propuestas para comparar.":"Busquemos otra posibilidad."}</h2></div><p role="status">{result.message}</p></div>
+        {result.options.length>0&&<div className="assistant-comparison" tabIndex={0} role="region" aria-label="Comparación de lo incluido en las propuestas"><table><caption>Compara lo que incluye cada propuesta</caption><thead><tr><th scope="col">Lo que necesitas</th>{result.options.map((option,index)=><th key={option.id} scope="col">Propuesta {index+1}<small>{option.title}</small></th>)}</tr></thead><tbody>
+          {([['Muebles','furniture'],['Repisas','shelves'],['Puertas','doors'],['Barras para colgar','clothesRails']] as const).map(([label,key])=><tr key={key}><th scope="row">{label}</th>{result.options.map(option=><td key={option.id}>{option.features?.[key]??'Por confirmar'}</td>)}</tr>)}
+          <tr><th scope="row">Cajones</th>{result.options.map(option=><td key={option.id}>Confirmar con el taller</td>)}</tr>
+          <tr><th scope="row">Medidas / espacio ocupado</th>{result.options.map(option=><td key={option.id}>{option.kind==='furniture'?`${dimension(option.fit.width)} × ${dimension(option.fit.height)} × ${dimension(option.fit.depth)}`:option.spaceSummary?.walls.map(wall=><div key={wall.wall}>Pared {wall.wall.toUpperCase()}: {wall.rows.map(row=>`${row.row==='base'?'bajos':'alacenas'} ${dimension(row.occupied)}`).join(' · ')}<small>{wall.rows.map(row=>`${row.row==='base'?'Bajos':'Alacenas'} libres ${dimension(row.free)}`).join(' · ')}</small></div>)||'Revisa la distribución'}</td>)}</tr>
+          <tr className="assistant-comparison-price"><th scope="row">Importe referencial</th>{result.options.map(option=><td key={option.id}>{option.price===null?'Por cotizar':money(option.price)}</td>)}</tr>
+        </tbody></table><p>Repisas, puertas y barras corresponden al modelo mostrado. Los cajones y complementos adicionales se confirman con el taller; no se ha supuesto una capacidad de carga o de almacenamiento.</p></div>}
         <div className="assistant-option-grid">{result.options.map((option,index)=><article className={`assistant-option${selection?.optionId===option.id?" is-chosen":""}`} key={option.id}>
           <div className="assistant-option-image"><span>Propuesta {String(index+1).padStart(2,"0")}</span><CatalogThumbnail name={option.title} geometry={option.kind==="furniture"?option.product.preview.geometry:option.result.geometry} materials={option.kind==="kitchen"?option.result.materials:settings?.materials??[]} handle={option.kind==="furniture"?option.config.handle:"push"}/></div>
           <div className="assistant-option-copy"><p className="assistant-budget-state" data-state={option.budgetState}>{option.budgetState==="within"?"Dentro de tu presupuesto":option.budgetState==="over"?"Supera el presupuesto indicado":option.budgetState==="quote-required"?"El taller debe confirmar el precio":"Propuesta compatible"}</p>
-            <h3>{option.title}</h3><p className="assistant-option-size">{dimension(option.fit.width)} ancho × {dimension(option.fit.height)} alto × {dimension(option.fit.depth)} fondo</p>
-            <ul>{option.reasons.map((reason,reasonIndex)=><li key={reasonIndex}>{reason}</li>)}</ul>
+            <h3>{option.title}</h3>
+            {!!option.benefits?.length&&<div className="assistant-benefits">{option.benefits.map(benefit=><p key={benefit}><Check size={14} aria-hidden="true"/>{benefit}</p>)}</div>}
+            {option.kind === "kitchen" ? <AssistantKitchenMeasures summary={option.spaceSummary} quote={option.result}/> : <p className="assistant-option-size">{dimension(option.fit.width)} ancho × {dimension(option.fit.height)} alto × {dimension(option.fit.depth)} fondo</p>}
+            <ul>{(option.kind === "kitchen" && !option.spaceSummary ? kitchenSpaceReasons(option.plan.items.length) : option.reasons).map((reason,reasonIndex)=><li key={reasonIndex}>{reason}</li>)}</ul>
             <div className="assistant-option-price"><span>Importe referencial</span><strong>{option.price===null?"Por cotizar":money(option.price)}</strong></div>
             <button type="button" className="button assistant-personalize" disabled={!!busyChoice} onClick={()=>void choose(option,true)}>{busyChoice===option.id?<Loader2 size={16} className="animate-spin"/>:<SlidersHorizontal size={16}/>} Personalizar esta propuesta</button>
             <button type="button" className="assistant-request" disabled={!!busyChoice} onClick={()=>void choose(option,false)}>Solicitar cotización <ArrowUpRight size={17}/></button>

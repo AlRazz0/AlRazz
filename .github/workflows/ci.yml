@@ -24,3 +24,5 @@ jobs:
       - run: npm run test:kitchen-fit-api
       - run: npm run test:crm-api
       - run: npm run test:assistant-api
+      - run: npm run test:measurements-api
+      - run: npm run test:completed-projects-api

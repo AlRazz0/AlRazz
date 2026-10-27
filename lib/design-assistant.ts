@@ -1,10 +1,11 @@
 import { z } from "zod";
 import {
   createFurnitureBuilder, getConstruction, getConstructionOptions, getFrontOptions,
-  settingsSchema, type Config, type Construction, type Product, type Settings,
+  settingsSchema, type Config, type Construction, type Product, type Settings, type Result,
 } from "./furniture.ts";
 import { buildKitchen, publicKitchenQuote, type KitchenPlan, type KitchenQuote } from "./kitchen.ts";
 import { publicFurnitureResult, publicProduct, type PublicProductMetadata } from "./public-product.ts";
+import { kitchenSpaceReasons, summarizeKitchenSpace, type KitchenSpaceSummary } from "./kitchen-space-summary.ts";
 
 const measure = (minimum: number, maximum: number) => z.number().finite().int().min(minimum).max(maximum).multipleOf(10, "Usa medidas en pasos de 10 mm.");
 export const designAssistantInputSchema = z.object({
@@ -22,16 +23,23 @@ export const designAssistantInputSchema = z.object({
 });
 export type DesignAssistantInput = z.infer<typeof designAssistantInputSchema>;
 export type DesignAssistantBudgetState = "not-provided" | "within" | "over" | "quote-required";
-/** Kitchen depth is the greatest module depth, not the second wall's length. */
+/** Legacy kitchen ranking bounds: width is occupied A, depth is module depth, not the L envelope. Use spaceSummary for display. */
 export type DesignAssistantFit = { width: number; height: number; depth: number; freeWidth: number; freeHeight: number; freeDepth: number };
 type AssistantProduct = PublicProductMetadata & { preview: ReturnType<typeof publicFurnitureResult> };
 type RecommendationBase = {
   id: string; title: string; price: number | null; fit: DesignAssistantFit; reasons: string[];
   withinBudget: boolean | null; budgetState: DesignAssistantBudgetState;
+  features: DesignAssistantFeatures; benefits: string[];
 };
+export type DesignAssistantFeatures = { furniture:number; shelves:number; doors:number; clothesRails:number; drawers:null };
+/** Counts come from built parts/fittings; no storage volume, load rating or drawer is inferred. */
+export function furnitureFeatures(results:readonly Result[]):DesignAssistantFeatures {
+  return {furniture:results.length,shelves:results.reduce((sum,result)=>sum+result.panels.filter(panel=>panel.id.startsWith("REPISA_")).length,0),
+    doors:results.reduce((sum,result)=>sum+result.doors,0),clothesRails:results.reduce((sum,result)=>sum+(result.fixtures?.filter(fixture=>fixture.kind==="clothes-rail").length??0),0),drawers:null};
+}
 export type DesignAssistantOption = RecommendationBase & (
   | { kind: "furniture"; product: AssistantProduct; config: Config }
-  | { kind: "kitchen"; plan: KitchenPlan; result: KitchenQuote }
+  | { kind: "kitchen"; plan: KitchenPlan; result: KitchenQuote; spaceSummary: KitchenSpaceSummary }
 );
 export type DesignAssistantResult = {
   input: DesignAssistantInput; options: DesignAssistantOption[];
@@ -135,7 +143,7 @@ function furnitureCandidates(input: DesignAssistantInput, products: readonly Pro
       if (config.doors !== product.defaults.doors || config.front !== (product.defaults.front ?? "melamine")) reasons.push("La distribución de puertas se adaptó a las opciones y alturas permitidas del modelo; revísala en 3D.");
       const option: DesignAssistantOption = {
         kind: "furniture", id: `${product.id}-${index + 1}`, title: `${product.name} · ${index === 0 ? "equilibrado" : index === 1 ? "más espacio" : "compacto"}`,
-        product: publicModel, config, price: preview.price, fit, reasons, ...budgetInfo(preview.price, input.budget),
+        product: publicModel, config, price: preview.price, fit, reasons, features:furnitureFeatures([result]),benefits:[],...budgetInfo(preview.price, input.budget),
       };
       options.push({ option, score: candidateScore(option, input, index), order: product.order, model: product.id });
     }
@@ -223,13 +231,8 @@ function kitchenCandidates(input: DesignAssistantInput, products: readonly Produ
       const fit = fitInfo(input, occupiedA, result.envelope.height, greatestDepth);
       const option: DesignAssistantOption = {
         kind: "kitchen", id: `kitchen-${source.product.id}-${variant}`, title: `${layout === "l" ? "Cocina en L" : "Cocina lineal"} · ${variant === "compact" ? "inicio compacto" : variant === "storage" ? "más almacenaje" : "con alacenas"}`,
-        plan, result, price: result.price, fit,
-        reasons: [
-          `Propuesta inicial con ${items.length} módulos publicados, dentro de las paredes y altura indicadas.`,
-          ...fitReasons(fit),
-          ...(layout === "l" ? [`Pared B de ${wallB} mm; se respeta la reserva de esquina calculada por el motor.`] : []),
-          "Los electrodomésticos, lavadero e instalaciones no están incluidos: añade sus reservas y revisa la distribución antes de solicitar la cotización final.",
-        ],
+        plan, result, price: result.price, fit, spaceSummary: summarizeKitchenSpace(result),features:furnitureFeatures(snapshot.modules.map(module=>module.result)),benefits:[],
+        reasons: kitchenSpaceReasons(items.length),
         ...budgetInfo(result.price, input.budget),
       };
       candidates.push({ option, score: candidateScore(option, input, variant === "compact" ? 0 : variant === "storage" ? 1 : 2), order: source.product.order, model: source.product.id });
@@ -256,6 +259,17 @@ export function getDesignRecommendations(raw: unknown, products: readonly Produc
     if (seen.has(key)) continue;
     seen.add(key); options.push(structuredClone(option));
     if (options.length === 3) break;
+  }
+  for(const option of options){
+    const isDesk=option.kind==="furniture"&&["desk","desk-storage"].includes(getConstruction(option.product).kind);
+    const facts=[isDesk&&option.kind==="furniture"?`Superficie de trabajo de ${option.config.width} × ${option.config.depth} mm.`:`${option.features.shelves} repisas y ${option.features.doors} puertas incluidas en el modelo.`];
+    const fewer=options.find(other=>other.id!==option.id&&other.features.shelves<option.features.shelves);
+    if(fewer)facts.push(`${option.features.shelves-fewer.features.shelves} repisas más que ${fewer.title}.`);
+    const lessHanging=options.find(other=>other.features.clothesRails<option.features.clothesRails);
+    if(lessHanging)facts.push(`${option.features.clothesRails} barras para colgar, frente a ${lessHanging.features.clothesRails} en ${lessHanging.title}.`);
+    const costlier=option.price===null?undefined:options.find(other=>other.price!==null&&other.price>option.price!);
+    if(costlier)facts.push(`S/ ${(costlier.price!-option.price!).toFixed(2)} menos que ${costlier.title}, según los importes públicos actuales.`);
+    option.benefits=facts.slice(0,3);
   }
   const budgetState = !options.length ? "no-options" : input.budget === undefined ? (options.every(option => option.price === null) ? "quote-required" : "not-provided") : options.some(option => option.withinBudget === true) ? "within" : options.some(option => option.price !== null) ? "over" : "quote-required";
   const message = !options.length ? "No encontramos una propuesta válida con este espacio y el catálogo publicado. Revisa las medidas o consúltalas con el taller."

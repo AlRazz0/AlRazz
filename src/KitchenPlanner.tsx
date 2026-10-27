@@ -46,6 +46,7 @@ import { getEmptyKitchenSlot, getKitchenReplacementSlot, getKitchenSlots, type K
 import { insertKitchenModule } from "./kitchen-placement";
 import { KitchenDimensionInput } from "./KitchenDimensionInput";
 import { KitchenModelPreview } from "./KitchenModelPreview";
+import { KitchenEnvironmentPanel } from "./KitchenEnvironmentPanel";
 import { ExtraSelector } from "./ExtraSelector";
 import { createLiveKitchenPreview, type LiveKitchenPreview } from "./live-furniture-preview";
 import "./kitchen-planner.css";
@@ -292,7 +293,10 @@ export default function KitchenPlanner() {
   function remove(id: string) {
     if (!plan) return;
     const next = removeKitchenItem(plan, id);
+    const removedDrawers = next.environment?.drawers?.some(drawer => drawer.itemId === id);
+    if (removedDrawers && next.environment) next.environment = { ...next.environment, drawers: next.environment.drawers?.filter(drawer => drawer.itemId !== id) };
     change(next);
+    if (removedDrawers) setSaveNotice("Se retiraron también los recorridos medidos del módulo eliminado. Deshacer recupera la composición y sus medidas.");
     if (selected === id) setSelected(next.items[0]?.id ?? "");
     setPlacement(undefined);
   }
@@ -534,7 +538,10 @@ export default function KitchenPlanner() {
           products={products}
           selected={selectedTemplate}
           onSelect={(template) => {
-            change(structuredClone(template.plan));
+            const next = structuredClone(template.plan);
+            if (plan.environment) next.environment = { ...structuredClone(plan.environment), drawers: [] };
+            change(next);
+            if (plan.environment?.drawers?.length) setSaveNotice("Se conservaron los obstáculos del ambiente. Los recorridos de cajones deben medirse de nuevo para los módulos de esta plantilla.");
             setName(template.name);
             setSelectedTemplate(template.id);
             setSelected(
@@ -664,9 +671,9 @@ export default function KitchenPlanner() {
               <button
                 aria-pressed={plan.layout === "straight"}
                 onClick={() => {
-                  if (plan.items.some((item) => item.wall === "b")) {
+                  if (plan.items.some((item) => item.wall === "b") || plan.environment?.obstacles.some(obstacle => obstacle.wall === "b")) {
                     setActionError(
-                      "Mueve o retira los módulos de la pared B antes de pasar a una cocina lineal.",
+                      "Mueve o retira los módulos y obstáculos de la pared B antes de pasar a una cocina lineal.",
                     );
                     return;
                   }
@@ -823,7 +830,7 @@ export default function KitchenPlanner() {
         )}
         {quote && currentQuote && quote.warnings.length > 0 && (
           <div className="kitchen-warnings">
-            {quote.warnings.map((warning) => (
+            {quote.warnings.filter(warning => !quote.verification?.issues.some(issue => issue.message === warning)).map((warning) => (
               <p key={warning}>{warning}</p>
             ))}
           </div>
@@ -831,6 +838,7 @@ export default function KitchenPlanner() {
         <KitchenLayoutMap plan={visualPlan ?? plan} preview={visualDirty} quote={currentQuote ? quote : undefined} products={products} selected={selected} pending={pending} error={error || (invalidMeasures.length || invalidRoom ? "Revisa las medidas incompletas." : "")}
           onSelect={selectModuleEditor}
           onMove={(id, direction) => { if (canMoveKitchenItem(plan,id,direction)) change(moveKitchenItem(plan,id,direction)); }} />
+        <KitchenEnvironmentPanel plan={plan} quote={currentQuote ? quote : undefined} pending={pending || visualDirty} serverError={error} onChange={change} />
         <section className="kitchen-assembly">
           <div className="kitchen-section-heading">
             <div>

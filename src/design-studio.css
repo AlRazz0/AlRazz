@@ -48,3 +48,5 @@
   .design-studio .stage-hint { font-size: 11px; }
   .design-studio .config-tabs [data-slot="tabs-trigger"] { font-size: 12px; }
 }
+
+.project-start-notice{margin:0;padding:16px 5%;background:#eaf1f3;border-bottom:1px solid #cbdade;color:#284650;font-size:14px;line-height:1.6}

@@ -1,3 +1,4 @@
+import { recordSuccessfulOperation } from "./measurement-client";
 export class ApiError extends Error {
   status: number;
   constructor(message: string, status: number) {
@@ -30,6 +31,7 @@ export async function api<T = any>(action: string, body?: unknown): Promise<T> {
       data.error || "No se pudo completar la operación.",
       response.status,
     );
+  if (body && typeof body === "object" && "op" in body) recordSuccessfulOperation(body.op);
   return data;
 }
 export function download(

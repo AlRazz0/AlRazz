@@ -17,6 +17,7 @@ import { StudioDimensionControl } from "./StudioDimensionControl";
 import { createLiveFurniturePreview, type LiveFurniturePreview } from "./live-furniture-preview";
 import { Switch } from "@/components/ui/switch";
 import { api } from "../lib/api";
+import { resolveConfiguratorStart } from "../lib/showroom";
 import {
   getConstruction,
   getConstructionOptions,
@@ -40,6 +41,7 @@ import { constructionDescriptions } from "./construction-labels";
 import ModelShowcase from "./ModelShowcase";
 import { ContactLinks } from "./ContactLinks";
 import { QuoteRequestForm } from "./QuoteRequestForm";
+import type { PublicCompletedProject } from "../lib/completed-projects";
 import "./design-studio.css";
 const searchText = (value: string) =>
   value
@@ -64,6 +66,9 @@ export default function Configurator() {
   const [quote, setQuote] = useState<Quote>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [projectNotice, setProjectNotice] = useState("");
+  const [projectIssue, setProjectIssue] = useState<{message:string;productId?:string}>();
+  const [productUnavailable, setProductUnavailable] = useState(false);
   const [quoteError, setQuoteError] = useState("");
   const [pending, setPending] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -86,6 +91,9 @@ export default function Configurator() {
   function load() {
     setLoading(true);
     setError("");
+    setProjectIssue(undefined);
+    setProjectNotice("");
+    setProductUnavailable(false);
     api("action=catalog")
       .then(async (d) => {
         setProducts(d.products);
@@ -109,21 +117,37 @@ export default function Configurator() {
           setQuoteKey(JSON.stringify({productId:saved.product.id, config:saved.config}));
           setSettings({ ...d.settings, materials: saved.materials });
           setSnapshot(true);
+        } else if (params.get("proyecto")) {
+          const {project}=await api<{project:PublicCompletedProject}>("action=completed-project&id="+encodeURIComponent(params.get("proyecto")!));
+          const model=project.model;
+          const current=d.products.find((entry:PublicProduct)=>entry.id===model?.id);
+          if(!model || !current) {
+            setProjectIssue({message:"El modelo de este trabajo ya no está disponible para personalizar. Puedes elegir otro del catálogo."});
+            return;
+          }
+          if(model.state!=="ready" || !model.preset) {
+            setProjectIssue({message:model.notice || "El catálogo cambió desde este trabajo. Revisa las opciones actuales antes de empezar.",productId:current.id});
+            return;
+          }
+          setProduct(current);
+          setConfig(model.preset);
+          setRenderConfig(model.preset);
+          setQuote(undefined);
+          setQuoteKey("");
+          setProjectNotice(`Partes del trabajo «${project.title}», con sus medidas y acabado. Este es un nuevo diseño: el importe y la disponibilidad se calculan con las opciones actuales del taller.`);
         } else {
-          const p =
-            d.products.find(
-              (p: PublicProduct) => p.id === params.get("producto"),
-            ) || d.products[0];
-          if (p) {
-            const requestedFinish = params.get("acabado");
-            const initialConfig = requestedFinish && d.settings.materials.some((material: PublicSettings["materials"][number]) => material.active && material.id === requestedFinish)
-              ? { ...p.defaults, finish: requestedFinish }
-              : p.defaults;
-            setProduct(p);
-            setConfig(initialConfig);
-            setRenderConfig(p.defaults);
-            setQuote(p.preview);
-            setQuoteKey(JSON.stringify({productId:p.id, config:p.defaults}));
+          const start = resolveConfiguratorStart<PublicProduct>(d.products, params.get("producto"), params.get("acabado"), d.settings.materials);
+          if (start) {
+            setProduct(start.product);
+            setConfig(start.config);
+            setRenderConfig(start.config);
+            setQuote(start.usesCataloguePreview ? start.product.preview : undefined);
+            setQuoteKey(start.usesCataloguePreview ? JSON.stringify({productId:start.product.id, config:start.config}) : "");
+          } else if (params.has("producto")) {
+            revision.current++;
+            setProduct(undefined); setConfig(undefined); setRenderConfig(undefined); setQuote(undefined); setQuoteKey("");
+            setSaved(undefined); setOwnsSaved(false); setPending(false); setQuoteError("");
+            setProductUnavailable(true);
           } else
             setError(
               "Todavía no hay modelos publicados. El administrador puede activar uno desde el panel.",
@@ -301,6 +325,8 @@ export default function Configurator() {
         <div className="loading-page">Cargando tu mueble…</div>
       </>
     );
+  if (productUnavailable) return <><Header/><main id="main-content" className="empty-page" tabIndex={-1}><h1>Este modelo no está disponible.</h1><p>El enlace no corresponde a un modelo publicado. Explora la colección para elegir una pieza.</p><a className="button rust" href="/coleccion">Explorar la colección <ArrowUpRight size={18} aria-hidden="true" /></a></main><Footer settings={settings}/></>;
+  if (projectIssue) return <><Header/><main id="main-content" className="empty-page" tabIndex={-1}><h1>Revisemos el punto de partida.</h1><p role="status">{projectIssue.message}</p>{projectIssue.productId&&<a className="button rust" href={"/configurar?producto="+encodeURIComponent(projectIssue.productId)}>Empezar con las opciones actuales</a>}<a href="/coleccion">Elegir otro mueble</a></main></>;
   if (error || !product || !config || !settings)
     return (
       <>
@@ -311,7 +337,7 @@ export default function Configurator() {
           <button className="button rust" onClick={load}>
             Reintentar
           </button>
-          <a href="/">Volver al catálogo</a>
+          <a href="/coleccion">Volver a la colección</a>
         </div>
       </>
     );
@@ -341,8 +367,9 @@ export default function Configurator() {
   return (
     <>
       <Header compact />
+      {projectNotice&&<p className="project-start-notice" role="status">{projectNotice}</p>}
       <div className="config-top">
-        <a href="/#catalogo">
+        <a href="/coleccion">
           <ArrowLeft size={16} /> Colección
         </a>
         <span>Tu diseño, a tu manera.</span>

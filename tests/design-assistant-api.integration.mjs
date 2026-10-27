@@ -5,6 +5,7 @@ import test from "node:test";
 import { Miniflare, createFetchMock, fetch as mockFetch } from "miniflare";
 import { defaultSettings } from "../lib/furniture.ts";
 import { productTemplate } from "../lib/product-templates.ts";
+import { summarizeKitchenSpace } from "../lib/kitchen-space-summary.ts";
 
 // Only the compiled Worker and ephemeral, synthetic D1 fixtures are used. No
 // .dev.vars, .wrangler persistence, real accounts, local server or network.
@@ -28,7 +29,10 @@ const upper = fixture("cabinet", "assistant-api-upper", {
   limits: { width: { min: 300, max: 1200 }, height: { min: 500, max: 1000 }, depth: { min: 250, max: 450 } },
   defaults: { ...base.defaults, width: 600, height: 700, depth: 300, modules: 1 },
 });
-const products = [storage, hidden, inactive, base, upper];
+const asymmetricBase = fixture("kitchen-base", "assistant-api-asymmetric-base", {
+  order: 0, defaults: { ...base.defaults,width:1000,modules:2 }, pricing: { basis:"unit",amount:250 },
+});
+const products = [storage, hidden, inactive, base, upper, asymmetricBase];
 const input = extra => ({ purpose: "storage", width: 1900, height: 2400, depth: 600, ...extra });
 function publicOnly(value) {
   const denied = new Set(["snapshot", "owner_hash", "settings", "basePrice", "amount", "panels", "fixtures", "accessories", "breakdown", "unitCost", "cost", "materialRate", "edgeRate", "doorHardware", "margin"]);
@@ -74,7 +78,7 @@ test("isolated public assistant validates real recommendations without exposing 
   const recommend = selection => post("/api/store", { op: "design-assistant", input: selection });
   const snapshot = async () => {
     const state = {};
-    for (const table of ["products", "settings", "designs", "kitchens", "quote_requests"])
+    for (const table of ["products", "settings", "designs", "kitchens", "quote_requests", "quote_request_events"])
       state[table] = (await db.prepare(`SELECT * FROM ${table} ORDER BY id`).all()).results;
     return state;
   };
@@ -86,6 +90,7 @@ test("isolated public assistant validates real recommendations without exposing 
     assert.ok(response.data.options.length > 0 && response.data.options.length <= 3);
     for (const option of response.data.options) {
       assert.equal(option.kind, "furniture");
+      assert.equal("spaceSummary" in option, false);
       assert.notEqual(option.product.id, inactive.id);
       assert.equal(option.product.active, true);
       assert.ok(option.config.width <= 1900 && option.config.height <= 2400 && option.config.depth <= 600);
@@ -142,10 +147,36 @@ test("isolated public assistant validates real recommendations without exposing 
       const quote = await post("/api/kitchen-quote", { plan: option.plan });
       assert.equal(quote.status, 200, JSON.stringify(quote.data));
       assert.deepEqual(option.result, quote.data);
+      assert.deepEqual(option.spaceSummary, summarizeKitchenSpace(quote.data));
       assert.equal(option.price, quote.data.price);
       assert.equal(option.withinBudget, false);
     }
     publicOnly(response.data);
     assert.deepEqual(await snapshot(), original);
+  });
+
+  await t.test("the public summary preserves asymmetric A/B frontage, corner capacity and separate upper rows", async () => {
+    for (const wallB of [2400,1650]) {
+      const response = await recommend(input({purpose:"kitchen",layout:"l",width:3000,wallB,height:2700}));
+      assert.equal(response.status,200,JSON.stringify(response.data));
+      const option = response.data.options.find(option => option.kind==="kitchen" && option.plan.items.filter(item=>item.wall==="a"&&item.row==="base").length===2 && option.plan.items.filter(item=>item.wall==="b"&&item.row==="base").length===1);
+      assert.ok(option,"two 1000 mm modules on A and one on B must remain separate measurements");
+      const a = option.spaceSummary.walls.find(wall=>wall.wall==="a"),b = option.spaceSummary.walls.find(wall=>wall.wall==="b");
+      assert.deepEqual(a.rows.find(row=>row.row==="base"),{row:"base",occupied:2000,blocked:0,free:1000});
+      assert.equal(b.corner,650);
+      assert.deepEqual(b.rows.find(row=>row.row==="base"),{row:"base",occupied:1000,blocked:0,free:wallB===2400?750:0});
+      const quote=await post("/api/kitchen-quote",{plan:option.plan});
+      assert.equal(quote.status,200);
+      assert.deepEqual(option.spaceSummary,summarizeKitchenSpace(quote.data));
+      publicOnly(response.data);
+    }
+    const straight=await recommend(input({purpose:"kitchen",layout:"straight",width:3000,height:2700}));
+    assert.equal(straight.status,200);
+    assert.ok(straight.data.options.length>0);
+    for(const option of straight.data.options){
+      assert.deepEqual(option.spaceSummary.walls.map(wall=>wall.wall),["a"]);
+      for(const wall of option.spaceSummary.walls)for(const row of wall.rows)assert.equal(wall.corner+row.occupied+row.blocked+row.free,wall.length);
+    }
+    assert.deepEqual(await snapshot(),original,"space summaries and ordinary quote parity never persist draft or CRM data");
   });
 });

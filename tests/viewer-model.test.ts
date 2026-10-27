@@ -10,6 +10,28 @@ const materials: PublicMaterial[] = [{ id: "sample", name: "Acabado de prueba", 
 const board = (values: Partial<VisualPanel> = {}): VisualPanel => ({
   size: [600, 900, 18], position: [0, 450, 300], material: "sample", ...values,
 });
+
+test("presentation edges retain exact 18 mm panels, hinge pivots and full-sized hardware", () => {
+  const group = new THREE.Group();
+  const model = createViewerModel(group, () => {}, 1, undefined, true);
+  const panels = [board({ size: [18, 900, 400], position: [-300, 450, 0] }), board({ door: true, hinge: "right" })];
+  const original = structuredClone(panels);
+  model.update(panels, materials, "exterior");
+  try {
+    const side = group.children[0] as THREE.Mesh;
+    const leaf = group.children[1].children[0] as THREE.Mesh;
+    assertSize(side, [.018, .9, .4], "rounded edge must not thicken or shrink the board");
+    assertSize(leaf, [.6, .9, .018], "door preserves its nominal 18 mm envelope");
+    assert.equal(side.children.filter(child => child instanceof THREE.LineSegments).length, 0,
+      "hidden unit outlines must not enlarge scene bounds or lift the floor");
+    const handle = group.getObjectByName("front-handle")!;
+    assert.ok(handle.getWorldScale(new THREE.Vector3()).distanceTo(new THREE.Vector3(1, 1, 1)) < 1e-9);
+    model.update([panels[0], { ...panels[1], size: [620, 900, 18] }], materials, "exterior", 1);
+    assert.ok(Math.abs(group.children[1].rotation.y - doorRotation(group.children[1] as THREE.Group, 1)) < 1e-9);
+    assert.deepEqual(panels, original, "presentation never edits catalogue geometry");
+  } finally { model.dispose(); }
+  assert.equal(group.children.length, 0);
+});
 function meshBounds(mesh: THREE.Mesh) {
   mesh.updateWorldMatrix(true, false);
   mesh.geometry.computeBoundingBox();

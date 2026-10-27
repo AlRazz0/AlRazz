@@ -23,6 +23,7 @@ import { money } from "../lib/furniture";
 import type { Design, PublicSettings } from "./types";
 import { Header, Footer } from "./App";
 import Viewer from "./Viewer";
+import "./editorial-tools.css";
 import { ContactLinks } from "./ContactLinks";
 import { QuoteRequestForm } from "./QuoteRequestForm";
 export default function Cart() {
@@ -115,7 +116,7 @@ export default function Cart() {
             <p className="eyebrow">TUS IDEAS, EN UN SOLO LUGAR</p>
             <h1>Mis diseños.</h1>
           </div>
-          <a className="text-link" href="/#catalogo">
+          <a className="text-link" href="/coleccion">
             Añadir otro mueble <Plus size={19} />
           </a>
         </div>
