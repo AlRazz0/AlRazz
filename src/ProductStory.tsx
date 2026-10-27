@@ -1,15 +1,68 @@
-import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
+import { lazy, Suspense, useEffect, useId, useRef, useState } from "react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, Expand, X } from "lucide-react";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "../components/ui/dialog";
 import { api } from "../lib/api";
 import { money } from "../lib/format-price";
 import { Header, Footer } from "./App";
 import { MaterialSwatch } from "./MaterialSwatch";
 import { materialLabel } from "./materials";
 import { ProductRoom } from "./ProductRoom";
-import type { PublicProduct, PublicSettings } from "./types";
+import type { ImmersiveMemory } from "./ImmersiveFurniture";
+import type { PublicMaterial, PublicProduct, PublicSettings } from "./types";
 import "./product-story.css";
 
 const centimeters = (value: number) => `${(value / 10).toLocaleString("es-PE", { maximumFractionDigits: 1 })} cm`;
+const ImmersiveFurniture = lazy(() => import("./ImmersiveFurniture"));
+type View = "room" | "3d";
+
+function ModelPresentation({ product, materials, view, memory, expanded = false }: {
+  product: PublicProduct; materials: readonly PublicMaterial[]; view: View; memory: { current: ImmersiveMemory }; expanded?: boolean;
+}) {
+  return view === "room" ? <ProductRoom product={product} materials={materials} priority
+    className={expanded ? "product-story__expanded-room" : "product-story__room"}
+    sizes={expanded ? "95vw" : "(min-width: 1100px) 65vw, (min-width: 760px) 55vw, 100vw"} />
+    : <div className={`product-story__3d${expanded ? " product-story__3d--expanded" : ""}`}>
+      <Suspense fallback={<p className="product-story__3d-loading" role="status">Preparando la vista 3D del modelo…</p>}>
+        <ImmersiveFurniture product={product} materials={materials} memory={memory} className="product-story__immersive" />
+      </Suspense>
+    </div>;
+}
+
+function ViewSelector({ view, onChange }: { view: View; onChange: (view: View) => void }) {
+  return <div className="product-story__view-selector" role="group" aria-label="Vista del mueble">
+    <button type="button" aria-pressed={view === "room"} onClick={() => onChange("room")} data-ui-sound="select">En ambiente</button>
+    <button type="button" aria-pressed={view === "3d"} onClick={() => onChange("3d")} data-ui-sound="select">Explorar en 3D</button>
+  </div>;
+}
+
+function ReferenceDimensions({ product }: { product: PublicProduct }) {
+  const id = useId();
+  const { width, height, depth } = product.defaults;
+  // This is an exterior dimension diagram, not a second furniture engine.
+  const scale = Math.min(210 / width, 195 / height, 80 / depth);
+  const w = width * scale, h = height * scale, dx = depth * scale * .72, dy = depth * scale * .42;
+  const x = (420 - w - dx) / 2, y = (315 - h + dy) / 2;
+  const depthX = x + w + dx / 2 + 13, depthY = y - dy / 2 - 22;
+  return <svg className="product-story__dimension-diagram" viewBox="0 0 420 360" role="img" aria-labelledby={`${id}-title ${id}-description`}>
+    <title id={`${id}-title`}>Medidas exteriores de referencia de {product.name}</title>
+    <desc id={`${id}-description`}>Ancho {centimeters(width)}, alto {centimeters(height)} y fondo {centimeters(depth)}. Esquema del volumen exterior.</desc>
+    <g className="product-story__dimension-volume" strokeLinejoin="round">
+      <path d={`M${x},${y}l${dx},${-dy}h${w}v${h}l${-dx},${dy}Z`} fill="#e0dfd2" />
+      <path d={`M${x},${y}h${w}l${dx},${-dy}h${-w}Z`} fill="#f5f2e9" />
+      <path d={`M${x},${y}h${w}v${h}h${-w}Z`} fill="#eae9de" />
+    </g>
+    <g className="product-story__dimension-lines" fill="none">
+      <path d={`M${x},${y + h + 10}v26m${w},-26v26M${x},${y + h + 28}h${w}`} />
+      <path d={`M${x - 10},${y}h-26m26,${h}h-26M${x - 28},${y}v${h}`} />
+      <path d={`M${x + w + 7},${y - 5}l16,-10m${dx - 16},${-dy + 10}l16,-10M${x + w + 15},${y - 10}l${dx},${-dy}`} />
+    </g>
+    <g className="product-story__dimension-labels" textAnchor="middle">
+      <text x={x + w / 2} y={y + h + 48}>Ancho {centimeters(width)}</text>
+      <text transform={`translate(${x - 42} ${y + h / 2}) rotate(-90)`}>Alto {centimeters(height)}</text>
+      <text transform={`translate(${depthX} ${depthY}) rotate(-30.25)`}>Fondo {centimeters(depth)}</text>
+    </g>
+  </svg>;
+}
 
 export default function ProductStory() {
   const [query] = useState(() => new URLSearchParams(window.location.search));
@@ -19,6 +72,12 @@ export default function ProductStory() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
+  const [view, setView] = useState<View>("room");
+  const [expanded, setExpanded] = useState(false);
+  const [showMobileCta, setShowMobileCta] = useState(false);
+  const primaryCta = useRef<HTMLAnchorElement>(null);
+  const finalInvitation = useRef<HTMLElement>(null);
+  const immersiveMemory = useRef<ImmersiveMemory>({ pose: "presence", open: false });
 
   useEffect(() => {
     let current = true;
@@ -44,6 +103,22 @@ export default function ProductStory() {
     return () => { document.title = previous; };
   }, [product]);
 
+  useEffect(() => {
+    if (!product || !primaryCta.current || !finalInvitation.current || typeof IntersectionObserver === "undefined") {
+      setShowMobileCta(false); return;
+    }
+    const mobile = window.matchMedia("(max-width: 759px)");
+    const update = () => {
+      const primary = primaryCta.current?.getBoundingClientRect();
+      const end = finalInvitation.current?.getBoundingClientRect();
+      setShowMobileCta(!!(mobile.matches && primary && primary.bottom <= 0 && end && end.top > window.innerHeight));
+    };
+    const observer = new IntersectionObserver(update, { threshold: [0, 1] });
+    observer.observe(primaryCta.current); observer.observe(finalInvitation.current);
+    mobile.addEventListener("change", update); update();
+    return () => { observer.disconnect(); mobile.removeEventListener("change", update); };
+  }, [product?.id]);
+
   const materials = settings?.materials.filter(material => material.active) ?? [];
   const selectedFinish = materials.find(material => material.id === query.get("acabado"));
   const configure = product ? `/configurar?${new URLSearchParams({ producto: product.id,
@@ -59,7 +134,7 @@ export default function ProductStory() {
     <Header />
     <main id="main-content" className="product-story" tabIndex={-1}>
       <nav className="product-story__breadcrumb" aria-label="Ruta de navegación">
-        <a href="/coleccion"><ArrowLeft size={15} aria-hidden="true" /> La colección</a>
+        <a href="/coleccion" data-ui-sound="tap"><ArrowLeft size={15} aria-hidden="true" /> La colección</a>
         {product && <><span aria-hidden="true">/</span><span aria-current="page">{product.name}</span></>}
       </nav>
       {loading ? <div className="product-story__loading" role="status" aria-live="polite">
@@ -70,9 +145,9 @@ export default function ProductStory() {
         <h1 id="product-story-unavailable">{error ? "Volvamos a intentarlo." : "Este modelo no está disponible."}</h1>
         <p role={error ? "alert" : undefined}>{error || "Puede que el taller lo esté renovando. Explora los modelos publicados o encuentra una propuesta para tu espacio."}</p>
         <div className="product-story__links">
-          {error && <button className="product-story__button" type="button" onClick={() => setAttempt(value => value + 1)}>Cargar de nuevo <ArrowRight size={18} aria-hidden="true" /></button>}
-          <a className={error ? "product-story__text-link" : "product-story__button"} href="/coleccion">Explorar la colección <ArrowRight size={18} aria-hidden="true" /></a>
-          <a className="product-story__text-link" href="/asistente">Ayúdame a elegir <ArrowUpRight size={18} aria-hidden="true" /></a>
+          {error && <button className="product-story__button" type="button" onClick={() => setAttempt(value => value + 1)} data-ui-sound="tap">Cargar de nuevo <ArrowRight size={18} aria-hidden="true" /></button>}
+          <a className={error ? "product-story__text-link" : "product-story__button"} href="/coleccion" data-ui-sound="tap">Explorar la colección <ArrowRight size={18} aria-hidden="true" /></a>
+          <a className="product-story__text-link" href="/asistente" data-ui-sound="tap">Ayúdame a elegir <ArrowUpRight size={18} aria-hidden="true" /></a>
         </div>
       </section> : <>
         <section className="product-story__hero" aria-labelledby="product-story-title">
@@ -88,12 +163,25 @@ export default function ProductStory() {
                 Incluye {[product.defaults.install && "instalación", product.defaults.transport && "transporte"].filter(Boolean).join(" y ")} en la referencia.
               </p>}
             </div>
-            <a className="product-story__button" href={configure}>Personalizar este mueble <ArrowUpRight size={20} aria-hidden="true" /></a>
+            <a className="product-story__button" href={configure} ref={primaryCta} data-ui-sound="tap">Personalizar este mueble <ArrowUpRight size={20} aria-hidden="true" /></a>
             {selectedFinish && <p className="product-story__finish-note">Empieza con {selectedFinish.name} en el configurador. La escena muestra el acabado de referencia.</p>}
-            <a className="product-story__text-link product-story__help" href="/asistente">¿Qué cabe en mi espacio? <ArrowRight size={16} aria-hidden="true" /></a>
+            <a className="product-story__text-link product-story__help" href="/asistente" data-ui-sound="tap">¿Qué cabe en mi espacio? <ArrowRight size={16} aria-hidden="true" /></a>
           </div>
-          <ProductRoom product={product} materials={settings?.materials ?? []} priority className="product-story__room"
-            sizes="(min-width: 1100px) 65vw, (min-width: 760px) 55vw, 100vw" />
+          <Dialog open={expanded} onOpenChange={setExpanded}>
+            <div className="product-story__gallery" aria-label="Galería del modelo">
+              <ModelPresentation product={product} materials={settings?.materials ?? []} memory={immersiveMemory} view={expanded ? "room" : view} />
+              <div className="product-story__gallery-toolbar"><ViewSelector view={view} onChange={setView} />
+                <DialogTrigger asChild><button className="product-story__expand" type="button" data-ui-sound="tap"><Expand size={16} aria-hidden="true" /> Ampliar<span className="product-story__sr-only"> vista de {product.name}</span></button></DialogTrigger>
+              </div>
+            </div>
+            <DialogContent className="product-story__gallery-modal" showCloseButton={false}>
+              <div className="product-story__modal-heading"><div><DialogTitle>{product.name}</DialogTitle><DialogDescription>Modelo de referencia. Las medidas, los frentes y los acabados se cambian al personalizar.</DialogDescription></div>
+                <DialogClose asChild><button type="button" className="product-story__modal-close" aria-label="Cerrar vista ampliada" data-ui-sound="tap"><X size={20} aria-hidden="true" /><span>Cerrar</span></button></DialogClose>
+              </div>
+              {expanded && <ModelPresentation product={product} materials={settings?.materials ?? []} memory={immersiveMemory} view={view} expanded />}
+              <div className="product-story__modal-toolbar"><ViewSelector view={view} onChange={setView} /><span>Vista de referencia · Sin cambios en tu diseño</span></div>
+            </DialogContent>
+          </Dialog>
         </section>
 
         <section className="product-story__reference" aria-labelledby="product-story-measures">
@@ -102,12 +190,12 @@ export default function ProductStory() {
             <h2 id="product-story-measures">Así empieza.<br />Tú lo haces tuyo.</h2>
             <p>Medidas del modelo de referencia. Encuentra las opciones disponibles al personalizar.</p>
           </div>
-          <dl className="product-story__dimensions">
+          <div className="product-story__reference-visual"><ReferenceDimensions product={product} /><dl className="product-story__dimensions">
             <div><dt>Ancho</dt><dd>{centimeters(product.defaults.width)}</dd></div>
             <div><dt>Alto</dt><dd>{centimeters(product.defaults.height)}</dd></div>
             <div><dt>Fondo</dt><dd>{centimeters(product.defaults.depth)}</dd></div>
             <div><dt>Material</dt><dd>Melamina <span>18 mm</span></dd></div>
-          </dl>
+          </dl><p className="product-story__diagram-note">Esquema exterior de referencia. El taller revisa los detalles antes de fabricar.</p></div>
         </section>
 
         {finishSamples.length > 0 && <section className="product-story__finishes" aria-labelledby="product-story-finishes">
@@ -115,7 +203,7 @@ export default function ProductStory() {
             <p className="product-story__eyebrow">Textura, tono, carácter</p>
             <h2 id="product-story-finishes">Un acabado.<br />Otra forma de sentirlo.</h2>
             <p>Una muestra de los acabados publicados por el taller. Elige y revisa tu combinación en el configurador.</p>
-            <a className="product-story__text-link" href={configure}>Explorar los acabados <ArrowRight size={18} aria-hidden="true" /></a>
+            <a className="product-story__text-link" href={configure} data-ui-sound="tap">Explorar los acabados <ArrowRight size={18} aria-hidden="true" /></a>
           </div>
           <ul className="product-story__finish-list" aria-label="Muestra de acabados, vista de referencia">
             {finishSamples.map(material => <li key={material.id}>
@@ -127,12 +215,16 @@ export default function ProductStory() {
           </ul>
         </section>}
 
-        <section className="product-story__invitation" aria-labelledby="product-story-start">
+        <section className="product-story__invitation" aria-labelledby="product-story-start" ref={finalInvitation}>
           <div><p className="product-story__eyebrow">El siguiente paso es tuyo</p><h2 id="product-story-start">Dale su lugar.</h2><p>Ajusta las medidas y el acabado. Guarda tu diseño y compártelo con el taller para revisar tu propuesta.</p></div>
-          <a className="product-story__button product-story__button--light" href={configure}>Personalizar este mueble <ArrowUpRight size={22} aria-hidden="true" /></a>
+          <a className="product-story__button product-story__button--light" href={configure} data-ui-sound="tap">Personalizar este mueble <ArrowUpRight size={22} aria-hidden="true" /></a>
         </section>
       </>}
     </main>
+    {product && showMobileCta && !expanded && <nav className="product-story__mobile-cta" aria-label="Personalizar este modelo">
+      <div><span>{product.name}</span><strong>{price === null ? "A tu medida" : money(price)}</strong></div>
+      <a href={configure} data-ui-sound="tap" aria-label={`Personalizar este mueble: ${product.name}`}>Personalizar <ArrowUpRight size={18} aria-hidden="true" /></a>
+    </nav>}
     <Footer settings={settings} />
   </div>;
 }

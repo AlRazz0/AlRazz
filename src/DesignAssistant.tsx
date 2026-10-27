@@ -12,6 +12,7 @@ import { materialLabel } from "./materials";
 import { AssistantKitchenMeasures } from "./AssistantKitchenMeasures";
 import { kitchenSpaceReasons } from "../lib/kitchen-space-summary";
 import "./design-assistant.css";
+import "./editorial-tools.css";
 
 type Purpose = DesignAssistantInput["purpose"];
 const purposes = [

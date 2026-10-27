@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { withDoorHinges, doorLatchDirection } from "../lib/door-hinges.ts";
 import type { VisualPanel } from "../lib/public-geometry.ts";
 import type { PublicMaterial } from "./types.ts";
@@ -61,6 +62,7 @@ export function createViewerModel(
   invalidate: () => void,
   anisotropy = 1,
   loadTexture?: (path: string) => Promise<THREE.Texture>,
+  presentation = false,
 ) {
   const boardGeometry = new THREE.BoxGeometry(1, 1, 1);
   const boardEdges = new THREE.EdgesGeometry(boardGeometry);
@@ -69,6 +71,7 @@ export function createViewerModel(
   const metalMaterial = new THREE.MeshStandardMaterial({ color: "#a8aba8", roughness: 0.28, metalness: 0.8 });
   const gripMaterial = new THREE.MeshStandardMaterial({ color: 0x3a3733, metalness: 0.65, roughness: 0.35 });
   const finishes = new Map<string, Finish>();
+  const presentationGeometry = new Map<string, THREE.BufferGeometry>();
   const swatches = createSwatchTextures(invalidate, anisotropy, loadTexture);
   let entries: Entry[] = [];
   let disposed = false;
@@ -81,7 +84,7 @@ export function createViewerModel(
     let cached = finishes.get(key);
     if (!cached) {
       cached = {
-        material: new THREE.MeshStandardMaterial({ color, roughness: 0.77, metalness: 0 }),
+        material: new THREE.MeshStandardMaterial({ color, roughness: presentation ? 0.64 : 0.77, metalness: 0 }),
         lines: new THREE.LineBasicMaterial({ color: new THREE.Color(color).multiplyScalar(0.72), transparent: true, opacity: 0.5 }),
         color,
       };
@@ -122,7 +125,9 @@ export function createViewerModel(
     }
     const mesh = new THREE.Mesh(boardGeometry, material.material);
     const lines = new THREE.LineSegments(boardEdges, material.lines);
-    mesh.add(lines);
+    // The shop portrait uses light on the physical edge, not a drawn outline.
+    lines.visible = !presentation;
+    if (!presentation) mesh.add(lines);
     mesh.castShadow = mesh.receiveShadow = true;
     let grip: THREE.Mesh | undefined;
     if (kind === "door-grip") {
@@ -176,6 +181,17 @@ export function createViewerModel(
     }
     mesh.material = finish.material;
     entry.lines!.material = finish.lines;
+    if (presentation) {
+      const key = panel.size.join(":");
+      let geometry = presentationGeometry.get(key);
+      if (!geometry) {
+        // A sub-millimetre edge treatment stays INSIDE the exact panel envelope.
+        geometry = new RoundedBoxGeometry(width, height, depth, 2, Math.min(.00045, width / 4, height / 4, depth / 4));
+        presentationGeometry.set(key, geometry);
+      }
+      mesh.geometry = geometry;
+      mesh.scale.set(1, 1, 1);
+    }
     if (panel.door) positionHinge(entry, panel, width, amount);
     else {
       mesh.position.fromArray(panel.position).multiplyScalar(0.001);
@@ -183,8 +199,8 @@ export function createViewerModel(
     }
     // The board scales, but the exterior hardware keeps its physical size/inset.
     if (entry.grip) {
-      entry.grip.scale.set(1 / width, 1 / height, 1 / depth);
-      entry.grip.position.set(doorLatchDirection(panel) * (width / 2 - 0.045) / width, 0, 0.02 / depth);
+      entry.grip.scale.set(presentation ? 1 : 1 / width, presentation ? 1 : 1 / height, presentation ? 1 : 1 / depth);
+      entry.grip.position.set(doorLatchDirection(panel) * (width / 2 - 0.045) / (presentation ? 1 : width), 0, presentation ? depth / 2 + .011 : 0.02 / depth);
     }
   }
 
@@ -236,6 +252,8 @@ export function createViewerModel(
       swatches.dispose();
       for (const finish of finishes.values()) { finish.material.dispose(); finish.lines.dispose(); }
       finishes.clear();
+      presentationGeometry.forEach(geometry => geometry.dispose());
+      presentationGeometry.clear();
       for (const geometry of [boardGeometry, boardEdges, rodGeometry, gripGeometry]) geometry.dispose();
       metalMaterial.dispose(); gripMaterial.dispose();
     },

@@ -23,6 +23,7 @@ import { money } from "../lib/furniture";
 import type { Design, PublicSettings } from "./types";
 import { Header, Footer } from "./App";
 import Viewer from "./Viewer";
+import "./editorial-tools.css";
 import { ContactLinks } from "./ContactLinks";
 import { QuoteRequestForm } from "./QuoteRequestForm";
 export default function Cart() {

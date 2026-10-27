@@ -11,12 +11,13 @@ export type ProductRoomProps = {
   sizes?: string;
 };
 
-/** An illustrated setting for the actual public model, without a WebGL context. */
+/** Immediate SVG reference; visible cards progressively request a shared WebGL portrait. */
 export function ProductRoom({ product, materials, className = "", priority = false,
   sizes = "(min-width: 1100px) 32vw, (min-width: 700px) 48vw, 100vw",
 }: ProductRoomProps) {
   const [backgroundFailed, setBackgroundFailed] = useState(false);
   const [nearViewport, setNearViewport] = useState(priority);
+  const [portrait, setPortrait] = useState("");
   const room = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!room.current || typeof IntersectionObserver === "undefined") { setNearViewport(true); return; }
@@ -26,6 +27,17 @@ export function ProductRoom({ product, materials, className = "", priority = fal
     observer.observe(room.current);
     return () => observer.disconnect();
   }, []);
+  useEffect(() => {
+    if (!nearViewport || !product.preview?.geometry.length) return;
+    let active = true;
+    let cancel: (() => void) | undefined;
+    void import("./furniture-portraits").then(({ requestFurniturePortrait }) => {
+      if (active) cancel = requestFurniturePortrait(product, materials, priority,
+        source => { if (active) setPortrait(source); }, () => {});
+    }).catch(() => {});
+    return () => { active = false; cancel?.(); };
+  }, [nearViewport, product, materials, priority]);
+  useEffect(() => { setPortrait(""); }, [product]);
   const { width, height, depth } = product.defaults;
   const kind = product.construction?.kind ?? "cabinet";
   const isDesk = kind === "desk" || kind === "desk-storage";
@@ -43,17 +55,18 @@ export function ProductRoom({ product, materials, className = "", priority = fal
 
   return (
     <div className={`product-room product-room--${family} ${className}`.trim()} style={style} ref={room}>
-      {!backgroundFailed && <img className="product-room__background"
+      {!portrait && !backgroundFailed && <img className="product-room__background"
         src="/images/editorial/room-1600.webp"
         srcSet="/images/editorial/room-800.webp 800w, /images/editorial/room-1600.webp 1600w"
         sizes={sizes} width="1600" height="900"
         alt="" loading={priority ? "eager" : "lazy"} fetchPriority={priority ? "high" : "auto"}
         decoding="async" onError={() => setBackgroundFailed(true)} />}
-      <div className="product-room__light" aria-hidden="true" />
-      {hasGeometry ? <div className="product-room__model">
+      {portrait && <img className="product-room__portrait" src={portrait} alt={`${product.name}, render de su volumen y acabado de referencia.`} width="1200" height="900" decoding="async" />}
+      {!portrait && <div className="product-room__light" aria-hidden="true" />}
+      {!portrait && (hasGeometry ? <div className="product-room__model">
         <CatalogThumbnail name={product.name} geometry={product.preview.geometry}
           materials={materials} handle={product.defaults.handle} textured={nearViewport} />
-      </div> : <p className="product-room__unavailable">La vista de este modelo estará disponible al personalizar.</p>}
+      </div> : <p className="product-room__unavailable">La vista de este modelo estará disponible al personalizar.</p>)}
       <p className="product-room__caption">Ambiente ilustrativo <span aria-hidden="true">·</span> Modelo del catálogo</p>
     </div>
   );

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState, type RefObject } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, type ComponentType, type RefObject } from "react";
 import { ArrowDown, ArrowRight, ArrowUpRight, ChevronLeft, ChevronRight, Layers3, Ruler, Sparkles } from "lucide-react";
 import { api } from "../lib/api";
 import { Header, Footer } from "./App";
@@ -6,6 +6,8 @@ import { ContactLinks } from "./ContactLinks";
 import { MaterialSwatch } from "./MaterialSwatch";
 import { materialLabel } from "./materials";
 import { useRevealMotion } from "./useRevealMotion";
+import { materialBoardLabel, materialCollectionHref, materialPresentationSamples } from "../lib/material-library";
+import type { MaterialLibraryProps } from "./MaterialLibrary";
 import type { PublicProduct, PublicSettings } from "./types";
 import "./editorial-home.css";
 
@@ -55,6 +57,12 @@ export default function Home() {
   const [error, setError] = useState(false);
   const [selected, setSelected] = useState(0);
   const [finishId, setFinishId] = useState("");
+  const [MaterialLibraryComponent, setMaterialLibraryComponent] = useState<ComponentType<MaterialLibraryProps>>();
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [libraryLoading, setLibraryLoading] = useState(false);
+  const [libraryError, setLibraryError] = useState("");
+  const libraryButton = useRef<HTMLButtonElement>(null);
+  const libraryRequest = useRef(false);
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     document.title = "El capo · Tu casa, tu forma de vivir";
@@ -66,6 +74,22 @@ export default function Home() {
   const products = catalog?.products ?? [];
   const materials = catalog?.settings.materials.filter(material => material.active) ?? [];
   const activeFinish = materials.find(material => material.id === finishId) ?? materials[0];
+  const materialStack = materialPresentationSamples(materials, activeFinish?.id ?? "", 4);
+  const materialSamples = materialPresentationSamples(materials, activeFinish?.id ?? "", 8);
+  async function openMaterialLibrary() {
+    if (!materials.length || libraryRequest.current) return;
+    setLibraryError("");
+    if (MaterialLibraryComponent) { setLibraryOpen(true); return; }
+    libraryRequest.current = true; setLibraryLoading(true);
+    try {
+      const module = await import("./MaterialLibrary");
+      setMaterialLibraryComponent(() => module.default); setLibraryOpen(true);
+    } catch {
+      setLibraryError("No pudimos abrir la biblioteca. Vuelve a intentarlo; tu selección se conserva.");
+      requestAnimationFrame(() => libraryButton.current?.focus({ preventScroll: true }));
+    }
+    finally { libraryRequest.current = false; setLibraryLoading(false); }
+  }
   // An editorial selection comes from the live catalog, never a second set of products.
   const featured = products.filter(product => !/cocina/i.test(product.category)).slice(0, 4);
   const choices = featured.length ? featured : products.slice(0, 4);
@@ -126,11 +150,16 @@ export default function Home() {
 
       <section id="materiales" className="editorial-materials editorial-section" aria-labelledby="editorial-material-title">
         <div className="editorial-material-copy" data-reveal><p className="editorial-kicker">El carácter está en los detalles.</p><h2 id="editorial-material-title">Un mismo diseño.<br/><em>Otra sensación.</em></h2><p>La calidez de un acabado madera. La serenidad de un tono claro. Encuentra el lenguaje que acompaña tu casa.</p><div className="editorial-material-spec"><Layers3 size={21} strokeWidth={1.4}/><span>Melamina de <strong>18 mm</strong><br/><small>Acabados del catálogo del taller</small></span></div>
-          <a className="editorial-link" href={activeFinish ? `/coleccion?acabado=${encodeURIComponent(activeFinish.id)}` : "/coleccion"}>Encontrar un mueble con este acabado <ArrowUpRight size={18} aria-hidden="true" /></a></div>
+          <button type="button" className="editorial-material-library-trigger" ref={libraryButton} disabled={!materials.length || libraryLoading}
+            aria-haspopup="dialog" aria-busy={libraryLoading} data-ui-sound={libraryLoading ? undefined : "tap"} onClick={() => void openMaterialLibrary()}>
+            <span>{libraryLoading ? "Abriendo la biblioteca…" : "Explorar todos los acabados"}<small>{materials.length ? `${materials.length} acabados activos del catálogo` : error ? "La biblioteca no está disponible" : catalog ? "Sin acabados activos publicados" : "Cargando el catálogo de acabados"}</small></span><ArrowUpRight size={20} strokeWidth={1.5} aria-hidden="true" />
+          </button>
+          {libraryError && <p className="editorial-material-error" role="alert">{libraryError}</p>}
+          <a className="editorial-link" href={activeFinish ? materialCollectionHref(activeFinish) : "/coleccion"}>Encontrar un mueble con este acabado <ArrowUpRight size={18} aria-hidden="true" /></a></div>
         <div className="editorial-material-stage" data-reveal>{materials.length ? <>
-          <div className="editorial-material-stack" aria-hidden="true">{materials.slice(0,4).map((material,index) => <div className={`editorial-material-board editorial-material-board--${index}`} key={material.id}><MaterialSwatch material={index === 3 && activeFinish ? activeFinish : material}/></div>)}</div>
-          <div className="editorial-material-picker"><p aria-live="polite">{activeFinish && materialLabel(activeFinish)}</p><div role="group" aria-label="Explorar acabados">{materials.slice(0,8).map(material => <button type="button" key={material.id} aria-label={materialLabel(material)} aria-pressed={material.id === activeFinish?.id} onClick={() => setFinishId(material.id)}><MaterialSwatch material={material}/></button>)}</div><small>El color en pantalla es referencial. Confirmamos la muestra y su disponibilidad contigo.</small></div>
-        </> : <p>Los acabados disponibles aparecerán al cargar la colección.</p>}</div>
+          <div className="editorial-material-stack" aria-hidden="true">{materialStack.map((material,index) => <div className={`editorial-material-board editorial-material-board--${index}`} key={material.id}><MaterialSwatch material={material}/></div>)}</div>
+          <div className="editorial-material-picker"><p aria-live="polite">{activeFinish && <><strong>{activeFinish.name}</strong><span>{[activeFinish.brand, activeFinish.code, materialBoardLabel(activeFinish.board), "18 mm"].filter(Boolean).join(" · ")}</span></>}</p><div role="group" aria-label="Una selección de los acabados del catálogo">{materialSamples.map(material => <button type="button" key={material.id} aria-label={materialLabel(material)} aria-pressed={material.id === activeFinish?.id} data-ui-sound={material.id === activeFinish?.id ? undefined : "select"} onClick={() => { if (material.id !== activeFinish?.id) setFinishId(material.id); }}><MaterialSwatch material={material}/></button>)}</div><small>Una muestra de la biblioteca. El color en pantalla es referencial; confirmamos el acabado y la muestra física contigo.</small></div>
+        </> : <div className="editorial-material-unavailable"><p>{error ? "No pudimos cargar los acabados del taller." : catalog ? "Los acabados activos aparecerán aquí cuando el taller los publique." : "Preparando los acabados del catálogo…"}</p>{error && <button type="button" className="editorial-link" onClick={() => setAttempt(value => value + 1)}>Volver a cargar acabados <ArrowRight size={16} aria-hidden="true" /></button>}</div>}</div>
       </section>
 
       <section id="proceso" className="editorial-process editorial-section" aria-labelledby="editorial-process-title">
@@ -148,5 +177,7 @@ export default function Home() {
         ["¿Puedo encargarlo directamente?", "Primero revisamos tu diseño y te enviamos una propuesta. Los importes y el despiece iniciales son referenciales hasta la validación del taller. La agenda de entrega se confirma contigo."],
       ].map(([question,answer]) => <details key={question}><summary>{question}<span aria-hidden="true">+</span></summary><p>{answer}</p></details>)}</div></section>
       <section id="contacto" className="editorial-contact editorial-section" aria-labelledby="editorial-contact-title"><div data-reveal><p className="editorial-kicker">La próxima historia empieza en tu casa.</p><h2 id="editorial-contact-title">Hagamos<br/>espacio para ti.</h2><a href="/asistente" className="editorial-button editorial-button--light">Diseñamos contigo <ArrowUpRight size={21}/></a></div><div className="editorial-contact-side"><p>Trae una idea, las medidas de tu espacio<br/>o esa duda que todavía no resuelves.</p>{catalog && <ContactLinks settings={catalog.settings}/>}<a className="editorial-contact-collection" href="/coleccion">Seguir explorando los muebles <ArrowRight size={18}/></a></div></section>
-    </main><Footer settings={catalog?.settings}/></div>;
+    </main>
+    {MaterialLibraryComponent && <MaterialLibraryComponent materials={materials} selectedId={activeFinish?.id ?? ""} open={libraryOpen} onOpenChange={setLibraryOpen} onSelect={setFinishId} onReturnFocus={() => libraryButton.current?.focus({ preventScroll: true })} />}
+    <Footer settings={catalog?.settings}/></div>;
 }

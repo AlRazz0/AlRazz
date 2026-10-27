@@ -20,3 +20,13 @@ footer.site-footer.editorial-footer{display:grid;grid-template-columns:1.6fr 1fr
 .editorial-footer .editorial-footer-links a { min-height:44px; display:inline-flex; align-items:center; }
 .editorial-footer .measurement-preferences summary { min-height:44px; padding-block:10px; }
 .editorial-footer .measurement-preferences label { min-height:44px; }
+
+/* The sound control is a preference, not a new primary action. */
+.site-header--redesign .header-actions{gap:18px}
+.site-header--redesign .header-actions>.sound-toggle{border-color:transparent;color:#65705c}
+.site-header--redesign .header-actions>.sound-toggle[aria-pressed=true]{color:#36492b;border-color:#bfccb3}
+.editorial-footer-bottom .sound-toggle{margin-top:-9px}
+.site-header--redesign .site-nav a:focus-visible::after{transform:scaleX(1)}
+.site-header--redesign :is(a,button):focus-visible{outline:2px solid #596d42;outline-offset:5px}
+.editorial-shell ::selection,.product-story-shell ::selection,.collection-shell ::selection{background:#dce3cd;color:#263221}
+@media(max-width:640px){.site-header--redesign .header-actions{gap:5px}.site-header--redesign .brand-logo--header{width:124px}.editorial-footer-bottom .sound-toggle{margin-top:0}}

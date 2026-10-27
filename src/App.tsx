@@ -14,6 +14,8 @@ import "./home-redesign.css";
 import "./alrazz-identity.css";
 import { startMeasurements } from "../lib/measurement-client";
 import { MeasurementPreferences } from "./MeasurementPreferences";
+import { SoundToggle } from "./SoundToggle";
+import { installInteractionSounds } from "./interaction-sound";
 import "./measurements.css";
 import "./editorial-chrome.css";
 import Home from "./Home";
@@ -102,6 +104,7 @@ export function Header({ compact = false }: { compact?: boolean }) {
               Diseñamos contigo <ArrowUpRight size={18} aria-hidden="true" />
             </a>
           )}
+          <SoundToggle compact />
           <a
             className="bag"
             href="/carrito"
@@ -154,6 +157,7 @@ export function Footer({
       )}
       </nav>
       <div className="editorial-footer-bottom"><span>El capo · {new Date().getFullYear()}</span><span>Diseños a medida · Melamina de 18 mm</span>
+      <SoundToggle />
       <MeasurementPreferences />
       </div>
     </footer>
@@ -162,6 +166,7 @@ export function Footer({
 export default function App() {
   const path = window.location.pathname;
   useEffect(() => { void startMeasurements(); }, []);
+  useEffect(() => window.location.pathname === "/admin" ? undefined : installInteractionSounds(), []);
   return (
     <Suspense
       fallback={<div className="loading-page">Preparando tu espacio…</div>}

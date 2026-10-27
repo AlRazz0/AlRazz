@@ -17,6 +17,17 @@
   object-position: center;
   pointer-events: none;
 }
+.product-room__portrait {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  background:#e8e1d6;
+  animation:portrait-arrive .3s ease-out;
+}
+@keyframes portrait-arrive { from{opacity:.3} to{opacity:1} }
+@media(prefers-reduced-motion:reduce){.product-room__portrait{animation:none}}
 .product-room__light {
   position: absolute;
   inset: 0;
