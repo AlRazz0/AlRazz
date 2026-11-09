@@ -162,6 +162,7 @@ test("Pages preparation copies only public client output and removes stale gener
     await mkdir(join(root, "hosting", "pages"), { recursive: true });
     for (const [file, value] of [
       ["dist/client/index.html", "<html>public SPA</html>"],
+      ["dist/client/_headers", await readFile(new URL("../public/_headers", import.meta.url), "utf8")],
       ["dist/client/assets/app.js", "public script"],
       ["dist/client/tools/alrazz-sketchup-export.rb", "# public SketchUp dimensions exporter"],
       ["dist/client/tools/other-export.rb", "PRIVATE_RUBY_FIXTURE"],
@@ -185,9 +186,10 @@ test("Pages preparation copies only public client output and removes stale gener
       );
     }
     const result = await preparePages(root);
-    assert.equal(result.assetCount, 3);
+    assert.equal(result.assetCount, 4);
     assert.deepEqual(JSON.parse(await readFile(join(root, "hosting", "pages", ".wrangler", "deploy", "config.json"), "utf8")), { configPath: "../../wrangler.jsonc" });
     assert.deepEqual((await readdir(result.output)).sort(), [
+      "_headers",
       "_routes.json",
       "_worker.js",
       "assets",
@@ -195,6 +197,12 @@ test("Pages preparation copies only public client output and removes stale gener
       "tools",
     ]);
     assert.deepEqual(await readdir(join(result.output, "assets")), ["app.js"]);
+    const headers = await readFile(join(result.output, "_headers"), "utf8");
+    assert.match(headers, /^\/\*\r?\n/m);
+    assert.match(headers, /Content-Security-Policy:.*frame-ancestors 'none'/);
+    assert.match(headers, /X-Frame-Options: DENY/);
+    assert.match(headers, /X-Content-Type-Options: nosniff/);
+    assert.match(headers, /Referrer-Policy: no-referrer/);
     assert.deepEqual(await readdir(join(result.output, "tools")), ["alrazz-sketchup-export.rb"]);
     assert.equal(
       await readFile(join(result.output, "tools", "alrazz-sketchup-export.rb"), "utf8"),
