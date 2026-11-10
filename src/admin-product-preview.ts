@@ -56,7 +56,7 @@ export function productEditorError(error: unknown): string {
         const path = issue.path.join(".");
         const label = fieldNames[path] ?? "Configuración";
         const message =
-          issue.received === "nan"
+          issue.received?.toLowerCase() === "nan"
             ? "completa el valor numérico"
             : issue.code === "too_small" && typeof issue.minimum === "number"
               ? `el mínimo es ${issue.minimum}`

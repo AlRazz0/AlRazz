@@ -7,6 +7,24 @@ const input = {
   op: "create-quote-request", requestId: "22222222-2222-4222-8222-222222222222",
   sources: [source], name: "Persona de prueba", phone: "+51 000 000 000", email: "", city: "Ciudad de prueba", message: "", consent: true,
 };
+
+test("oversized CRM sources reject before traversal and ordinary defaults are preserved", () => {
+  const sources = Array(1000).fill(null);
+  let reads = 0;
+  Object.defineProperty(sources, 0, { get() { reads++; return null; } });
+  const parsed = createQuoteRequestSchema.safeParse({ ...input, sources });
+  assert.equal(parsed.success, false);
+  if (parsed.success) assert.fail("Oversized collection accepted");
+  assert.equal(reads, 0);
+  assert.equal(parsed.error.issues.length, 1);
+  assert.equal(parsed.error.issues[0].code, "too_big");
+  assert.deepEqual(parsed.error.issues[0].path, ["sources"]);
+  const normal = createQuoteRequestSchema.parse({ ...input, phone: undefined, city: undefined, message: undefined, email: " TEST@EXAMPLE.TEST " });
+  assert.equal(normal.phone, "");
+  assert.equal(normal.city, "");
+  assert.equal(normal.message, "");
+  assert.equal(normal.email, "test@example.test");
+});
 test("CRM requires explicit consent, an actual contact channel and a bounded owned-source reference", () => {
   assert.equal(createQuoteRequestSchema.safeParse(input).success, true);
   for (const changed of [
