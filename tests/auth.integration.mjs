@@ -476,6 +476,98 @@ test("manufacturing details require both admin factors while all public design r
   }
 });
 
+test("every administrative API rejects anonymous, forged, password-only, expired and revoked sessions", async (t) => {
+  const h = await createHarness({
+    ADMIN_PASSKEYS_ENABLED: "1",
+    ADMIN_PASSKEY_RP_ID: new URL(base).hostname,
+    ADMIN_PASSKEY_ORIGIN: base,
+  });
+  t.after(() => h.close());
+  const reads = [
+    "measurements", "crm-metrics", "crm-agenda", "commercial-quotes",
+    "admin-completed-projects", "quote-requests", "quote-request", "passkeys", "admin-kitchens",
+  ];
+  const writes = [
+    "issue-commercial-quote", "complete-quote-action", "save-completed-project", "remove-completed-project",
+    "update-quote-request", "kitchen-cut-list", "cut-list", "product", "settings", "import",
+    "passkey-register-options", "passkey-revoke",
+  ];
+  // Seed only this synthetic in-memory database, then verify denied calls do not
+  // alter any business/security rows. No real database or credentials are used.
+  await h.client().request();
+  const protectedTables = ["products", "settings", "quote_requests", "quote_request_events", "commercial_quote_versions", "completed_projects", "admin_passkeys"];
+  const snapshot = async () => Promise.all(protectedTables.map(async table =>
+    (await h.db.prepare(`SELECT * FROM ${table} ORDER BY rowid`).all()).results));
+  const baseline = await snapshot();
+  const denied = async (client) => {
+    const state = await client.state();
+    assert.equal(state.status, 200);
+    assert.equal(state.data.admin, false);
+    for (const field of ["products", "settings", "settingsVersion"]) assert.ok(!(field in state.data), field);
+    for (const action of reads) {
+      const result = await client.request(undefined, { path: `/api/store?action=${action}` });
+      assert.equal(result.status, 401, action);
+      assert.equal(result.headers.get("cache-control"), "no-store", action);
+    }
+    for (const op of writes) {
+      const result = await client.request({ op, password, label: "synthetic device" });
+      assert.equal(result.status, 401, op);
+    }
+    const registration = await client.request({ op: "passkey-register-verify", ceremonyId: "a".repeat(64), credential: {} });
+    assert.ok([400, 401].includes(registration.status));
+    assert.deepEqual(await snapshot(), baseline);
+  };
+  await t.test("anonymous", () => denied(h.client()));
+  await t.test("forged token and invented owner role", async () => {
+    const client = h.client();
+    client.cookies.set("alrazz_admin", "a".repeat(64));
+    client.cookies.set("role", "owner");
+    await denied(client);
+  });
+  await t.test("password alone", async () => {
+    const client = h.client();
+    assert.equal((await client.login()).status, 200);
+    await denied(client);
+  });
+  await t.test("expired session", async () => {
+    await h.reset();
+    const client = h.client();
+    await client.login();
+    assert.equal((await client.verify()).status, 200);
+    assert.equal((await client.state()).data.admin, true);
+    await h.db.prepare("UPDATE admin_auth_sessions SET expires_at=1").run();
+    await denied(client);
+  });
+  await t.test("server-revoked session", async () => {
+    await h.reset();
+    const client = h.client();
+    await client.login();
+    assert.equal((await client.verify()).status, 200);
+    const copied = client.copy();
+    assert.equal((await client.request({ op: "logout" })).status, 200);
+    await denied(copied);
+  });
+  await t.test("authenticated requests cannot cross the origin boundary", async () => {
+    await h.reset();
+    const client = h.client();
+    await client.login();
+    assert.equal((await client.verify()).status, 200);
+    for (const op of [...writes, "passkey-register-verify", "logout"]) {
+      for (const options of [
+        { origin: "https://attacker.example.test" },
+        { origin: "null" },
+        { headers: { "Sec-Fetch-Site": "cross-site" } },
+      ]) {
+        const result = await client.request({ op, password, label: "synthetic device" }, options);
+        assert.equal(result.status, 403, op);
+        assert.equal(result.data.code, "ORIGIN_MISMATCH", op);
+      }
+    }
+    assert.equal((await client.state()).data.admin, true);
+    assert.deepEqual(await snapshot(), baseline);
+  });
+});
+
 test("administration requires both factors and revokes sessions", async (t) => {
   const h = await createHarness();
   t.after(() => h.close());

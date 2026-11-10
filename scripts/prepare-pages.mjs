@@ -63,7 +63,8 @@ async function publicFiles(directory, prefix = "") {
       files.push(...(await publicFiles(join(directory, entry.name), path)));
     } else if (
       entry.isFile() &&
-      (publicExtensions.has(extname(entry.name).toLowerCase()) ||
+      ((prefix === "" && entry.name === "_headers") ||
+        publicExtensions.has(extname(entry.name).toLowerCase()) ||
         publicSourceFiles.has(path.split(sep).join("/")))
     ) {
       files.push(path);

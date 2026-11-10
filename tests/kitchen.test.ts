@@ -19,6 +19,19 @@ const products = [base, wall, tall];
 const furniture = (id: string, product: Product, row: "base" | "wall" | "tall" = "base", face: "a" | "b" = "a") => ({ id, kind: "furniture" as const, wall: face, row, productId: product.id, config: { ...product.defaults } });
 const plan = (items: KitchenPlan["items"]): KitchenPlan => ({ layout: "straight", walls: { a: 3000, b: 2400 }, roomHeight: 2600, wallElevation: 1450, install: true, transport: true, items });
 
+test("oversized kitchen arrays stop before parsing elements or creating per-item issues", () => {
+  const items = Array(1000).fill(null);
+  let reads = 0;
+  Object.defineProperty(items, 0, { get() { reads++; return null; } });
+  const parsed = kitchenPlanSchema.safeParse({ ...plan([]), items });
+  assert.equal(parsed.success, false);
+  if (parsed.success) assert.fail("Oversized collection accepted");
+  assert.equal(reads, 0);
+  assert.equal(parsed.error.issues.length, 1);
+  assert.equal(parsed.error.issues[0].code, "too_big");
+  assert.deepEqual(parsed.error.issues[0].path, ["items"]);
+});
+
 test("kitchen uses one manufacturing engine and charges installation/delivery once", () => {
   const input = plan([furniture("base1", base), furniture("base2", base), furniture("wall1", wall, "wall")]);
   input.items[0].kind === "furniture" && (input.items[0].config.install = true);

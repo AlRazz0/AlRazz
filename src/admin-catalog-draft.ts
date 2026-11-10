@@ -144,9 +144,13 @@ export function getEditorIssue(value: Product, settings: Settings): EditorIssue 
         const messages: Record<string, string> = {
           invalid_type: "completa el valor con el tipo correcto",
           invalid_enum_value: "selecciona una opción válida",
+          invalid_value: "selecciona una opción válida",
           invalid_union: "revisa las opciones seleccionadas",
           invalid_union_discriminator: "selecciona una opción válida",
           invalid_string: issue.path[0] === "id"
+            ? "usa entre 2 y 60 caracteres: minúsculas, números y guiones"
+            : "revisa el formato del valor",
+          invalid_format: issue.path[0] === "id"
             ? "usa entre 2 y 60 caracteres: minúsculas, números y guiones"
             : "revisa el formato del valor",
           not_finite: "introduce un número finito",

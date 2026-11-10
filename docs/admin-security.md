@@ -47,6 +47,12 @@ Aplica las migraciones pendientes con `npm run db:remote`. Comprueba HTTPS, acce
 
 `npm test` valida criptografía y motor. Después de `npm run build`, `npm run test:auth-api` verifica la autenticación contra un Worker y D1 aislados, con correo simulado y red externa bloqueada. No usa datos del propietario ni envía mensajes. Con la muestra local encendida, `npm run test:api` comprueba el catálogo real con fixtures temporales, autentica mediante TOTP y preserva sus datos; no consume códigos de recuperación personales.
 
+La suite aislada también comprueba todas las consultas administrativas y operaciones privadas de catálogo, CRM, cotizaciones, proyectos, mediciones, cocinas y gestión de llaves con clientes anónimos, cookies inventadas, contraseña sin segundo factor y sesiones caducadas o revocadas. Comprueba que las tablas protegidas permanecen iguales y que una sesión válida no permite escrituras desde otro origen. AlRazz sigue teniendo un único propietario: un campo o una cookie que diga `owner` no concede permisos, y no existen cuentas de empleados.
+
+La validación utiliza Zod 4.6.7. Sus límites de colecciones rechazan una cocina o solicitud CRM excesiva antes de validar cada elemento, evitando la acumulación de errores descrita en [GHSA-mrhx-c7xc-m3w5](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5). El límite de cuerpo de 1 MB permanece, pero no se considera por sí solo una solución a ese problema. Las regresiones comprueban que arrays de 1000 elementos se rechazan sin recorrerlos, además de conservar los valores por defecto y las reglas de negocio. El proyecto mantiene React y Vite; se retiraron las dependencias Next/Vinext/RSC y Drizzle que no tenían consumidores en código, scripts ni configuración.
+
+El archivo `public/_headers` impide enmarcar la interfaz, incluido `/admin`, mediante `frame-ancestors 'none'` y `X-Frame-Options: DENY`. También deshabilita la interpretación de otro tipo de contenido y el envío del referente. La preparación de Pages conserva este archivo explícitamente; las APIs mantienen sus propias comprobaciones y cabeceras. Las reglas de archivos estáticos de [Cloudflare Pages](https://developers.cloudflare.com/pages/configuration/headers/) y [Workers](https://developers.cloudflare.com/workers/static-assets/headers/) se aplican al publicar los assets. Verificar las cabeceras de `/admin` en el dominio público después del despliegue: las pruebas locales no confirman la configuración actualmente publicada.
+
 
 ## Llaves de acceso (WebAuthn)
 
